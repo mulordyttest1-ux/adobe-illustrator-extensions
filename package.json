@@ -1,0 +1,24 @@
+{
+  "name": "adobe-illustrator-extensions",
+  "version": "1.0.0",
+  "description": "Monorepo for Adobe Illustrator CEP Extensions",
+  "private": true,
+  "workspaces": [
+    "wedding-cep/cep",
+    "symbol-cep/cep"
+  ],
+  "scripts": {
+    "lint:wedding": "eslint wedding-cep/cep/js/ --config shared/eslint.config.mjs --ignore-pattern bundle.js",
+    "lint:symbol": "eslint symbol-cep/cep/js/ --config shared/eslint.config.mjs --ignore-pattern bundle.js",
+    "lint:all": "npm run lint:wedding && npm run lint:symbol",
+    "build:wedding": "node wedding-cep/cep/build.cjs",
+    "build:all": "npm run build:wedding",
+    "test:wedding": "node --test wedding-cep/cep/js/**/*.test.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^10.0.0",
+    "globals": "^17.3.0"
+  }
+}

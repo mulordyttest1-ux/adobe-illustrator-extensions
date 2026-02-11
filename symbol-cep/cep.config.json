@@ -1,0 +1,36 @@
+{
+  "project": {
+    "id": "com.dinhson.imposition",
+    "version": "1.0.0",
+    "name": "imposition panel"
+  },
+  "extension": {
+    "width": 420,
+    "height": 600,
+    "minWidth": 320,
+    "minHeight": 400,
+    "maxWidth": 600,
+    "maxHeight": 800
+  },
+  "build": {
+    "hosts": [
+      {
+        "name": "ILST",
+        "version": "[24.0,99.9]"
+      }
+    ],
+    "cepVersion": "9.0"
+  },
+  "env": {
+    "development": {
+      "debug": true,
+      "logLevel": "verbose",
+      "debugPort": 8088
+    },
+    "production": {
+      "debug": false,
+      "logLevel": "error",
+      "debugPort": 8088
+    }
+  }
+}

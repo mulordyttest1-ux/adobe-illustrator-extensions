@@ -1,0 +1,56 @@
+# Task: Architecture-Driven Refactoring Master Plan
+
+## Checklist
+
+- [x] Build Unified Architecture-Driven Refactoring Plan
+  - [x] Freeze Architecture Contract (immutable rules)
+  - [x] Map all 43+ files against contract (fit/misfit)
+  - [x] Identify gaps per module
+  - [x] Derive refactoring actions from gaps only
+  - [x] Prioritize and sequence actions
+- [x] User Review & Approval
+- [x] Batch 0: Baseline Documentation
+  - [x] A0.1: Create `API_SURFACE.md`
+  - [x] A0.2: Create `DEPENDENCY_MAP.md`
+  - [x] A0.3: Create pre-flight checklist
+  - [x] A0.4: Create module templates
+- [x] Batch 1: Cleanup & Headers
+  - [x] A1.1: Delete `DateGridWidget.legacy.js`
+  - [x] A1.2: Fix duplicate `setupDebugButtons()` in main.js
+  - [x] A1.3: Add header contracts to all JS files
+  - [x] A1.4: Standardize exports (window.* only)
+- [x] Batch 2: Extract Actions from main.js
+  - [x] A2.1: Extract `ScanAction.js`
+  - [x] A2.2: Extract `UpdateAction.js`
+  - [x] A2.3: Extract `SwapAction.js`
+  - [x] A2.4: Refactor main.js to use actions + add header
+- [x] Batch 3: Reduce Oversized Files
+  - [x] A3.1: Split `WeddingProActionHandler.js` (330→163) → extracted `KeyNormalizer.js` + `UIFeedback.js`
+  - [x] A3.2: Split `DateGridWidget.js` (348→175) → extracted `DateGridDOM.js`
+  - [x] A3.3: `DomFactory.js` (272) — kept intact, pure stateless factory
+  - [x] A3.4: Added headers + updated index.html with all new script tags
+- [x] Batch 4: ES Modules + Bundler
+  - [x] A4.1: Setup esbuild (`package.json`, `build.js`)
+  - [x] A4.2: Convert Core layer (2 files)
+  - [x] A4.3: Convert Domain layer (9 files)
+  - [x] A4.4: Convert Pipeline layer (4 files)
+  - [x] A4.5: Convert Strategy layer (3 files)
+  - [x] A4.6: Convert UX layer (12 files)
+  - [x] A4.7: Convert Components layer (9 files)
+  - [x] A4.8: Convert Controllers layer (4 files)
+  - [x] A4.9: Convert Actions layer (3 files)
+  - [x] A4.10: Create `app.js` composition root
+  - [x] A4.11: Create `build.js` + run esbuild
+  - [x] A4.12: Update `index.html`
+  - [x] A4.13: Verify build + typeof cleanup
+- [x] Batch 5: Testing & Type Safety
+  - [x] A5.1: Setup test runner (Node.js built-in `node:test`)
+  - [x] A5.2: Core tests (`string.test.js` 16 cases, `date.test.js` 18 cases)
+  - [x] A5.3: Domain tests (`name.test.js` 9 cases)
+  - [x] A5.4: Pipeline tests (`KeyNormalizer.test.js` 4 cases)
+  - [x] A5.5: Verify full test suite passes (49/49 ✅, 190ms)
+- [x] Batch 6: Stabilization & Polish
+  - [x] A6.1: Fix SourceMap (Switch to inline for G-Drive sync stability)
+  - [x] A6.2: Fix KeyNormalizer (Explicit imports, remove legacy global guards)
+  - [x] A6.3: Fix ScanAction logic (Wire WeddingRules for side-aware 'vithu' mapping)
+  - [x] A6.4: Final verification (49/49 pass, manual sync test)

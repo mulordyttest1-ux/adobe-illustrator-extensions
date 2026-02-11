@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+*/cep/js/bundle.js
+*/cep/js/bundle.js.map
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDE
+.vscode/
+*.code-workspace
+
+# Debug & temp
+*/cep/debug_scripts/
+*/cep/shadow_*.bat
+*.tmp
+*.log
+
+# Google Drive artifacts
+~$*
+
+# Agent brain (conversation-specific, not shared)
+.gemini/

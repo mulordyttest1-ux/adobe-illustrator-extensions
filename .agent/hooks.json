@@ -1,0 +1,22 @@
+{
+  "hooks": [
+    {
+      "matcher": "tool in [\"Edit\", \"Write\"] && tool_input.target_file matches \"\\\\.jsx$\"",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "grep -lE \"const |let |=>|`\" \"$target_file\"; if [ $? -eq 0 ]; then echo \"❌ CRITICAL: ExtendScript chỉ hỗ trợ ES3. Không dùng const, let, arrow function, hoặc template literal!\"; exit 1; fi"
+        }
+      ]
+    },
+    {
+      "matcher": "tool == \"run_command\" && tool_input.command_line matches \"build\"",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo \"🚀 Deploy Complete! Đừng quên Restart Illustrator để reload panel.\""
+        }
+      ]
+    }
+  ]
+}
