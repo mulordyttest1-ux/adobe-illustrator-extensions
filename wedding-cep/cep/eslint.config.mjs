@@ -13,7 +13,7 @@ export default [
     {
         ignores: [
             "**/bundle.js",
-            "**/libs/**",
+            "js/libs/**",
             "dist/**",
             "node_modules/**"
         ]
@@ -24,7 +24,7 @@ export default [
 
     // 3. Main Rules & Globals
     {
-        files: ["**/cep/js/**/*.js", "**/cep/js/**/*.mjs"],
+        files: ["js/**/*.js", "js/**/*.mjs"],
         languageOptions: {
             ecmaVersion: 2020,
             sourceType: "module",
@@ -136,7 +136,7 @@ export default [
     // 4. Overrides: Architecture Boundaries
     {
         // DOMAIN LAYER: Pure, no dependency on upper layers
-        files: ["**/js/logic/domain/**/*.js"],
+        files: ["js/logic/domain/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [
@@ -152,7 +152,7 @@ export default [
     },
     {
         // CORE LAYER: Purest utilities
-        files: ["**/js/logic/core/**/*.js"],
+        files: ["js/logic/core/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [
@@ -163,7 +163,7 @@ export default [
     },
     {
         // PIPELINE LAYER: Import from Domain/Core only (plus libs)
-        files: ["**/js/logic/pipeline/**/*.js"],
+        files: ["js/logic/pipeline/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [

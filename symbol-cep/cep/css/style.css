@@ -1,0 +1,164 @@
+:root {
+    --bg-color: #323232;
+    --text-color: #dcdcdc;
+    --input-bg: #262626;
+    --input-border: #444;
+    --accent-color: #378ef0;
+    --accent-hover: #006cfa;
+    --danger-color: #ff5f5f;
+    --spacing: 8px;
+    --radius: 4px;
+    --font-size: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: "Adobe Clean", "Segoe UI", sans-serif;
+    font-size: var(--font-size);
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    cursor: default;
+}
+
+/* Nav */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #2a2a2a;
+    border-bottom: 1px solid #1a1a1a;
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #888;
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    transition: all 0.2s;
+}
+
+nav a:hover {
+    color: #fff;
+}
+
+nav a.contrast {
+    background: #444;
+    color: white;
+    font-weight: 600;
+}
+
+/* Containers */
+main {
+    padding: 15px;
+}
+
+/* Grid System */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.grid-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-4 {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+/* Form Elements */
+label {
+    display: block;
+    margin-bottom: 4px;
+    color: #aaa;
+    font-size: 11px;
+}
+
+label strong {
+    color: #ddd;
+    font-size: 12px;
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: white;
+    padding: 6px;
+    border-radius: var(--radius);
+    font-size: 12px;
+}
+
+input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.15s;
+    width: 100%;
+}
+
+button:hover {
+    background: var(--accent-hover);
+}
+
+button.outline {
+    background: transparent;
+    border: 1px solid #555;
+    color: #ccc;
+}
+
+button.outline:hover {
+    border-color: var(--accent-color);
+    color: white;
+    background: rgba(55, 142, 240, 0.1);
+}
+
+/* Utilities */
+.small-text {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #444;
+    margin: 15px 0;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Scoped Fixes for Config Tab */
+#config-form .grid label {
+    text-align: center;
+}

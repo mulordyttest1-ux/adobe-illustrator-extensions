@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Scripter - DinhSon Edition</title>
+
+    <!-- DinhSon Light Theme -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/compact.css">
+    <link rel="stylesheet" href="css/date-grid.css">
+
+    <style>
+        /* Panel-specific styles */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .app-header {
+            padding: var(--ds-space-sm) var(--ds-space-md);
+            background: var(--ds-bg-secondary);
+            border-bottom: 1px solid var(--ds-border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: var(--ds-font-size-lg);
+            font-weight: var(--ds-font-weight-semibold);
+            color: var(--ds-text-primary);
+        }
+
+        .app-version {
+            font-size: var(--ds-font-size-xs);
+            color: var(--ds-text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--ds-border-light);
+            border-top-color: var(--ds-accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: var(--ds-space-md);
+            color: var(--ds-text-secondary);
+            font-size: var(--ds-font-size-sm);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: var(--ds-space-md);
+            right: var(--ds-space-md);
+            z-index: 1001;
+        }
+
+        .toast {
+            padding: var(--ds-space-sm) var(--ds-space-md);
+            border-radius: var(--ds-radius-sm);
+            margin-top: var(--ds-space-sm);
+            box-shadow: var(--ds-shadow-medium);
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success {
+            background: var(--ds-accent-success);
+            color: white;
+        }
+
+        .toast-error {
+            background: var(--ds-accent-danger);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <span class="app-title">🎊 Wedding Scripter</span>
+            <span class="app-version">v1.0.0</span>
+        </header>
+
+        <!-- Main Content with Tabs -->
+        <main class="main-content">
+            <div class="ds-tabs-container">
+                <!-- Tab Navigation -->
+                <nav class="ds-tabs" role="tablist">
+                    <button class="ds-tab active" data-tab="compact" role="tab" aria-selected="true">
+                        Compact
+                    </button>
+                    <button class="ds-tab" data-tab="settings" role="tab" aria-selected="false">
+                        Cài đặt
+                    </button>
+                </nav>
+
+                <!-- Tab Content -->
+                <div class="ds-tabs-content">
+                    <!-- Tab 1: Compact Mode -->
+                    <section id="tab-compact" class="ds-tab-panel active" role="tabpanel">
+                        <div id="compact-content">
+                            <!-- Will be loaded by CompactFormBuilder -->
+                            <div class="ds-flex-center ds-text-muted ds-p-lg">
+                                <span>Đang tải Compact Mode...</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Tab 2: Settings -->
+                    <section id="tab-settings" class="ds-tab-panel" role="tabpanel">
+                        <div class="ds-panel">
+                            <div class="ds-panel-header">Thông tin</div>
+                            <div class="ds-panel-body">
+                                <p><strong>Wedding Scripter</strong> - DinhSon Edition</p>
+                                <p class="ds-text-secondary ds-text-sm ds-mt-sm">
+                                    Script hỗ trợ thiết kế thiệp cưới cho Adobe Illustrator.
+                                </p>
+                                <hr class="ds-divider">
+                                <p class="ds-text-sm">
+                                    <span class="ds-text-muted">Version:</span> 1.0.0<br>
+                                    <span class="ds-text-muted">Author:</span> DinhSon<br>
+                                    <span class="ds-text-muted">Theme:</span> Light Mode 🌞
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="ds-panel">
+                            <div class="ds-panel-header">Hệ thống</div>
+                            <div class="ds-panel-body">
+                                <button class="ds-btn ds-btn-secondary ds-btn-block" id="btn-reload-panel">
+                                    🔄 Reload Panel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- LOG CONFIGURATION REMOVED -->
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <!-- Loading Overlay (shown initially) -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Đang khởi động...</div>
+    </div>
+
+    <!-- Adobe CEP Libraries (vendor — not bundled) -->
+    <script src="js/libs/fuse.basic.min.js"></script>
+    <script src="js/CSInterface.js"></script>
+
+    <!-- Application Bundle (esbuild: js/app.js → js/bundle.js) -->
+    <script src="js/bundle.js"></script>
+
+</body>
+
+</html>

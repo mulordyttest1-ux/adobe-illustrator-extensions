@@ -1,0 +1,324 @@
+{
+    "TYPE": {
+        "TEXT": "text",
+        "NAME": "name",
+        "SELECT": "select",
+        "DATE": "date",
+        "CHECKBOX": "checkbox"
+    },
+    "UI_STYLE": {
+        "DEFAULT": "default",
+        "RADIO": "radio"
+    },
+    "SYNC_MODE": {
+        "ISOLATED": "ISOLATED",
+        "NONE": "NONE"
+    },
+    "LISTS": {
+        "LE": [
+            "Tân Hôn",
+            "Thành Hôn",
+            "Vu Quy",
+            "Báo Hỷ"
+        ],
+        "VITHU_NAM": [
+            "Trưởng Nam",
+            "Thứ Nam",
+            "Út Nam",
+            "Quý Nam",
+            "... Nam"
+        ],
+        "VITHU_NU": [
+            "Trưởng Nữ",
+            "Thứ Nữ",
+            "Út Nữ",
+            "Quý Nữ",
+            "... Nữ"
+        ],
+        "EVENT_TYPES": [
+            "Tiệc Cưới",
+            "Tân Gia",
+            "Sinh Nhật"
+        ]
+    },
+    "STANDARD_TIMES": {
+        "LE": {
+            "h": "09",
+            "m": "00"
+        },
+        "TIEC": {
+            "h": "11",
+            "m": "00"
+        },
+        "NHAP": {
+            "h": "17",
+            "m": "00"
+        }
+    },
+    "STRUCTURE": [
+        {
+            "group": "THÔNG TIN CỐ ĐỊNH",
+            "icon": "📋",
+            "items": [
+                {
+                    "key": "info.event_type",
+                    "label": "Loại Sự Kiện",
+                    "type": "select",
+                    "options": [
+                        "Tiệc Cưới",
+                        "Tân Gia",
+                        "Sinh Nhật"
+                    ],
+                    "default_val": "Tiệc Cưới"
+                },
+                {
+                    "key": "info.ten_le",
+                    "label": "Loại Lễ",
+                    "type": "select",
+                    "ui_style": "radio",
+                    "options": [
+                        "Tân Hôn",
+                        "Thành Hôn",
+                        "Vu Quy",
+                        "Báo Hỷ"
+                    ],
+                    "is_trigger": true
+                },
+                {
+                    "key": "ui.vithu_nam",
+                    "label": "Vị thứ (Nam)",
+                    "type": "select",
+                    "ui_style": "radio",
+                    "options": [
+                        "Trưởng Nam",
+                        "Thứ Nam",
+                        "Út Nam",
+                        "Quý Nam",
+                        "... Nam"
+                    ]
+                },
+                {
+                    "key": "ui.vithu_nu",
+                    "label": "Vị thứ (Nữ)",
+                    "type": "select",
+                    "ui_style": "radio",
+                    "options": [
+                        "Trưởng Nữ",
+                        "Thứ Nữ",
+                        "Út Nữ",
+                        "Quý Nữ",
+                        "... Nữ"
+                    ]
+                }
+            ]
+        },
+        {
+            "group": "VỊ TRÍ 1 (POS 1)",
+            "icon": "👨",
+            "prefix": "pos1",
+            "items": [
+                {
+                    "key": "ong",
+                    "label": "Tên Ông",
+                    "type": "person_name"
+                },
+                {
+                    "key": "ba",
+                    "label": "Tên Bà",
+                    "type": "person_name"
+                },
+                {
+                    "key": "diachi",
+                    "label": "Địa chỉ",
+                    "type": "address"
+                },
+                {
+                    "key": "con_full",
+                    "label": "Tên Con",
+                    "type": "person_name"
+                }
+            ]
+        },
+        {
+            "group": "VỊ TRÍ 2 (POS 2)",
+            "icon": "👩",
+            "prefix": "pos2",
+            "items": [
+                {
+                    "key": "ong",
+                    "label": "Tên Ông",
+                    "type": "person_name"
+                },
+                {
+                    "key": "ba",
+                    "label": "Tên Bà",
+                    "type": "person_name"
+                },
+                {
+                    "key": "diachi",
+                    "label": "Địa chỉ",
+                    "type": "address"
+                },
+                {
+                    "key": "con_full",
+                    "label": "Tên Con",
+                    "type": "person_name"
+                }
+            ]
+        },
+        {
+            "group": "ĐỊA ĐIỂM",
+            "icon": "📍",
+            "items": [
+                {
+                    "key": "ceremony.host_type",
+                    "label": "Chủ Tiệc",
+                    "type": "select",
+                    "ui_style": "radio",
+                    "options": [
+                        "Nhà Trai",
+                        "Nhà Gái"
+                    ]
+                },
+                {
+                    "key": "ceremony.ten",
+                    "label": "Nơi Lễ",
+                    "type": "venue_name",
+                    "suffix_checkbox": {
+                        "label": "Auto",
+                        "default": true
+                    }
+                },
+                {
+                    "key": "ceremony.diachi",
+                    "label": "ĐC Lễ",
+                    "type": "address"
+                },
+                {
+                    "key": "venue.ten",
+                    "label": "Nơi Tiệc",
+                    "type": "venue_name",
+                    "suffix_checkbox": {
+                        "label": "Auto",
+                        "default": false
+                    }
+                },
+                {
+                    "key": "venue.diachi",
+                    "label": "ĐC Tiệc",
+                    "type": "address"
+                }
+            ]
+        },
+        {
+            "group": "THỜI GIAN",
+            "icon": "📅",
+            "items": [
+                {
+                    "key": "date.tiec",
+                    "label": "Ngày Tiệc",
+                    "type": "solar_date",
+                    "standard_type": "TIEC",
+                    "suffix_checkbox": {
+                        "label": "Lock",
+                        "default": true
+                    }
+                },
+                {
+                    "key": "date.le",
+                    "label": "Ngày Lễ",
+                    "type": "date",
+                    "standard_type": "LE",
+                    "suffix_checkbox": {
+                        "label": "Lock",
+                        "default": true
+                    }
+                },
+                {
+                    "key": "date.nhap",
+                    "label": "Ngày Nháp",
+                    "type": "date",
+                    "standard_type": "NHAP",
+                    "suffix_checkbox": {
+                        "label": "Lock",
+                        "default": true
+                    }
+                }
+            ]
+        }
+    ],
+    "DERIVED": {
+        "NAME": [
+            {
+                "suffix": "",
+                "desc": "Full"
+            },
+            {
+                "suffix": ".ten",
+                "desc": "Tên chính"
+            },
+            {
+                "suffix": ".lot",
+                "desc": "Họ đệm"
+            },
+            {
+                "suffix": ".ho_dau",
+                "desc": "Họ (Từ đầu tiên)"
+            },
+            {
+                "suffix": ".dau",
+                "desc": "Chữ cái đầu"
+            }
+        ],
+        "DATE": [
+            {
+                "suffix": ".gio",
+                "desc": "Giờ"
+            },
+            {
+                "suffix": ".phut",
+                "desc": "Phút"
+            },
+            {
+                "suffix": ".thu",
+                "desc": "Thứ"
+            },
+            {
+                "suffix": ".ngay",
+                "desc": "Ngày Dương"
+            },
+            {
+                "suffix": ".thang",
+                "desc": "Tháng Dương"
+            },
+            {
+                "suffix": ".nam",
+                "desc": "Năm Dương"
+            },
+            {
+                "suffix": ".namyy",
+                "desc": "Năm 2 số (yy)"
+            },
+            {
+                "suffix": ".ngay_al",
+                "desc": "Ngày Âm"
+            },
+            {
+                "suffix": ".thang_al",
+                "desc": "Tháng Âm"
+            },
+            {
+                "suffix": ".nam_al",
+                "desc": "Năm Âm (Chữ)"
+            }
+        ]
+    },
+    "TRIGGER_CONFIG": {
+        "Vu Quy": 1,
+        "Thành Hôn": 0,
+        "Tân Hôn": 0,
+        "Báo Hỷ": 0,
+        "Nhà Gái": 1,
+        "Nhà Trai": 0
+    }
+}

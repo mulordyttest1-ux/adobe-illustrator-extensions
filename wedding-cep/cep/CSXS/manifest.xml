@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest Version="8.0" 
+                   ExtensionBundleId="com.dinhson.weddingscripter" 
+                   ExtensionBundleVersion="1.0.0"
+                   ExtensionBundleName="Wedding Scripter"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <ExtensionList>
+        <Extension Id="com.dinhson.weddingscripter.panel" Version="1.0.0"/>
+    </ExtensionList>
+    
+    <ExecutionEnvironment>
+        <HostList>
+            <!-- Adobe Illustrator CC 2020+ (v24.0 and above) -->
+            <Host Name="ILST" Version="[24.0,99.9]"/>
+        </HostList>
+        <LocaleList>
+            <Locale Code="All"/>
+        </LocaleList>
+        <RequiredRuntimeList>
+            <RequiredRuntime Name="CSXS" Version="11.0"/>
+        </RequiredRuntimeList>
+    </ExecutionEnvironment>
+    
+    <DispatchInfoList>
+        <Extension Id="com.dinhson.weddingscripter.panel">
+            <DispatchInfo>
+                <Resources>
+                    <MainPath>./index.html</MainPath>
+                    <ScriptPath>./jsx/illustrator.jsx</ScriptPath>
+                    <CEFCommandLine>
+                        <Parameter>--enable-nodejs</Parameter>
+                        <Parameter>--mixed-context</Parameter>
+                    </CEFCommandLine>
+                </Resources>
+                <Lifecycle>
+                    <AutoVisible>true</AutoVisible>
+                </Lifecycle>
+                <UI>
+                    <Type>Panel</Type>
+                    <Menu>Wedding Scripter</Menu>
+                    <Geometry>
+                        <Size>
+                            <Height>600</Height>
+                            <Width>420</Width>
+                        </Size>
+                        <MinSize>
+                            <Height>400</Height>
+                            <Width>320</Width>
+                        </MinSize>
+                        <MaxSize>
+                            <Height>800</Height>
+                            <Width>600</Width>
+                        </MaxSize>
+                    </Geometry>
+                    <Icons>
+                        <!-- Optional: Add icons later -->
+                    </Icons>
+                </UI>
+            </DispatchInfo>
+        </Extension>
+    </DispatchInfoList>
+    
+</ExtensionManifest>

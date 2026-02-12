@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imposition Panel</title>
+    <!-- Adobe-like Dark Theme -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="container-fluid">
+    <nav>
+        <ul>
+            <li><strong>Imposition</strong></li>
+        </ul>
+        <ul>
+            <!-- Reload Button -->
+            <li><a href="#" onclick="location.reload()"
+                    style="color: #666; text-decoration: none; font-size: 16px; margin-right: 10px;"
+                    title="Reload Panel">↻</a></li>
+            <li><a href="#" id="tab-action-btn" class="contrast" onclick="switchTab('action')">Actions</a></li>
+            <li><a href="#" id="tab-config-btn" class="secondary" onclick="switchTab('config')">Config</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Tab 1: Actions -->
+        <section id="tab-action" class="tab-content">
+            <article id="action-container">
+                <span style="color: #666; font-style: italic;">Đang tải danh sách...</span>
+            </article>
+        </section>
+
+        <!-- Tab 2: Config -->
+        <section id="tab-config" class="tab-content" style="display: none;">
+            <article id="config-container">
+                <span aria-busy="true">Loading config...</span>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        // Simple Tab Switcher
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById('tab-' + tabName).style.display = 'block';
+
+            // Toggle Active Class (using style.css classes if available, or inline logic)
+            // For now simple contrast toggle
+            const btnAction = document.getElementById('tab-action-btn');
+            const btnConfig = document.getElementById('tab-config-btn');
+
+            if (tabName === 'action') {
+                btnAction.classList.add('contrast');
+                btnAction.classList.remove('secondary');
+                btnConfig.classList.add('secondary');
+                btnConfig.classList.remove('contrast');
+            } else {
+                btnConfig.classList.add('contrast');
+                btnConfig.classList.remove('secondary');
+                btnAction.classList.add('secondary');
+                btnAction.classList.remove('contrast');
+            }
+        }
+    </script>
+
+    <!-- 1. Vendor (Must be first) -->
+    <script src="lib/CSInterface.js"></script>
+
+    <!-- 2. Core Config -->
+    <script src="js/config.js"></script>
+    <script src="js/bridge.js"></script>
+
+    <!-- 3. Features (Load order optimized) -->
+    <script src="js/features/imposition/data_store.js"></script>
+    <script src="js/features/imposition/config_engine.js"></script> <!-- Engine -->
+    <script src="js/features/imposition/builtin_presets.js"></script> <!-- Presets -->
+    <script src="js/features/imposition/action_tab.js"></script>
+    <script src="js/features/imposition/config_tab.js"></script>
+
+    <!-- 4. Main App Boot -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,313 @@
+:root {
+  /* === COMPACT VARIABLES (V2)  === */
+  --ds-bg-primary: #FFFFFF;
+  --ds-bg-secondary: #F5F5F7;
+  --ds-bg-input: #FFFFFF;
+
+  --ds-text-primary: #111827;
+  --ds-text-secondary: #505055;
+
+  --ds-accent-primary: #0066CC;
+  --ds-border-light: #d1d5db;
+
+  /* SPACING */
+  --ds-space-xs: 2px;
+  --ds-space-sm: 4px;
+  --ds-space-md: 8px;
+
+  /* TYPOGRAPHY */
+  --ds-font-family: "Segoe UI", Inter, sans-serif;
+  --ds-font-size-xs: 9px;
+  --ds-font-size-sm: 10px;
+  --ds-font-size-md: 11px;
+  --ds-font-size-lg: 12px;
+
+  /* SIZES */
+  --ds-input-height: 24px;
+  --ds-radius-sm: 2px;
+  --ds-radius-md: 4px;
+
+  /* === COMPACT SPECIFIC (Moved from compact.css) === */
+  --compact-font-size: 10px;
+  --compact-label-w: 50px;
+  --compact-idx-w: 24px;
+  --compact-name-h: 20px;
+  --compact-addr-h: 27px; /* 2/3 of 40px */
+  --compact-gap: 2px;
+  --compact-row-gap: 4px;
+}
+
+/* BASE */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-size-md);
+  background: var(--ds-bg-primary);
+  color: var(--ds-text-primary);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* === FIX: HIDE SPIN BUTTONS (Quan trọng) === */
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* UTILS */
+.ds-flex {
+  display: flex;
+}
+
+.ds-hidden {
+  display: none !important;
+}
+
+/* PANEL */
+.ds-panel {
+  background: var(--ds-bg-secondary);
+  border: 1px solid var(--ds-border-light);
+  border-radius: var(--ds-radius-md);
+  padding: 6px;
+  margin-bottom: 6px;
+}
+
+.ds-panel-header {
+  font-size: var(--ds-font-size-lg);
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--ds-border-light);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ds-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* INPUTS */
+.ds-input {
+  width: 100%;
+  height: var(--ds-input-height);
+  padding: 0 4px;
+  border: 1px solid var(--ds-border-light);
+  border-radius: var(--ds-radius-sm);
+  font-size: var(--ds-font-size-md);
+  background: var(--ds-bg-input);
+  color: var(--ds-text-primary);
+}
+
+.ds-input:focus {
+  border-color: var(--ds-accent-primary);
+  outline: none;
+}
+
+.ds-input:disabled {
+  background: #E8E8ED;
+  color: #888;
+}
+
+/* TEXTAREA */
+.ds-textarea {
+  font-family: inherit;
+  font-size: var(--ds-font-size-md);
+  width: 100%;
+  padding: 4px;
+  border: 1px solid var(--ds-border-light);
+  border-radius: var(--ds-radius-sm);
+  resize: vertical;
+  min-height: 40px;
+}
+
+/* BUTTONS */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ds-btn-primary {
+  background: var(--ds-accent-primary);
+  color: #fff;
+}
+
+.ds-btn-secondary {
+  background: #E8E8ED;
+  border-color: #ccc;
+  color: #000;
+}
+
+.ds-btn-success {
+  background: #34C759;
+  color: #fff;
+}
+
+/* LABEL */
+.ds-label {
+  font-size: var(--ds-font-size-sm);
+  color: var(--ds-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* RADIO & CHECKBOX */
+.ds-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ds-radio-wrapper,
+.ds-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.ds-radio,
+.ds-checkbox {
+  margin: 0;
+}
+
+/* TABS */
+.ds-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--ds-border-light);
+  background: #f0f0f0;
+}
+
+.ds-tab {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.ds-tab.active {
+  color: var(--ds-accent-primary);
+  border-bottom-color: var(--ds-accent-primary);
+  font-weight: 600;
+  background: #fff;
+}
+
+.ds-tab-panel {
+  display: none;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ds-tab-panel.active {
+  display: block;
+}
+
+/* TOAST NOTIFICATION */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999 !important;
+  /* Ensure it's on top */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  pointer-events: none;
+  /* Let clicks pass through if needed, though buttons inside might need events */
+}
+
+.toast {
+  background-color: #333333 !important;
+  /* Force dark background */
+  color: #ffffff !important;
+  /* Force white text */
+  padding: 12px 24px !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  min-width: 200px;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.toast-success {
+  background-color: #2e7d32 !important;
+  /* Dark Green */
+  border-left: 4px solid #4ade80 !important;
+  /* Accent */
+}
+
+.toast-error {
+  background-color: #c62828 !important;
+  /* Dark Red */
+  border-left: 4px solid #f87171 !important;
+  /* Accent */
+}
+
+/* Autocomplete Dropdown */
+.autocomplete-list {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 9999; /* Luôn nổi lên trên */
+    background-color: #fff;
+    max-height: 150px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    font-family: var(--ds-font-family);
+    font-size: var(--ds-font-size-md);
+}
+
+.autocomplete-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    background-color: #fff;
+    border-bottom: 1px solid #d4d4d4;
+}
+
+.autocomplete-item:hover {
+    background-color: #e9e9e9;
+}
+
+/* Khi dùng phím mũi tên */
+.autocomplete-active {
+    background-color: var(--ds-accent-primary) !important;
+    color: #ffffff;
+}
