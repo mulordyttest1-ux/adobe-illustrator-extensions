@@ -35,7 +35,8 @@ export default [
                 // Adobe CEP
                 CSInterface: "readonly",
 
-                // Domain
+                // Symbol CEP Domain
+                ImpositionDomain: "writable",
                 WeddingRules: "readonly",
                 NameAnalysis: "readonly",
                 CalendarEngine: "readonly",

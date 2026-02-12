@@ -89,7 +89,7 @@ window.ConfigEngine = {
                 section.rows.forEach(function (row) {
                     if (row.fields) {
                         for (const key in row.fields) {
-                            if (row.fields.hasOwnProperty(key)) {
+                            if (Object.prototype.hasOwnProperty.call(row.fields, key)) {
                                 const f = row.fields[key];
                                 // PROACTIVE FIX: Infer Binding from Row Context if missing (and not explicitly disabled)
                                 if (f.binding === undefined) {

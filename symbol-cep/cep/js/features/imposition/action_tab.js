@@ -92,8 +92,8 @@ window.Imposition = window.Imposition || {};
             }
 
             const cardsHtml = presets.map(p => {
-                const w = p.geometry.finish ? p.geometry.finish.w : '?';
-                const h = p.geometry.finish ? p.geometry.finish.h : '?';
+                const _w = p.geometry.finish ? p.geometry.finish.w : '?';
+                const _h = p.geometry.finish ? p.geometry.finish.h : '?';
                 const usage = p.usageCount ? `<span style="color: #4CAF50; margin-left: 5px;">★ ${p.usageCount}</span>` : '';
 
                 // Manager Buttons (Delete only - Config removed for simplicity)
@@ -177,7 +177,7 @@ window.Imposition = window.Imposition || {};
             // Call Unified Logic
             // FIX: Default to Symbol Mode (True) if undefined, for legacy presets compatibility
             const raw = preset.rawValues || {};
-            const useSymbol = (raw.opt_symbol_mode !== false && raw.opt_symbol_mode !== 'false');
+            const _useSymbol = (raw.opt_symbol_mode !== false && raw.opt_symbol_mode !== 'false');
 
             // Override: If user explicitly unchecked it (false), then useSymbol is false.
             // If undefined, useSymbol is true.

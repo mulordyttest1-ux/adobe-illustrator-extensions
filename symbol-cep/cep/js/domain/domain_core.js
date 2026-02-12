@@ -100,14 +100,14 @@ if (typeof ImpositionDomain === 'undefined') {
         return {
             finish: { w: finishW_pt, h: finishH_pt },
             print: { w: printW_pt, h: printH_pt },
-            
+
             margins: { top: mTop, bot: mBot, left: mLeft, right: mRight },
 
-            yieldPadding: margins, 
+            yieldPadding: margins,
 
             rules: rules,
             isAutoSize: isAutoSize,
-            
+
             // Helper to calculate final absolute coordinates given a Center Point
             getAbsoluteBounds: function (centerX, centerY) {
                 const targetLeft = centerX - (finishW_pt / 2);
@@ -179,7 +179,7 @@ if (typeof ImpositionDomain === 'undefined') {
                         const row = sec.rows[r];
                         if (row.fields) {
                             for (const key in row.fields) {
-                                if (row.fields.hasOwnProperty(key)) {
+                                if (Object.prototype.hasOwnProperty.call(row.fields, key)) {
                                     const f = row.fields[key];
                                     // Polyfill Binding if UNDEFINED (ConfigEngine logic)
                                     // CRITICAL: Do NOT override explicit `binding: false`
@@ -320,45 +320,45 @@ if (typeof ImpositionDomain === 'undefined') {
 
         const placements = [];
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
 
-            let variantIndex = 0;
+                let variantIndex = 0;
 
-            if (rowsPerVariant > 0 && r < (rowsPerVariant * variantCount)) {
-                // MAIN BODY
-                variantIndex = Math.floor(r / rowsPerVariant);
-                if (variantIndex >= variantCount) variantIndex = variantCount - 1;
-            } else {
-                // FOOTER
-                variantIndex = c % variantCount;
-            }
-
-            // --- LOGIC MỚI: TÍNH GÓC XOAY (HEAD-TO-HEAD) ---
-            let rotation = 0;
-            if (headToHead) { 
-                if (r % 2 !== 0) { // Nếu là hàng lẻ (0, [1], 2, [3]...)
-                    rotation = 180;
+                if (rowsPerVariant > 0 && r < (rowsPerVariant * variantCount)) {
+                    // MAIN BODY
+                    variantIndex = Math.floor(r / rowsPerVariant);
+                    if (variantIndex >= variantCount) variantIndex = variantCount - 1;
+                } else {
+                    // FOOTER
+                    variantIndex = c % variantCount;
                 }
+
+                // --- LOGIC MỚI: TÍNH GÓC XOAY (HEAD-TO-HEAD) ---
+                let rotation = 0;
+                if (headToHead) {
+                    if (r % 2 !== 0) { // Nếu là hàng lẻ (0, [1], 2, [3]...)
+                        rotation = 180;
+                    }
+                }
+
+
+                // Coordinates (Center of Yield)
+                const x = gridL + (c * (yieldDim.w + spacing.x)) + (yieldDim.w / 2);
+                const y = gridT - (r * (yieldDim.h + spacing.y)) - (yieldDim.h / 2);
+
+                placements.push({
+                    x: x,
+                    y: y,
+                    variantIndex: variantIndex,
+                    row: r,
+                    col: c,
+                    rotation: rotation // <--- Trả về góc xoay
+                });
             }
-            
-
-            // Coordinates (Center of Yield)
-            const x = gridL + (c * (yieldDim.w + spacing.x)) + (yieldDim.w / 2);
-            const y = gridT - (r * (yieldDim.h + spacing.y)) - (yieldDim.h / 2);
-
-            placements.push({
-                x: x,
-                y: y,
-                variantIndex: variantIndex,
-                row: r,
-                col: c,
-                rotation: rotation // <--- Trả về góc xoay
-            });
         }
-    }
 
-    return placements;
-};
+        return placements;
+    };
 
 })(ImpositionDomain);

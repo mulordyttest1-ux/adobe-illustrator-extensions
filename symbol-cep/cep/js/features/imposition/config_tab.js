@@ -140,7 +140,7 @@ window.Imposition = window.Imposition || {};
             if (!schema.sections) return '';
 
             return schema.sections.map(section => {
-                let fieldsHtml = '';
+                let fieldsHtml;
 
                 // Layout Strategy
                 if (section.layout === 'matrix') {
@@ -278,7 +278,7 @@ window.Imposition = window.Imposition || {};
                     // Render minimal input
                     const val = field.default !== undefined ? `value="${field.default}"` : '';
                     const step = field.step ? `step="${field.step}"` : '';
-                    const disabled = field.protected && this.isEditMode ? 'disabled' : ''; // Just in case
+                    const _disabled = field.protected && this.isEditMode ? 'disabled' : ''; // Just in case
 
                     // Tiny remove button?
                     const removeBtn = (this.isEditMode && !field.protected) ?

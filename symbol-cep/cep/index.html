@@ -72,7 +72,10 @@
     <script src="js/config.js"></script>
     <script src="js/bridge.js"></script>
 
-    <!-- 3. Features (Load order optimized) -->
+    <!-- 3. Domain Logic (Must load before Features) -->
+    <script src="js/domain/domain_core.js"></script>
+
+    <!-- 4. Features (Load order optimized) -->
     <script src="js/features/imposition/data_store.js"></script>
     <script src="js/features/imposition/config_engine.js"></script> <!-- Engine -->
     <script src="js/features/imposition/builtin_presets.js"></script> <!-- Presets -->
