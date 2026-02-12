@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="com.dinhson.imposition" ExtensionBundleVersion="1.0.0" ExtensionBundleName="imposition panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.dinhson.imposition.dev" ExtensionBundleVersion="1.0.0" ExtensionBundleName="Imposition Panel (Dev)" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <ExtensionList>
-        <Extension Id="com.dinhson.imposition.panel" Version="1.0.0"/>
+        <Extension Id="com.dinhson.imposition.panel.dev" Version="1.0.0"/>
     </ExtensionList>
     <ExecutionEnvironment>
         <HostList>
@@ -15,7 +15,7 @@
         </RequiredRuntimeList>
     </ExecutionEnvironment>
     <DispatchInfoList>
-        <Extension Id="com.dinhson.imposition.panel">
+        <Extension Id="com.dinhson.imposition.panel.dev">
             <DispatchInfo>
                 <Resources>
                     <MainPath>./index.html</MainPath>
@@ -30,7 +30,7 @@
                 </Lifecycle>
                 <UI>
                     <Type>Panel</Type>
-                    <Menu>imposition panel</Menu>
+                    <Menu>Imposition Panel (Dev)</Menu>
                     <Geometry>
                         <Size><Height>600</Height><Width>420</Width></Size>
                         <MinSize><Height>400</Height><Width>320</Width></MinSize>

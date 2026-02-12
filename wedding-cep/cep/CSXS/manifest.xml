@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtensionManifest Version="8.0" 
-                   ExtensionBundleId="com.dinhson.weddingscripter" 
+                   ExtensionBundleId="com.dinhson.weddingscripter.dev" 
                    ExtensionBundleVersion="1.0.0"
-                   ExtensionBundleName="Wedding Scripter"
+                   ExtensionBundleName="Wedding Scripter (Dev)"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     
     <ExtensionList>
-        <Extension Id="com.dinhson.weddingscripter.panel" Version="1.0.0"/>
+        <Extension Id="com.dinhson.weddingscripter.panel.dev" Version="1.0.0"/>
     </ExtensionList>
     
     <ExecutionEnvironment>
@@ -23,7 +23,7 @@
     </ExecutionEnvironment>
     
     <DispatchInfoList>
-        <Extension Id="com.dinhson.weddingscripter.panel">
+        <Extension Id="com.dinhson.weddingscripter.panel.dev">
             <DispatchInfo>
                 <Resources>
                     <MainPath>./index.html</MainPath>
@@ -38,7 +38,7 @@
                 </Lifecycle>
                 <UI>
                     <Type>Panel</Type>
-                    <Menu>Wedding Scripter</Menu>
+                    <Menu>Wedding Scripter (Dev)</Menu>
                     <Geometry>
                         <Size>
                             <Height>600</Height>
