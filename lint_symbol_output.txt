@@ -1,0 +1,49 @@
+
+> adobe-illustrator-extensions@1.0.0 lint:symbol
+> eslint symbol-cep/cep/js/ --config shared/eslint.config.mjs --ignore-pattern bundle.js
+
+
+C:\Projects\adobe-illustrator-extensions\symbol-cep\cep\js\domain\domain_core.js
+   38:13  warning  Identifier 'sheetW_mm' is not in camel case   camelcase
+   39:13  warning  Identifier 'sheetH_mm' is not in camel case   camelcase
+   41:13  warning  Identifier 'sheetW_pt' is not in camel case   camelcase
+   41:25  warning  Identifier 'sheetW_mm' is not in camel case   camelcase
+   42:13  warning  Identifier 'sheetH_pt' is not in camel case   camelcase
+   42:25  warning  Identifier 'sheetH_mm' is not in camel case   camelcase
+   44:37  warning  Identifier 'sheetW_pt' is not in camel case   camelcase
+   45:37  warning  Identifier 'sheetH_pt' is not in camel case   camelcase
+   49:22  warning  Identifier 'sheetW_pt' is not in camel case   camelcase
+   50:23  warning  Identifier 'sheetH_pt' is not in camel case   camelcase
+   51:22  warning  Identifier 'sheetW_mm' is not in camel case   camelcase
+   52:23  warning  Identifier 'sheetH_mm' is not in camel case   camelcase
+   65:13  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+   65:25  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+   68:13  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+   69:13  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+   72:13  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+   73:13  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+   88:13  warning  Identifier 'printW_pt' is not in camel case   camelcase
+   88:25  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+   89:13  warning  Identifier 'printH_pt' is not in camel case   camelcase
+   89:25  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+   92:26  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+   92:41  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+   93:25  warning  Identifier 'printW_pt' is not in camel case   camelcase
+   93:39  warning  Identifier 'printH_pt' is not in camel case   camelcase
+   99:45  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+  100:44  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+  104:34  warning  Identifier 'finishW_pt' is not in camel case  camelcase
+  104:49  warning  Identifier 'finishH_pt' is not in camel case  camelcase
+  105:33  warning  Identifier 'printW_pt' is not in camel case   camelcase
+  105:47  warning  Identifier 'printH_pt' is not in camel case   camelcase
+
+C:\Projects\adobe-illustrator-extensions\symbol-cep\cep\js\domain\layout_engine.js
+   30:34  warning  Function has too many parameters (6). Maximum allowed is 4                         max-params
+   87:5   warning  Function '_calculateGridOrigin' has too many parameters (9). Maximum allowed is 4  max-params
+  107:5   warning  Function '_generatePlacements' has too many parameters (7). Maximum allowed is 4   max-params
+
+C:\Projects\adobe-illustrator-extensions\symbol-cep\cep\js\features\imposition\config_persistence.js
+  124:9  warning  Method '_buildGeometry' has a complexity of 14. Maximum allowed is 12  complexity
+
+✖ 36 problems (0 errors, 36 warnings)
+

@@ -1,0 +1,78 @@
+
+> wedding-scripter-cep@1.0.0 lint
+> eslint js/ --ignore-pattern bundle.js
+
+[0m
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\actions\ScanAction.js[24m
+  [2m24:5[22m  [33mwarning[39m  Async method 'execute' has a complexity of 21. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\actions\SwapAction.js[24m
+  [2m54:5[22m  [33mwarning[39m  Method '_updateAutoVenues' has a complexity of 16. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\actions\UpdateAction.js[24m
+  [2m20:5[22m  [33mwarning[39m  Async method 'execute' has a complexity of 14. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\app.js[24m
+  [2m284:54[22m  [33mwarning[39m  Empty block statement  [2mno-empty[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\bridge.js[24m
+  [2m84:5[22m  [33mwarning[39m  Async method 'updateWithStrategy' has a complexity of 16. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\components\DateGridRenderer.js[24m
+  [2m110:5[22m  [33mwarning[39m  Method '_createPair' has too many parameters (5). Maximum allowed is 4  [2mmax-params[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\components\modules\AddressService.js[24m
+  [2m13:5[22m  [33mwarning[39m  Static method 'bind' has too many parameters (5). Maximum allowed is 4  [2mmax-params[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\components\modules\FormLogic.js[24m
+  [2m17:5[22m   [33mwarning[39m  Method 'setupAutoVenue' has a complexity of 14. Maximum allowed is 12  [2mcomplexity[22m
+  [2m56:49[22m  [33mwarning[39m  Arrow function has a complexity of 13. Maximum allowed is 12           [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\controllers\ConfigController.js[24m
+   [2m92:17[22m  [33mwarning[39m  Empty block statement  [2mno-empty[22m
+  [2m102:17[22m  [33mwarning[39m  Empty block statement  [2mno-empty[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\controllers\helpers\WeddingProActionHandler.js[24m
+  [2m67:5[22m  [33mwarning[39m  Async method 'handleUpdate' has a complexity of 15. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\domain\name.js[24m
+  [2m18:5[22m  [33mwarning[39m  Method 'splitFullName' has a complexity of 13. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\domain\smart.js[24m
+  [2m17:5[22m  [33mwarning[39m  Method 'detectKeywords' has a complexity of 13. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\domain\time.js[24m
+  [2m36:5[22m  [33mwarning[39m  Method 'shouldLock' has a complexity of 14. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\domain\venue.js[24m
+  [2m53:5[22m  [33mwarning[39m  Method 'applyAutoVenue' has a complexity of 19. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\pipeline\assembler.js[24m
+  [2m24:5[22m  [33mwarning[39m  Async method 'assemble' has a complexity of 16. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\strategies\FreshStrategy.js[24m
+  [2m21:5[22m  [33mwarning[39m  Static method 'analyze' has a complexity of 16. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\strategies\SmartComplexStrategy.js[24m
+  [2m11:5[22m  [33mwarning[39m  Static method 'analyze' has a complexity of 23. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\ux\AddressAutocomplete.js[24m
+  [2m62:17[22m  [33mwarning[39m  Empty block statement  [2mno-empty[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\ux\InputEngine.js[24m
+  [2m33:5[22m  [33mwarning[39m  Method '_detectFieldType' has a complexity of 19. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\ux\validators\AddressValidator.js[24m
+  [2m28:5[22m  [33mwarning[39m  Method 'validate' has a complexity of 13. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\ux\validators\DateValidator.js[24m
+  [2m24:5[22m  [33mwarning[39m  Method 'validateDateLogic' has a complexity of 20. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\ux\validators\NameValidator.js[24m
+  [2m20:5[22m  [33mwarning[39m  Method 'validate' has a complexity of 21. Maximum allowed is 12  [2mcomplexity[22m
+
+[4mC:\Projects\adobe-illustrator-extensions\wedding-cep\cep\js\logic\ux\validators\VietnamesePhonetics.js[24m
+  [2m16:5[22m  [33mwarning[39m  Method 'checkWord' has a complexity of 22. Maximum allowed is 12  [2mcomplexity[22m
+
+[33m[1m✖ 25 problems (0 errors, 25 warnings)[22m[39m
+[0m

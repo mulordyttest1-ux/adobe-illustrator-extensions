@@ -9,7 +9,7 @@ export class AddressService {
     /**
      * Bind Address Autocomplete (Dropdown Mode)
      */
-    /* eslint-disable max-lines-per-function */
+    /* eslint-disable-next-line max-lines-per-function, max-params */
     static bind(input, key, changeCallback, container = null, schema = null) {
         // Validation via Schema (Explicit)
         if (typeof SchemaUtils !== 'undefined') {

@@ -1,74 +1,63 @@
-﻿# ðŸš€ QUICK REFERENCE (Auto-Compiled)
-
-> **Má»¥c Ä‘Ã­ch:** Context nhanh cho Agent (~2K tokens).
-> **Source:** ÄÆ°á»£c compile tá»± Ä‘á»™ng tá»« cÃ¡c file SKILL.md. KHÃ”NG sá»­a file nÃ y thá»§ cÃ´ng.
-> **Last Build:** 2026-01-25 11:56
-
----
-
-## ðŸ“ PROJECT OVERVIEW
-| Key | Value |
-|-----|-------|
-| **Project** | Wedding Scripter |
-| **Stack** | ES3 (Host) + ES6+ (CEP) |
-| **Architecture** | Hexagonal |
+﻿# 🚀 MONOREPO QUICK REFERENCE
+> **Context:** Agent Knowledge Base (Monorepo Edition)
+> **Updated:** 2026-02-12
+> **Governance:** [See GOVERNANCE.md](../GOVERNANCE.md)
 
 ---
 
-## ðŸ”¥ EXTRACTED SKILLS (TL;DR)
+## 🗺️ PROJECT MAP
 
-### [Hexagonal_Rules](skills/Hexagonal_Rules/SKILL.md)
-- **MỤC ĐÍCH:** Tách biệt Core (Domain) khỏi Infrastructure để dễ test, dễ mở rộng.
-- **KHI NÀO DÙNG:** Khi thêm file mới, refactor, hoặc review code structure.
-- **RULE QUAN TRỌNG:**
-  - Domain **KHÔNG BAO GIỜ** import từ Infrastructure.
-  - Use Case nhận Repository qua **Dependency Injection** (không tự `new`).
-  - Logic nằm ở CEP/JS (V8), IO nằm ở ExtendScript/JSX (ES3).
-- **❌ SAI LẦM PHỔ BIẾN:** Domain gọi `app.activeDocument` trực tiếp, dùng ES6 trong file .jsx.
-- **LIÊN KẾT:** [Project_Context](../Project_Context/SKILL.md), [Coding_Principles](../Coding_Principles/SKILL.md)
-
-
-
-### [Code_Style_Standard](skills/Code_Style_Standard/SKILL.md)
-- **MỤC ĐÍCH:** Đảm bảo code consistency, dễ đọc, dễ maintain trong môi trường ES3
-- **KHI NÀO DÙNG:** Mỗi khi viết code mới hoặc review code
-- **RULE QUAN TRỌNG:**
-  - Biến/hàm: `camelCase` | Hằng: `UPPER_SNAKE` | Class: `PascalCase`
-  - Private: prefix `_` | Boolean: prefix `is/has/can`
-  - IIFE wrapper: `(function() { ... })();`
-- **❌ SAI LẦM PHỔ BIẾN:** Trailing comma, quên `var self = this` trong callback
-- **LIÊN KẾT:** [ES3_ES6_Boundary](../ES3_ES6_Boundary/SKILL.md)
-
-
-
-### [ES3_ES6_Boundary](skills/ES3_ES6_Boundary/SKILL.md)
-- **MỤC ĐÍCH:** Tránh SyntaxError do dùng sai JS version theo vị trí file
-- **KHI NÀO DÙNG:** Mỗi khi viết code mới hoặc sửa code trong `cep/` hoặc `src/`
-- **RULE QUAN TRỌNG:**
-  - `cep/js/**/*.js` = **ES6+** OK (arrow, const, let, class)
-  - `cep/jsx/**/*.jsx` + `src/**/*` = **ES3 ONLY** (var, function, no arrow)
-- **❌ SAI LẦM PHỔ BIẾN:** Dùng arrow function trong `.jsx` file → SyntaxError
-- **LIÊN KẾT:** [Code_Style_Standard](../Code_Style_Standard/SKILL.md), [CEP_Standards](../CEP_Standards/SKILL.md)
-
-
-
-### [Wedding_Domain_Knowledge](skills/Wedding_Domain_Knowledge/SKILL.md)
-1.  **Object:** Thiệp Cưới (Wedding Card) với 2 bên (Nam/Nữ) + Lễ + Tiệc.
-2.  **Logic:** Tự động tách tên (Họ/Đệm/Tên), tự sinh Prefix (Ông/Bà), tự tính ngày (Lễ/Tiệc/Nháp).
-3.  **Flow:** UI (JS) → Packet → Adapter → Illustrator (ES3) update TextFrame.
-4.  **Key Rule:** Font Unicode dựng sẵn. TextFrame name match key schema.
-5.  **Files:** Schema (`Config_Schema.js`), Logic (`NameProcessor.js`), Adapter (`MetadataAdapter.jsx`).
-
-
+| Project | Folder | Type | Status |
+| :--- | :--- | :--- | :--- |
+| **Monorepo Root** | `./` | Workspace | Active |
+| **Wedding CEP** | `wedding-cep/` | Extension | Legacy/Refactoring |
+| **Symbol CEP** | `symbol-cep/` | Extension | **Clean Architecture** |
+| **Shared** | `shared/` | Libs | Active |
 
 ---
 
-## ðŸ”„ WORKFLOWS
-| Workflow | Link |
-|----------|------|
-| add_new_field | [View](workflows/add_new_field.md) |
-| safe_refactor | [View](workflows/safe_refactor.md) |
-| resume-session | [View](workflows/resume-session.md) |
-| close-session | [View](workflows/close-session.md) |
-| feature_development_quick_ref | [View](workflows/feature_development_quick_ref.md) |
-| feature_development | [View](workflows/feature_development.md) |
+## 🔥 CRITICAL PROTOCOLS
+
+### 1. Architecture (Hexagonal)
+- **Domain (L1):** Pure Logic (Calculations, Entities). **NO** UI, **NO** CEP/JSX deps.
+- **Application (L4):** Use Cases (Orchestration).
+- **Adapters (L5):** Interface Implementations (IllustratorAdapter).
+- **Infrastructure (L6/L7):** UI (React/HTML), Disk, Network.
+
+### 2. Tech Stack Boundaries
+| Layer | Technology | Allowed Syntax |
+| :--- | :--- | :--- |
+| **CEP (UI/Logic)** | Node.js (V8) | **ES6+** (Class, Arrow, Const/Let) |
+| **Host (Illustrator)**| ExtendScript | **ES3 ONLY** (`var`, `function`, `evalFile`) |
+
+### 3. Workflow Shortcuts
+- `npm run lint:all` : Check code quality.
+- `npm run build:wedding` : Build legacy extension.
+
+---
+
+## 🧩 DOMAIN KNOWLEDGE
+
+### Symbol CEP (Imposition)
+- **Goal:** Sắp xếp đối tượng (Symbol) lên trang in (Sheet) theo lưới (Grid) hoặc giải thuật.
+- **Key Concepts:** `Sheet`, `Frame` (vùng in), `N-Up` (số lượng con), `Margin` (lề).
+- **Flow:** Config UI → ConfigEngine → Rules → JSX → Illustrator Layout.
+
+### Wedding CEP (Cards)
+- **Goal:** Điền thông tin thiệp cưới tự động.
+- **Key Concepts:** `Groom/Bride`, `Date`, `Venue`, `Guest List`.
+- **Legacy:** Đang chuyển đổi từ Monolith sang Hexagonal.
+
+---
+
+## 📚 ACTIVE SKILLS (Memory)
+- **[Hexagonal_Rules](skills/Hexagonal_Rules/SKILL.md)**: Quy tắc phân lớp.
+- **[Code_Style_Standard](skills/Code_Style_Standard/SKILL.md)**: Naming convention.
+- **[ES3_ES6_Boundary](skills/ES3_ES6_Boundary/SKILL.md)**: Tránh syntax error.
+
+---
+
+## 🛠️ TROUBLESHOOTING
+- **Panel Trắng?** → Check `localhost:9088` (Symbol) hoặc `9097` (Wedding).
+- **CSInterface undefined?** → Check `index.html` script loading order.
+- **"EvalScript error"?** → Check ES6 syntax leakage in `.jsx` files.

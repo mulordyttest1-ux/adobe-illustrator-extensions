@@ -37,13 +37,14 @@ description: Danh mục tổng hợp tất cả Agent Skills - Khi nào dùng sk
 
 ---
 
-## 🔄 Danh sách Workflows
+## 🔄 Danh sách Workflows (Dùng Slash Command)
 
-| # | Workflow | Mô tả | Khi nào dùng |
+| # | Workflow / Command | Mô tả | Khi nào dùng |
 |---|----------|-------|--------------|
-| 1 | `/add_new_field` | Thêm trường dữ liệu mới | Thêm field vào form Wedding Pro |
-| 2 | `/safe_refactor` | Refactor an toàn | Sửa code lớn, đổi tên, di chuyển file |
-| 3 | `/debug_illustrator` | Debug trong AI | Khi script lỗi trong Illustrator |
+| 1 | `@[/feature_development]` | Xây dựng tính năng mới | Chuẩn quy trình 6 bước để viết code |
+| 2 | `@[/safe_refactor]` | Refactor an toàn | Sửa code lớn, đổi tên, chẻ nhỏ file |
+| 3 | `@[/pre-flight]` | Chuẩn bị trước cất cánh | Đọc Context, Rule Architecture trước khi code |
+| 4 | `@[/lint]` | Kiểm tra chất lượng | Rà soát lỗi Naming và Module Boundary |
 
 ---
 
@@ -55,14 +56,11 @@ description: Danh mục tổng hợp tất cả Agent Skills - Khi nào dùng sk
 
 | User Request Patterns | Task Type | Auto-Read Skills |
 |:----------------------|:----------|:-----------------|
-| \"Add field\", \"thêm trường\", \"new field\" | ADD_FIELD | add_new_field workflow + Code_Style_Standard |
+| \"Add field\", \"new module\", \"viết tính năng\" | NEW_FEATURE | feature_development workflow + Code_Style_Standard |
 | \"Refactor\", \"restructure\", \"move file\" | REFACTOR | safe_refactor workflow + Hexagonal_Rules |
-| \"Fix bug\", \"lỗi\", \"error\", \"không chạy\" | DEBUG | Troubleshooting + ES3_ES6_Boundary |
-| \"Write function\", \"create class\", \"implement\" | NEW_CODE | ES3_ES6_Boundary + Hexagonal_Rules + Code_Style_Standard |
-| \"Change UI\", \"update layout\", \"CEP panel\" | UI_WORK | CEP_Standards + Hexagonal_Rules |
-| \"Should I\", \"how to\", \"architecture\" | DESIGN | Hexagonal_Rules + Coding_Principles + Decision_Log |
-| \"Setup\", \"install\", \"deploy\" | DEPLOYMENT | Deployment_Architecture |
-| \"Explain\", \"what is\", \"how does\" | EXPLAIN | Project_Context + relevant domain skill |
+| \"Fix bug\", \"lỗi\", \"error\", \"không chạy\" | DEBUG | Troubleshooting |
+| \"Check code\", \"kiểm tra\" | LINT | lint workflow + ES3_ES6_Boundary |
+| \"Clean up\", \"Nx\", \"kiến trúc\" | ARCHITECTURE| Hexagonal_Rules + CEP_Standards |
 
 ### Classification Algorithm
 
@@ -80,13 +78,11 @@ description: Danh mục tổng hợp tất cả Agent Skills - Khi nào dùng sk
 
 | Task | Skills cần đọc | Workflow |
 |------|----------------|----------|
-| **Thêm trường mới** | Project_Context → Hexagonal_Rules | `/add_new_field` |
-| **Sửa giao diện** | Project_Context → Code_Style_Standard | - |
-| **Refactor module** | Hexagonal_Rules → Coding_Principles | `/safe_refactor` |
-| **Fix bug** | Project_Context | `/debug_illustrator` |
-| **Review code** | Coding_Principles → Code_Style_Standard | - |
-| **Tạo module mới** | Hexagonal_Rules → Code_Style_Standard | - |
-| **CEP Migration** | CEP_Standards → Hexagonal_Rules | - |
+| **Viết tính năng mới** | Project_Context → Hexagonal_Rules | `@[/feature_development]` |
+| **Sửa giao diện** | Project_Context → Code_Style_Standard | `@[/feature_development]` |
+| **Refactor module** | Hexagonal_Rules → Coding_Principles | `@[/safe_refactor]` |
+| **Kiểm tra tiêu chuẩn** | Khởi tạo qua Pre-flight | `@[/lint]` |
+| **Kiến trúc Nx** | Hexagonal_Rules → CEP_Standards | `@[/pre-flight]` |
 
 ---
 
@@ -124,12 +120,11 @@ Khi bắt đầu session mới với dự án này:
 - [Code_Examples](../Code_Examples/SKILL.md)
 
 ### Workflows
-- [add_new_field.md](../../workflows/add_new_field.md)
-- [safe_refactor.md](../../workflows/safe_refactor.md)
-- [resume-session.md](../../workflows/resume-session.md)
-- [close-session.md](../../workflows/close-session.md)
-- [feature_development.md](../../workflows/feature_development.md)
-- [feature_development_quick_ref.md](../../workflows/feature_development_quick_ref.md)
+- [feature_development.md](../../../workflows/feature_development.md)
+- [feature_development_quick_ref.md](../../../workflows/feature_development_quick_ref.md)
+- [safe_refactor.md](../../../workflows/safe_refactor.md)
+- [pre-flight.md](../../../workflows/pre-flight.md)
+- [lint.md](../../../workflows/lint.md)
 
 ---
 

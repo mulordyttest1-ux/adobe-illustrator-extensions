@@ -1,0 +1,514 @@
+{
+  "libs/wedding/domain": {
+    "root": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "targets": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.dependsOn": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.options": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.cache": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.inputs": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.outputs": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.syncGenerators": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.executor": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.options.cwd": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.options.command": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata.technologies": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata.technologies.0": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata.description": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata.help": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata.help.command": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.typecheck.metadata.help.example": [
+      "libs/wedding/domain/tsconfig.json",
+      "@nx/js/typescript"
+    ],
+    "targets.test": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.cache": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.outputs": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.executor": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options.cwd": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options.env": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options.command": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.technologies": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.technologies.0": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.description": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.help": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.help.command": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.help.example": [
+      "libs/wedding/domain/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "name": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "tags": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "tags.npm:private": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "tags.scope:domain": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageName": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageVersion": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageExports": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageMain": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.isInPackageManagerWorkspaces": [
+      "libs/wedding/domain/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.dependsOn": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.test.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ]
+  },
+  "wedding-cep/cep": {
+    "root": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "name": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "tags": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "tags.npm:private": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "tags.scope:app": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.0": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.1": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.2": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.3": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.4": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.5": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.6": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.7": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.description": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageName": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageVersion": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.isInPackageManagerWorkspaces": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.watch.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:watch.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.lint.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-check.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dep-graph.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e.executor": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e.options": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e.metadata": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e.options.script": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e.metadata.scriptContent": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test:e2e.metadata.runCommand": [
+      "wedding-cep/cep/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.test.dependsOn": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.test.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ]
+  }
+}

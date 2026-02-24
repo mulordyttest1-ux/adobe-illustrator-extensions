@@ -22,52 +22,69 @@ export class SmartComplexStrategy {
         // Group 1 ([\s\S]*?) là nội dung bên trong
         const markerRegex = /\u200B+([\s\S]*?)\u200B+/g;
 
+        const matches = this._extractMatches(content, markerRegex);
+
+        // --- RECOVERY MODE (Khi mất marker) ---
+        if (matches.length === 0) {
+            return this._handleRecovery(content, packet, keys, GHOST);
+        }
+
+        // --- VALIDATION ---
+        if (matches.length !== keys.length) {
+            return this._handleValidation(content, packet, keys);
+        }
+
+        // --- CALCULATION (ATOMIC) ---
+        return this._calculateAtomic(packet, keys, matches, GHOST);
+    }
+
+    static _extractMatches(content, regex) {
         const matches = [];
         let match;
-        while ((match = markerRegex.exec(content)) !== null) {
+        while ((match = regex.exec(content)) !== null) {
             matches.push({
                 start: match.index, // Index này chính xác 100% trên content gốc
                 end: match.index + match[0].length,
                 inner: match[1] // Nội dung bên trong (đã bóc vỏ marker)
             });
         }
+        return matches;
+    }
 
-        // --- RECOVERY MODE (Khi mất marker) ---
-        if (matches.length === 0) {
-            // Nếu chỉ có 1 Key -> Force DIRECT để cứu
-            if (keys.length === 1) {
-                const key = keys[0];
-                let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : content;
-                if (newVal === '') newVal = GHOST;
+    static _handleRecovery(content, packet, keys, GHOST) {
+        // Nếu chỉ có 1 Key -> Force DIRECT để cứu
+        if (keys.length === 1) {
+            const key = keys[0];
+            let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : content;
+            if (newVal === '') newVal = GHOST;
 
-                return {
-                    mode: 'DIRECT',
-                    content: newVal,
-                    meta: { type: 'stateful', keys: keys, mappings: [] }
-                };
-            }
-            return { mode: 'SKIP', reason: 'NO_MARKERS_FOUND' };
+            return {
+                mode: 'DIRECT',
+                content: newVal,
+                meta: { type: 'stateful', keys: keys, mappings: [] }
+            };
         }
+        return { mode: 'SKIP', reason: 'NO_MARKERS_FOUND' };
+    }
 
-        // --- VALIDATION ---
-        if (matches.length !== keys.length) {
-            // Nếu số lượng không khớp -> Force DIRECT nếu là Single Key (để tự sửa lỗi)
-            if (keys.length === 1) {
-                const key = keys[0];
-                let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : content;
-                // Chuẩn hóa xuống dòng
-                newVal = newVal.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    static _handleValidation(content, packet, keys) {
+        // Nếu số lượng không khớp -> Force DIRECT nếu là Single Key (để tự sửa lỗi)
+        if (keys.length === 1) {
+            const key = keys[0];
+            let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : content;
+            // Chuẩn hóa xuống dòng
+            newVal = newVal.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-                return {
-                    mode: 'DIRECT',
-                    content: newVal,
-                    meta: { type: 'stateful', keys: keys, mappings: [] }
-                };
-            }
-            return { mode: 'SKIP', error: 'STRUCTURE_MISMATCH' };
+            return {
+                mode: 'DIRECT',
+                content: newVal,
+                meta: { type: 'stateful', keys: keys, mappings: [] }
+            };
         }
+        return { mode: 'SKIP', error: 'STRUCTURE_MISMATCH' };
+    }
 
-        // --- CALCULATION (ATOMIC) ---
+    static _calculateAtomic(packet, keys, matches, GHOST) {
         const replacements = [];
         let hasChanges = false;
 

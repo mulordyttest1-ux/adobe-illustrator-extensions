@@ -29,19 +29,6 @@ export class FormComponents {
         // Row 1
         const row1 = this._createRow();
 
-        // Dropdown
-        const eventSelect = document.createElement('select');
-        eventSelect.className = 'compact-select';
-        eventSelect.style.width = '80px';
-        eventSelect.tabIndex = this.builder._tabIndex++;
-        ['Tiệc Cưới', 'Tân Gia', 'Sinh Nhật'].forEach(opt => {
-            const o = document.createElement('option');
-            o.value = opt; o.textContent = opt;
-            eventSelect.appendChild(o);
-        });
-        this.builder.refs['info.event_type'] = eventSelect;
-        row1.appendChild(eventSelect);
-
         // Radio Loại Lễ
         const leRadioGroup = this._createInlineRadio('info.ten_le', ['Tân Hôn', 'Thành Hôn', 'Vu Quy', 'Báo Hỷ']);
         row1.appendChild(leRadioGroup);

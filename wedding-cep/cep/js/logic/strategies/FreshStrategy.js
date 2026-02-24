@@ -19,36 +19,36 @@ export class FreshStrategy {
      * @returns {Object|null} Plan object or null if not applicable
      */
     static analyze(content, packet, meta, constants = {}) {
-        // Gatekeeper: Only process items WITHOUT existing metadata
-        // If it has keys, it's definitely NOT fresh.
-        if (meta && meta.keys && meta.keys.length > 0) return null;
-        // Legacy check
-        if (meta && meta.mappings && meta.mappings.length > 0) return null;
-        if (!content || content.length < 2) return null;
+        if (!this._isValidForAnalysis(content, meta)) return null;
 
         const GHOST = constants.CHARS?.GHOST || '\u200B';
-
-        // A. Scan placeholders
         const placeholders = this._scanPlaceholders(content, packet, GHOST);
 
-        // B. Merge (no keyword scan in ES6 version for simplicity)
         if (placeholders.length === 0) return null;
 
-        // C. Build Meta Keys (Stateless)
+        return this._buildPlan(placeholders);
+    }
+
+    static _isValidForAnalysis(content, meta) {
+        if (meta && meta.keys && meta.keys.length > 0) return false;
+        if (meta && meta.mappings && meta.mappings.length > 0) return false;
+        if (!content || content.length < 2) return false;
+        return true;
+    }
+
+    static _buildPlan(placeholders) {
         const keys = [];
         const seenKeys = {};
 
-        // Sort by position
         placeholders.sort((a, b) => a.start - b.start);
 
         for (const r of placeholders) {
             if (r.key && !seenKeys[r.key]) {
-                keys.push(r.key); // Only save the key name
+                keys.push(r.key);
                 seenKeys[r.key] = true;
             }
         }
 
-        // D. Build Execution List (reverse sort for safe replacement)
         const execList = [...placeholders].sort((a, b) => b.start - a.start);
 
         return {

@@ -25,3 +25,5 @@ desktop.ini
 
 # Agent brain (conversation-specific, not shared)
 .gemini/
+
+test-output

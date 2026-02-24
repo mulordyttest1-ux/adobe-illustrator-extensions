@@ -162,3 +162,38 @@ hr {
 #config-form .grid label {
     text-align: center;
 }
+
+/* --- Responsive (Toolbar Mode for Narrow Width) --- */
+@media (max-width: 200px) {
+    /* Hide Title */
+    nav li:first-child strong {
+        display: none;
+    }
+
+    /* Compact Nav */
+    nav {
+        padding: 4px;
+        flex-direction: row; /* Keep horizontal */
+        justify-content: space-between;
+    }
+
+    nav ul {
+        gap: 4px;
+    }
+
+    /* Hide Button Text on small screen? Or keep it? "Actions" is short enough. */
+    /* Let's at least make buttons very small */
+    nav a {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+
+    /* Grid Adjustments for narrow width */
+    .grid, .grid-2, .grid-4 {
+        grid-template-columns: 1fr !important; /* Force single column */
+    }
+
+    main {
+        padding: 8px; /* Reduce padding */
+    }
+}

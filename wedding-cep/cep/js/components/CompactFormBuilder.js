@@ -109,6 +109,7 @@ export class CompactFormBuilder {
 
         if (chk) {
             this.refs[`${key}_auto`] = chk;
+            chk.addEventListener('change', () => this._handleChange(`${key}_auto`, chk.checked));
         }
 
         // Delegate to AddressService

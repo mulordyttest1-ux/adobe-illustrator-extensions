@@ -30,6 +30,16 @@ export const InputEngine = {
         };
     },
 
+    FIELD_RULES: [
+        { type: 'date_hour', match: (k) => k.includes('gio') },
+        { type: 'date_minute', match: (k) => k.includes('phut') },
+        { type: 'date_day', match: (k) => k.includes('ngay') },
+        { type: 'date_month', match: (k) => k.includes('thang') },
+        { type: 'date_year', match: (k) => k.includes('nam') && !k.includes('ten') },
+        { type: 'name', match: (k) => ['ten', 'ong', 'ba', 'ho_ten', 'con'].some(s => k.includes(s)) },
+        { type: 'address', match: (k) => ['diachi', 'address', 'venue', 'ceremony'].some(s => k.includes(s)) }
+    ],
+
     _detectFieldType(key, schema) {
         if (!key) return 'text';
 
@@ -42,21 +52,8 @@ export const InputEngine = {
 
         // 2. Fallback (Implicit - Legacy Support)
         const lowerKey = key.toLowerCase();
-
-        // Time fields (NEW)
-        if (lowerKey.includes('gio')) return 'date_hour';
-        if (lowerKey.includes('phut')) return 'date_minute';
-
-        // Date fields
-        if (lowerKey.includes('ngay')) return 'date_day';
-        if (lowerKey.includes('thang')) return 'date_month';
-        if (lowerKey.includes('nam') && !lowerKey.includes('ten')) return 'date_year';
-
-        // Name & Address
-        if (lowerKey.includes('ten') || lowerKey.includes('ong') || lowerKey.includes('ba') || lowerKey.includes('ho_ten') || lowerKey.includes('con')) return 'name';
-        if (lowerKey.includes('diachi') || lowerKey.includes('address') || lowerKey.includes('venue') || lowerKey.includes('ceremony')) return 'address';
-
-        return 'text';
+        const rule = this.FIELD_RULES.find(r => r.match(lowerKey));
+        return rule ? rule.type : 'text';
     },
 
     _normalize(value, fieldType, options) {

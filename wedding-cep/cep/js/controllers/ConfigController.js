@@ -89,8 +89,8 @@ export const ConfigController = {
             if (saved) {
                 return { ...this.defaults, ...JSON.parse(saved) };
             }
-        } catch {
-
+        } catch (error) {
+            console.warn('[ConfigController] Failed to parse config', error.message);
         }
         return { ...this.defaults };
     },
@@ -99,8 +99,8 @@ export const ConfigController = {
         try {
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._values));
 
-        } catch {
-
+        } catch (error) {
+            console.warn('[ConfigController] Failed to save config', error.message);
         }
     },
 

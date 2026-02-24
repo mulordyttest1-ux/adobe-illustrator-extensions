@@ -21,35 +21,13 @@ export const UpdateAction = {
         const { bridge, builder, showToast, button } = ctx;
 
         try {
-            // 1. UI: Disable button
-            button.disabled = true;
-            button.textContent = '⏳';
+            this._setButtonState(button, true);
 
-            // 2. Get form data
             const rawData = builder.getData();
+            const processedData = await this._assembleData(rawData);
 
-            // 3. Run assembler pipeline (if available)
-            let processedData = rawData;
-
-            if (typeof WeddingAssembler !== 'undefined') {
-                // 3a. Inject dependencies
-                WeddingAssembler.setDependencies({
-                    normalizer: typeof Normalizer !== 'undefined' ? Normalizer : null,
-                    nameAnalysis: typeof NameAnalysis !== 'undefined' ? NameAnalysis : null,
-                    calendarEngine: typeof CalendarEngine !== 'undefined' ? CalendarEngine : null,
-                    weddingRules: typeof WeddingRules !== 'undefined' ? WeddingRules : null,
-                    timeAutomation: typeof TimeAutomation !== 'undefined' ? TimeAutomation : null,
-                    venueAutomation: typeof VenueAutomation !== 'undefined' ? VenueAutomation : null
-                });
-
-                // 3b. Assemble: normalize → names → parents → dates → time → venue → mapping
-                processedData = await WeddingAssembler.assemble(rawData, SchemaLoader.getSync());
-            }
-
-            // 4. Send to Illustrator via Bridge
             const result = await bridge.updateWithStrategy(processedData);
 
-            // 5. Handle result
             if (result && result.success) {
                 showToast(`Đã cập nhật thông minh ${result.updated} vị trí!`, 'success');
                 return { success: true, updated: result.updated };
@@ -63,9 +41,29 @@ export const UpdateAction = {
             return { success: false, error: err.message };
 
         } finally {
-            button.disabled = false;
-            button.textContent = '📤 Update';
+            this._setButtonState(button, false);
         }
+    },
+
+    _setButtonState(button, isUpdating) {
+        button.disabled = isUpdating;
+        button.textContent = isUpdating ? '⏳' : '📤 Update';
+    },
+
+    async _assembleData(rawData) {
+        if (typeof WeddingAssembler === 'undefined') return rawData;
+
+        WeddingAssembler.setDependencies({
+            normalizer: typeof Normalizer !== 'undefined' ? Normalizer : null,
+            nameAnalysis: typeof NameAnalysis !== 'undefined' ? NameAnalysis : null,
+            calendarEngine: typeof CalendarEngine !== 'undefined' ? CalendarEngine : null,
+            weddingRules: typeof WeddingRules !== 'undefined' ? WeddingRules : null,
+            timeAutomation: typeof TimeAutomation !== 'undefined' ? TimeAutomation : null,
+            venueAutomation: typeof VenueAutomation !== 'undefined' ? VenueAutomation : null
+        });
+
+        const schema = typeof SchemaLoader !== 'undefined' ? SchemaLoader.getSync() : null;
+        return await WeddingAssembler.assemble(rawData, schema);
     }
 };
 

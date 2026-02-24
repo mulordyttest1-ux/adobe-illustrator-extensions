@@ -1,13 +1,11 @@
 /* global Fuse */
 /**
- * AddressAutocomplete.js - Fuzzy search cho địa chỉ Việt Nam
- * 
- * Sử dụng Fuse.js để tìm kiếm địa chỉ theo alias hoặc tên đầy đủ.
- * 
- * Usage:
- *   await AddressAutocomplete.init();
- *   const match = AddressAutocomplete.search('ekdl');
- *   const formatted = AddressAutocomplete.format(match, true); // suffix mode
+ * MODULE: AddressAutocomplete
+ * LAYER: UX Automation
+ * PURPOSE: Fuzzy search cho địa chỉ Việt Nam. Sử dụng Fuse.js để tìm kiếm địa chỉ theo alias hoặc tên đầy đủ.
+ * DEPENDENCIES: Fuse.js (vendor), CSInterface
+ * SIDE EFFECTS: DOM Injection (list container), CEP FS (File System reads)
+ * EXPORTS: AddressAutocomplete
  */
 export class AddressAutocomplete {
     /**
@@ -59,8 +57,8 @@ export class AddressAutocomplete {
 
             this.isReady = true;
 
-        } catch {
-
+        } catch (error) {
+            console.warn('[AddressAutocomplete] init failed:', error.message);
         }
     }
 

@@ -107,6 +107,7 @@ export const DateGridRenderer = {
         return row;
     },
 
+    /* eslint-disable-next-line max-params */
     _createPair(baseKey, field1, field2, type, refs) {
         const group = document.createElement('div');
         group.className = 'date-input-group';

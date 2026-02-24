@@ -1,0 +1,21 @@
+{
+  "run": {
+    "command": "nx lint wedding-scripter-cep",
+    "startTime": "2026-02-12T08:01:16.913Z",
+    "endTime": "2026-02-12T08:01:19.700Z",
+    "inner": false
+  },
+  "tasks": [
+    {
+      "taskId": "wedding-scripter-cep:lint",
+      "target": "lint",
+      "projectName": "wedding-scripter-cep",
+      "hash": "16076144441796455352",
+      "startTime": "2026-02-12T08:01:16.939Z",
+      "endTime": "2026-02-12T08:01:19.695Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 0
+    }
+  ]
+}

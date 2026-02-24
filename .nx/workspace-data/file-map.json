@@ -1,0 +1,739 @@
+{
+  "version": "6.0",
+  "nxVersion": "22.5.0",
+  "pathMappings": {},
+  "nxJsonPlugins": [
+    {
+      "name": "@nx/js/typescript",
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        },
+        "build": {
+          "targetName": "build",
+          "configName": "tsconfig.lib.json",
+          "buildDepsName": "build-deps",
+          "watchDepsName": "watch-deps"
+        }
+      }
+    },
+    {
+      "name": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
+    }
+  ],
+  "fileMap": {
+    "nonProjectFiles": [
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_layout.jsx",
+        "hash": "2200953514752442986"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/config_engine.js",
+        "hash": "11385542119967410431"
+      },
+      {
+        "file": "symbol-cep/cep/js/config.js",
+        "hash": "7880958829929636987"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/core.jsx",
+        "hash": "12907666552864689049"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_sheet_guides.jsx",
+        "hash": "5789834660893434145"
+      },
+      {
+        "file": "symbol-cep/cep/js/bridge.js",
+        "hash": "4083498919387686038"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/schema_editor.js",
+        "hash": "17174772362991068648"
+      },
+      {
+        "file": "symbol-cep/installer/setup.bat",
+        "hash": "7424648561679392891"
+      },
+      {
+        "file": "symbol-cep/cep/js/domain/field_ids.js",
+        "hash": "12039684004365627868"
+      },
+      {
+        "file": "Generate-Context.ps1",
+        "hash": "17732222505828947576"
+      },
+      {
+        "file": "wedding-cep/installer/setup.ps1",
+        "hash": "8300243964559618256"
+      },
+      {
+        "file": "wedding-cep/PROJECT_STATUS.md",
+        "hash": "5340606050082130022"
+      },
+      {
+        "file": "wedding-cep/installer/SETUP_GUIDE.md",
+        "hash": "8973327859669991808"
+      },
+      {
+        "file": "schema_refactor.test.js",
+        "hash": "18409306410937130707"
+      },
+      {
+        "file": "wedding-cep/installer/setup.bat",
+        "hash": "7424648561679392891"
+      },
+      {
+        "file": "symbol-cep/cep/index.html",
+        "hash": "17149206528482365476"
+      },
+      {
+        "file": "symbol-cep/scripts/configure.js",
+        "hash": "8367356908160490454"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_resize.jsx",
+        "hash": "1700314840592266649"
+      },
+      {
+        "file": "symbol-cep/cep/js/domain/layout_engine.js",
+        "hash": "3563278308294820230"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_color.jsx",
+        "hash": "11745702337122109284"
+      },
+      {
+        "file": "symbol-cep/scripts/install.js",
+        "hash": "1345569693458554554"
+      },
+      {
+        "file": "machine_audit_results.md",
+        "hash": "14303210869828459577"
+      },
+      {
+        "file": "README.md",
+        "hash": "16166552813166290143"
+      },
+      {
+        "file": "symbol-cep/cep/js/domain/domain_core.js",
+        "hash": "17090867171398289498"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_preflight.jsx",
+        "hash": "5300889352013934948"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "9430166341120122740"
+      },
+      {
+        "file": "tsconfig.json",
+        "hash": "3585899986601459851"
+      },
+      {
+        "file": "debug_check.js",
+        "hash": "13491528444640802480"
+      },
+      {
+        "file": "package.json",
+        "hash": "364788194431419178"
+      },
+      {
+        "file": "API_SURFACE.md",
+        "hash": "12021238457923550509"
+      },
+      {
+        "file": "symbol-cep/dev_install.bat",
+        "hash": "5987426304895665013"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/config_events.js",
+        "hash": "12162613565492625476"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/data_store.js",
+        "hash": "13419199506954256032"
+      },
+      {
+        "file": "DEPENDENCY_MAP.md",
+        "hash": "12686251279948497615"
+      },
+      {
+        "file": "symbol-cep/cep/build.cjs",
+        "hash": "4438380830818191811"
+      },
+      {
+        "file": "installer/setup.ps1",
+        "hash": "8300243964559618256"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/utils.jsx",
+        "hash": "16135553296803192513"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/bridge.jsx",
+        "hash": "17422137252754333666"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_cleanup.jsx",
+        "hash": "16286598781622948482"
+      },
+      {
+        "file": "symbol-cep/FRAMEWORK_VERIFICATION.md",
+        "hash": "15105815412849291528"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_rotate.jsx",
+        "hash": "8709765514654644274"
+      },
+      {
+        "file": "lint_output.txt",
+        "hash": "7828643948828424293"
+      },
+      {
+        "file": "symbol-cep/Giải mã Thuật toán tính Lề (Margin Algorithm).md",
+        "hash": "2019104936285137006"
+      },
+      {
+        "file": "symbol-cep/PROJECT_STATUS.md",
+        "hash": "8613756008124405570"
+      },
+      {
+        "file": "symbol-cep/cep/lib/CSInterface.js",
+        "hash": "13385747269562494543"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/action_tab.js",
+        "hash": "17112314550552679390"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/builtin_presets.js",
+        "hash": "7163753617469785007"
+      },
+      {
+        "file": ".gitignore",
+        "hash": "2346762889231833070"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "6870352021923392442"
+      },
+      {
+        "file": "installer/setup.bat",
+        "hash": "7424648561679392891"
+      },
+      {
+        "file": "symbol-cep/cep/README.md",
+        "hash": "13768929977906535852"
+      },
+      {
+        "file": "wedding-cep/DEPENDENCY_MAP.md",
+        "hash": "12686251279948497615"
+      },
+      {
+        "file": "symbol-cep/Generate-Context.ps1",
+        "hash": "4273458366382358782"
+      },
+      {
+        "file": "symbol-cep/installer/setup.ps1",
+        "hash": "8300243964559618256"
+      },
+      {
+        "file": "symbol-cep/cep/CSXS/manifest.xml",
+        "hash": "513707820564699357"
+      },
+      {
+        "file": "symbol-cep/installer/SETUP_GUIDE.md",
+        "hash": "8973327859669991808"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/config_renderer.js",
+        "hash": "4571956761077112150"
+      },
+      {
+        "file": "symbol-cep/cep.config.json",
+        "hash": "3713231199842538950"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/config_persistence.js",
+        "hash": "14006168794728330522"
+      },
+      {
+        "file": "shared/eslint.config.mjs",
+        "hash": "16654211076715285675"
+      },
+      {
+        "file": "symbol-cep/cep/js/features/imposition/config_tab.js",
+        "hash": "5675246861018832094"
+      },
+      {
+        "file": "symbol-cep/cep/.debug",
+        "hash": "1470623632460365249"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_marks.jsx",
+        "hash": "1212678055099110624"
+      },
+      {
+        "file": "symbol-cep/cep/lib/pico.min.css",
+        "hash": "6813919973971018989"
+      },
+      {
+        "file": "lint_symbol_output.txt",
+        "hash": "9605715396097375848"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_symbol.jsx",
+        "hash": "13518693455539958132"
+      },
+      {
+        "file": "symbol-cep/cep/js/domain/margin_engine.js",
+        "hash": "4052945163265669182"
+      },
+      {
+        "file": ".ls-lint.yml",
+        "hash": "7090056405494433751"
+      },
+      {
+        "file": ".prettierrc",
+        "hash": "16267754514737964994"
+      },
+      {
+        "file": "installer/SETUP_GUIDE.md",
+        "hash": "8973327859669991808"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/core_loader.jsx",
+        "hash": "15040087024514435872"
+      },
+      {
+        "file": ".prettierignore",
+        "hash": "14688272390704683536"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_symbol.jsx",
+        "hash": "3721391915375608448"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "8732215130578100842"
+      },
+      {
+        "file": "symbol-cep/cep/js/app.js",
+        "hash": "2224689550759455621"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/features/imposition_modules/mod_yield_guides.jsx",
+        "hash": "3521203347172614043"
+      },
+      {
+        "file": "symbol-cep/cep/css/style.css",
+        "hash": "3803449948659082716"
+      },
+      {
+        "file": "wedding-cep/API_SURFACE.md",
+        "hash": "12021238457923550509"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "7201236232007915200"
+      },
+      {
+        "file": "symbol-cep/cep/js/types.d.ts",
+        "hash": "14600471527838243463"
+      },
+      {
+        "file": "symbol-cep/cep/jsx/host.jsx",
+        "hash": "16264906172306997092"
+      },
+      {
+        "file": "nx.json",
+        "hash": "12012464182204931974"
+      },
+      {
+        "file": ".nxignore",
+        "hash": "18156323665298521351"
+      }
+    ],
+    "projectFileMap": {
+      "wedding-scripter-cep": [
+        {
+          "file": "wedding-cep/cep/.debug",
+          "hash": "13233172560950440621"
+        },
+        {
+          "file": "wedding-cep/cep/.dependency-cruiser.cjs",
+          "hash": "9229341389232135125"
+        },
+        {
+          "file": "wedding-cep/cep/CSXS/manifest.xml",
+          "hash": "9995836460752594931"
+        },
+        {
+          "file": "wedding-cep/cep/README.md",
+          "hash": "11754093814534359389"
+        },
+        {
+          "file": "wedding-cep/cep/build.cjs",
+          "hash": "3581595023177823190"
+        },
+        {
+          "file": "wedding-cep/cep/css/compact.css",
+          "hash": "10390982474117333629"
+        },
+        {
+          "file": "wedding-cep/cep/css/date-grid.css",
+          "hash": "9042714440970638353"
+        },
+        {
+          "file": "wedding-cep/cep/css/main.css",
+          "hash": "12978357709386709473"
+        },
+        {
+          "file": "wedding-cep/cep/data/ngay.csv",
+          "hash": "12049308979745903819"
+        },
+        {
+          "file": "wedding-cep/cep/data/schema.json",
+          "hash": "15987109313057842353"
+        },
+        {
+          "file": "wedding-cep/cep/data/vn_address_custom.json",
+          "hash": "6994089357218437803"
+        },
+        {
+          "file": "wedding-cep/cep/eslint.config.mjs",
+          "hash": "1869127886338939251",
+          "deps": [
+            "npm:globals",
+            "npm:@eslint/js"
+          ]
+        },
+        {
+          "file": "wedding-cep/cep/index.html",
+          "hash": "12620849761593259919"
+        },
+        {
+          "file": "wedding-cep/cep/js/CSInterface.js",
+          "hash": "6349582106009799916"
+        },
+        {
+          "file": "wedding-cep/cep/js/actions/ScanAction.js",
+          "hash": "377566453823646149",
+          "deps": [
+            "@wedding/domain"
+          ]
+        },
+        {
+          "file": "wedding-cep/cep/js/actions/SwapAction.js",
+          "hash": "14483038367655548211"
+        },
+        {
+          "file": "wedding-cep/cep/js/actions/UpdateAction.js",
+          "hash": "2322417728318511405"
+        },
+        {
+          "file": "wedding-cep/cep/js/app.js",
+          "hash": "17101038397048006063",
+          "deps": [
+            "@wedding/domain"
+          ]
+        },
+        {
+          "file": "wedding-cep/cep/js/bridge.js",
+          "hash": "12982135794978141832"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/CompactFormBuilder.js",
+          "hash": "904969542151790983"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/DateGridRenderer.js",
+          "hash": "5333184519263744851"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/DateGridWidget.js",
+          "hash": "4314114718959694450",
+          "deps": [
+            "@wedding/domain"
+          ]
+        },
+        {
+          "file": "wedding-cep/cep/js/components/TabbedPanel.js",
+          "hash": "16116011617950856750"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/helpers/DateGridDOM.js",
+          "hash": "1380645412735752753"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/helpers/DomFactory.js",
+          "hash": "2328614493684904793"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/modules/AddressService.js",
+          "hash": "7379248751436570579"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/modules/FormComponents.js",
+          "hash": "10956700434856051649"
+        },
+        {
+          "file": "wedding-cep/cep/js/components/modules/FormLogic.js",
+          "hash": "14417439211991669526",
+          "deps": [
+            "@wedding/domain"
+          ]
+        },
+        {
+          "file": "wedding-cep/cep/js/controllers/ConfigController.js",
+          "hash": "8159526150506434087"
+        },
+        {
+          "file": "wedding-cep/cep/js/controllers/helpers/KeyNormalizer.js",
+          "hash": "106269822399856309",
+          "deps": [
+            "@wedding/domain"
+          ]
+        },
+        {
+          "file": "wedding-cep/cep/js/controllers/helpers/KeyNormalizer.test.js",
+          "hash": "12047603079409336008"
+        },
+        {
+          "file": "wedding-cep/cep/js/controllers/helpers/UIFeedback.js",
+          "hash": "520134958402275219"
+        },
+        {
+          "file": "wedding-cep/cep/js/controllers/helpers/WeddingProActionHandler.js",
+          "hash": "8937151354377692056"
+        },
+        {
+          "file": "wedding-cep/cep/js/libs/fuse.basic.min.js",
+          "hash": "12361250855407728662"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/core/date.js",
+          "hash": "12784598880663845894"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/core/date.test.js",
+          "hash": "2096809419492743356"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/core/index.js",
+          "hash": "13573181440442989913"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/core/string.js",
+          "hash": "14883412805159691590"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/core/string.test.js",
+          "hash": "8131986944963113582"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/pipeline/DataValidator.js",
+          "hash": "3884363693590123791"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/pipeline/assembler.js",
+          "hash": "8426317490430683459"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/pipeline/normalizer.js",
+          "hash": "722763367584744058"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/pipeline/validator.js",
+          "hash": "331399357922153070"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/schema/SchemaUtils.js",
+          "hash": "7908382722817763901"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/strategies/FreshStrategy.js",
+          "hash": "603464052980891840"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/strategies/SmartComplexStrategy.js",
+          "hash": "11005366112798007795"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/strategies/StrategyOrchestrator.js",
+          "hash": "7625110377039663459"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/AddressAutocomplete.js",
+          "hash": "13546519356134384936"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/InputEngine.js",
+          "hash": "3879721026021231760"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/constants/abbreviations.js",
+          "hash": "2630542366748301173"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/constants/patterns.js",
+          "hash": "13215480601472262810"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/core/UnicodeNormalizer.js",
+          "hash": "9101280854675480204"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/normalizers/AddressNormalizer.js",
+          "hash": "7584863596316546774"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/normalizers/DateNormalizer.js",
+          "hash": "1787461682071504676"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/normalizers/NameNormalizer.js",
+          "hash": "9284004081840370194"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/validators/AddressValidator.js",
+          "hash": "11303862216075555348"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/validators/DateValidator.js",
+          "hash": "7041673916388316370"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/validators/NameValidator.js",
+          "hash": "1153854905499447305"
+        },
+        {
+          "file": "wedding-cep/cep/js/logic/ux/validators/VietnamesePhonetics.js",
+          "hash": "12832267794439857545"
+        },
+        {
+          "file": "wedding-cep/cep/js/main.js",
+          "hash": "5356646073041582505"
+        },
+        {
+          "file": "wedding-cep/cep/js/schemaLoader.js",
+          "hash": "3039929219743510558"
+        },
+        {
+          "file": "wedding-cep/cep/js/types.d.ts",
+          "hash": "9172843242391350670"
+        },
+        {
+          "file": "wedding-cep/cep/jsx/illustrator.jsx",
+          "hash": "13133894650750977604"
+        },
+        {
+          "file": "wedding-cep/cep/jsx/utils.jsx",
+          "hash": "17818456902469986833"
+        },
+        {
+          "file": "wedding-cep/cep/package-lock.json",
+          "hash": "1113113312734042994"
+        },
+        {
+          "file": "wedding-cep/cep/package.json",
+          "hash": "4066766866463259297",
+          "deps": [
+            "npm:@eslint/js",
+            "npm:esbuild",
+            "npm:eslint",
+            "npm:globals"
+          ]
+        }
+      ],
+      "@wedding/domain": [
+        {
+          "file": "libs/wedding/domain/.spec.swcrc",
+          "hash": "18201067170784284381"
+        },
+        {
+          "file": "libs/wedding/domain/README.md",
+          "hash": "15490473076317177383"
+        },
+        {
+          "file": "libs/wedding/domain/jest.config.cts",
+          "hash": "14415196469999854282"
+        },
+        {
+          "file": "libs/wedding/domain/package.json",
+          "hash": "16302475791043191155"
+        },
+        {
+          "file": "libs/wedding/domain/src/index.ts",
+          "hash": "5756645333744226447"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/calendar.js",
+          "hash": "13897904323458111379"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/conflict.js",
+          "hash": "17029783401286207746"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/date-logic.js",
+          "hash": "13058631435448993680"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/domain.ts",
+          "hash": "11804648011974876708"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/isolation.js",
+          "hash": "13902158738763536141"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/name.js",
+          "hash": "4809729785712970665"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/name.test.js",
+          "hash": "9253072813133835863"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/resolver.js",
+          "hash": "17531963166015477647"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/rules.js",
+          "hash": "18325269015875516088"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/smart.js",
+          "hash": "18389604414578164613"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/time.js",
+          "hash": "1754124970562593087"
+        },
+        {
+          "file": "libs/wedding/domain/src/lib/venue.js",
+          "hash": "2019897847587615022"
+        },
+        {
+          "file": "libs/wedding/domain/tsconfig.json",
+          "hash": "6677929884130237697"
+        },
+        {
+          "file": "libs/wedding/domain/tsconfig.lib.json",
+          "hash": "12331793349550589190"
+        },
+        {
+          "file": "libs/wedding/domain/tsconfig.spec.json",
+          "hash": "1938483679512308168"
+        }
+      ]
+    }
+  },
+  "externalNodesHash": "7410751761571567352"
+}

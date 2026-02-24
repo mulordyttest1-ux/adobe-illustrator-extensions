@@ -52,24 +52,25 @@ export const SwapAction = {
      * @private
      */
     _updateAutoVenues(builder, swapped) {
-        const ceremonyAuto = builder.refs['ceremony.ten_auto'];
-        const venueAuto = builder.refs['venue.ten_auto'];
+        const tuGia = this._getTuGia(builder);
+        this._applyAutoVenue(builder, 'ceremony', tuGia, swapped['pos1.diachi']);
+        this._applyAutoVenue(builder, 'venue', tuGia, swapped['pos1.diachi']);
+    },
+
+    _getTuGia(builder) {
         const hostRef = builder.refs['ceremony.host_type'];
         const checkedHost = hostRef?.elements?.find(r => r.checked);
         const hostValue = checkedHost?.value || 'Trai';
-        const tuGia = hostValue === 'Trai' ? 'Tư Gia Nhà Trai' : 'Tư Gia Nhà Gái';
+        return hostValue === 'Trai' ? 'Tư Gia Nhà Trai' : 'Tư Gia Nhà Gái';
+    },
 
-        if (ceremonyAuto?.checked) {
-            const el = builder.refs['ceremony.ten'];
+    _applyAutoVenue(builder, prefix, tuGia, address) {
+        const autoCheckbox = builder.refs[`${prefix}.ten_auto`];
+        if (autoCheckbox?.checked) {
+            const el = builder.refs[`${prefix}.ten`];
             if (el) el.value = tuGia;
-            const addrEl = builder.refs['ceremony.diachi'];
-            if (addrEl) addrEl.value = swapped['pos1.diachi'] || '';
-        }
-        if (venueAuto?.checked) {
-            const el = builder.refs['venue.ten'];
-            if (el) el.value = tuGia;
-            const addrEl = builder.refs['venue.diachi'];
-            if (addrEl) addrEl.value = swapped['pos1.diachi'] || '';
+            const addrEl = builder.refs[`${prefix}.diachi`];
+            if (addrEl) addrEl.value = address || '';
         }
     }
 };

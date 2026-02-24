@@ -15,7 +15,7 @@ description: Agent pre-flight checklist — PHẢI chạy trước KHI viết co
 
 - [ ] **Type Definitions:** `cep/js/types.d.ts` (API khuôn đúc — NGUỒN SỰ THẬT DUY NHẤT cho tên hàm)
 - [ ] **Kiến trúc & Tiêu chuẩn:** `.agent/memory/planning/agent_friendly_architecture.md`
-- [ ] **Trạng thái & Rules nhanh:** `.agent/PROJECT_STATUS.md`
+- [ ] **Trạng thái & Rules nhanh:** `.agent/GOVERNANCE.md`
 - [ ] **API Surface:** `API_SURFACE.md` (tra cứu nhanh hàm nào tồn tại)
 - [ ] **Dependency Map:** `DEPENDENCY_MAP.md` (ai phụ thuộc ai)
 - [ ] **Handoff Lock:** Nếu tôi là Executor, đã đọc `implementation_plan.md` và `task.md` chưa?
@@ -64,10 +64,15 @@ description: Agent pre-flight checklist — PHẢI chạy trước KHI viết co
 
 ## Phase 4: Validation (Kiểm chứng sau code)
 
-- [ ] **Build thành công:** `node build.cjs`
+> **⚠️ BẮT BUỘC:** Mọi bài Test tương tác UI phải tuân thủ đúng quy trình kết nối CDP tại `@[.agent/workflows/testing_guide.md]`. Tuyệt đối không tự bịa cách test gõ phím mù.
+
+- [ ] **Build thành công:** `npm run build:wedding`
 - [ ] **Unit Tests pass:** `node --test js/**/*.test.js`
-- [ ] **E2E Smoke Test:** `npm run test:e2e` (Yêu cầu mở Illustrator)
-- [ ] **ESLint pass (nếu đã cài):** `npx eslint js/ --ignore-pattern bundle.js`
+- [ ] **Agentic E2E Generation:** Tôi (Agent) ĐÃ tự động dệt thêm kịch bản chống phá hoại (Edge Cases test) vào file `test_smoke.cjs` chưa? Vui lòng soát lại tính năng vừa làm.
+- [ ] **E2E Smoke Test:** `npm run test:e2e` (Thực thi chuỗi kịch bản Cấp Tiến của Agent trên Port 9097)
+- [ ] **Lint & Architecture:** `npm run lint:wedding` (Chạy workflow @[/lint])
+- [ ] **Dead Code Sweep (Dọn rác):** Chạy test/radar tĩnh (như `knip` hoặc rà bằng IDE) để tìm và diệt mọi cành khô, file mồ côi non-imported.
+- [ ] **Wiring Audit (Rà soát Dây điện):** Phân tích `nx graph` hoặc rà soát bằng tay để đảm bảo mạch nối chuẩn Linear Boot, không Circular Dependency.
 - [ ] **Cập nhật `types.d.ts` nếu thêm/sửa public API**
 - [ ] **Cập nhật `API_SURFACE.md` nếu thêm/sửa public API**
 

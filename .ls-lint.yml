@@ -1,0 +1,28 @@
+ls:
+  .js: kebab-case
+  .jsx: kebab-case
+  .ts: kebab-case
+  .tsx: kebab-case
+  .json: kebab-case
+  .md: kebab-case | snake_case
+  .css: kebab-case
+
+ignore:
+  - node_modules
+  - .git
+  - .agent
+  - dist
+  - build
+  - .vscode
+  - .idea
+  - "**/libs"
+  - "**/vendor"
+  - "**/bundle.js"
+  - "**/CSInterface.js"
+  - package-lock.json
+  - README.md
+  - LICENSE
+  - .gitignore
+  - .ls-lint.yml
+  - eslint.config.mjs
+  - "**/CSXS/manifest.xml"

@@ -28,12 +28,16 @@
         var cepRoot = thisFile.parent.parent.parent;
         var modPath = thisFile.parent + "/imposition_modules/";
 
-        // 2. LOAD DOMAIN MATH (Critical)
-        var domainFile = new File(cepRoot + "/js/domain/domain_core.js");
-        if (domainFile.exists) {
-            $.evalFile(domainFile);
-        } else {
-            throw new Error("Core Error: Missing domain_core.js");
+        // 2. LOAD DOMAIN MATH (Critical — load order matters)
+        var domainPath = cepRoot + "/js/domain/";
+        var domainFiles = ["domain_core.js", "margin_engine.js", "layout_engine.js"];
+        for (var d = 0; d < domainFiles.length; d++) {
+            var domainFile = new File(domainPath + domainFiles[d]);
+            if (domainFile.exists) {
+                $.evalFile(domainFile);
+            } else {
+                throw new Error("Core Error: Missing " + domainFiles[d]);
+            }
         }
 
         // 3. LOAD MODULES

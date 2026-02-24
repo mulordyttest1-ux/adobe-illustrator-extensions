@@ -34,11 +34,6 @@
             "Út Nữ",
             "Quý Nữ",
             "... Nữ"
-        ],
-        "EVENT_TYPES": [
-            "Tiệc Cưới",
-            "Tân Gia",
-            "Sinh Nhật"
         ]
     },
     "STANDARD_TIMES": {
@@ -60,17 +55,6 @@
             "group": "THÔNG TIN CỐ ĐỊNH",
             "icon": "📋",
             "items": [
-                {
-                    "key": "info.event_type",
-                    "label": "Loại Sự Kiện",
-                    "type": "select",
-                    "options": [
-                        "Tiệc Cưới",
-                        "Tân Gia",
-                        "Sinh Nhật"
-                    ],
-                    "default_val": "Tiệc Cưới"
-                },
                 {
                     "key": "info.ten_le",
                     "label": "Loại Lễ",

@@ -33,7 +33,7 @@
                     <Menu>Imposition Panel (Dev)</Menu>
                     <Geometry>
                         <Size><Height>600</Height><Width>420</Width></Size>
-                        <MinSize><Height>400</Height><Width>320</Width></MinSize>
+                        <MinSize><Height>400</Height><Width>130</Width></MinSize>
                         <MaxSize><Height>800</Height><Width>600</Width></MaxSize>
                     </Geometry>
                 </UI>

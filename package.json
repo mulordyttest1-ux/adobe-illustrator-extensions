@@ -5,20 +5,48 @@
   "private": true,
   "workspaces": [
     "wedding-cep/cep",
-    "symbol-cep/cep"
+    "symbol-cep/cep",
+    "libs/wedding/*"
   ],
   "scripts": {
-    "lint:wedding": "eslint wedding-cep/cep/js/ --config shared/eslint.config.mjs --ignore-pattern bundle.js",
+    "lint:wedding": "eslint wedding-cep/cep/js/ libs/wedding/domain/src/lib/ --config shared/eslint.config.mjs --ignore-pattern bundle.js",
     "lint:symbol": "eslint symbol-cep/cep/js/ --config shared/eslint.config.mjs --ignore-pattern bundle.js",
     "lint:all": "npm run lint:wedding && npm run lint:symbol",
     "build:wedding": "node wedding-cep/cep/build.cjs",
-    "build:all": "npm run build:wedding",
-    "test:wedding": "node --test wedding-cep/cep/js/**/*.test.js"
+    "build:symbol": "node symbol-cep/cep/build.cjs",
+    "build:all": "npm run build:wedding && npm run build:symbol",
+    "test:wedding": "node --test wedding-cep/cep/js/**/*.test.js",
+    "test:e2e:wedding": "node wedding-cep/cep/debug_scripts/test_smoke.cjs",
+    "test:e2e:symbol": "node symbol-cep/debug_scripts/test_smoke.cjs",
+    "test:e2e:all": "npm run test:e2e:wedding && npm run test:e2e:symbol",
+    "nx": "nx",
+    "graph": "nx graph",
+    "affected": "nx affected"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@ls-lint/ls-lint": "^2.3.1",
+    "@nx/eslint": "^22.5.0",
+    "@nx/eslint-plugin": "^22.5.0",
+    "@nx/jest": "^22.5.0",
+    "@nx/js": "^22.5.0",
+    "@swc-node/register": "~1.11.1",
+    "@swc/core": "~1.15.5",
+    "@swc/helpers": "~0.5.18",
+    "@swc/jest": "~0.2.38",
+    "@types/jest": "^30.0.0",
+    "@types/node": "20.19.9",
     "esbuild": "^0.24.0",
     "eslint": "^10.0.0",
-    "globals": "^17.3.0"
+    "globals": "^17.3.0",
+    "jest": "^30.0.2",
+    "jest-environment-node": "^30.0.2",
+    "jest-util": "^30.0.2",
+    "nx": "^22.5.0",
+    "prettier": "~3.6.2",
+    "ts-jest": "^29.4.0",
+    "ts-node": "10.9.1",
+    "tslib": "^2.3.0",
+    "typescript": "~5.9.2"
   }
 }

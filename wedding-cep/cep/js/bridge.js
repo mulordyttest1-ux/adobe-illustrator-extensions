@@ -1,7 +1,13 @@
 /**
- * Bridge.js - Communication Layer (Base64 & TextDecoder)
- * Fixes: Invalid JSON, URI Malformed, UTF-8 issues
+ * MODULE: Bridge
+ * LAYER: Infrastructure
+ * PURPOSE: Communication Layer (Base64 & TextDecoder) handling Adobe ExtendScript interop. Fixes Invalid JSON, URI Malformed, UTF-8 issues.
+ * DEPENDENCIES: StrategyOrchestrator
+ * SIDE EFFECTS: Adobe CEP Interop, `window.bridge` global
+ * EXPORTS: Bridge
  */
+import { StrategyOrchestrator } from './logic/strategies/StrategyOrchestrator.js';
+
 export class Bridge {
     constructor() {
         this.cs = new CSInterface();
@@ -45,6 +51,19 @@ export class Bridge {
 
     async call(fnName, data = {}) {
         if (!this.isConnected) return { success: false, error: 'CEP not connected' };
+
+        if (fnName === 'ping') {
+            return new Promise((resolve) => {
+                this.cs.evalScript('IllustratorBridge.ping()', (result) => {
+                    const decoded = this._decodeResult(result);
+                    if (decoded && decoded.message === 'Pong') {
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                });
+            });
+        }
 
         return new Promise((resolve) => {
             let script;
@@ -97,33 +116,7 @@ export class Bridge {
                 return { success: false, error: 'StrategyOrchestrator missing' };
             }
             const orchestrator = new StrategyOrchestrator();
-            const plans = [];
-
-            for (const frame of frames) {
-                // [SYNC FIX 1] Map đúng key từ Scanner
-                const content = frame.raw_content || frame.content || '';
-
-                // [SYNC FIX 2] Tái tạo Metadata Object cho Logic
-                let metadata = null;
-
-                // Logic: Nếu frame có meta_keys, đó là 'managed' (stateful)
-                // Nếu không, đó là 'fresh' (null metadata)
-                if (frame.meta_keys && frame.meta_keys.length > 0) {
-                    metadata = {
-                        type: 'stateful',
-                        keys: frame.meta_keys,
-                        mappings: [] // [FIX] Luôn cung cấp mảng rỗng để tránh lỗi "cannot read property of undefined"
-                    };
-                } else {
-                    metadata = null;
-                }
-
-                // Chạy phân tích
-                const plan = orchestrator.analyze(content, metadata, packet);
-                if (plan && plan.mode !== 'SKIP') {
-                    plans.push({ id: frame.id, plan: plan });
-                }
-            }
+            const plans = this._computePlans(frames, packet, orchestrator);
 
             // 3. APPLY: Gửi lệnh cập nhật xuống AI
             if (plans.length > 0) {
@@ -132,9 +125,33 @@ export class Bridge {
                 return { success: true, updated: 0, message: 'No changes needed' };
             }
         } catch (error) {
-
             return { success: false, error: error.message };
         }
+    }
+
+    _computePlans(frames, packet, orchestrator) {
+        const plans = [];
+        for (const frame of frames) {
+            const content = frame.raw_content || frame.content || '';
+            const metadata = this._buildMetadata(frame);
+
+            const plan = orchestrator.analyze(content, metadata, packet);
+            if (plan && plan.mode !== 'SKIP') {
+                plans.push({ id: frame.id, plan: plan });
+            }
+        }
+        return plans;
+    }
+
+    _buildMetadata(frame) {
+        if (frame.meta_keys && frame.meta_keys.length > 0) {
+            return {
+                type: 'stateful',
+                keys: frame.meta_keys,
+                mappings: []
+            };
+        }
+        return null;
     }
 
 }

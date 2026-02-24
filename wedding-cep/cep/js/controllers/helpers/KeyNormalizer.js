@@ -1,4 +1,4 @@
-import { CalendarEngine } from '../../logic/domain/calendar.js';
+import { CalendarEngine } from '@wedding/domain';
 
 /**
  * MODULE: KeyNormalizer

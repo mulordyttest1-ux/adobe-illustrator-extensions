@@ -50,27 +50,39 @@ export const DateValidator = {
         const le = parse('date.le');
         const nhap = parse('date.nhap');
 
-        // 1. ƯU TIÊN CAO NHẤT: NGÀY KHÔNG TỒN TẠI (RED)
+        // 1. NGÀY KHÔNG TỒN TẠI
+        this._checkExistence(warnings, { tiec, le, nhap });
+        if (warnings.length > 0) return { valid: false, warnings };
+
+        // 2. NGHỊCH LÝ THỜI GIAN
+        this._checkSequence(warnings, data, { tiec, le, nhap });
+        if (warnings.length > 0) return { valid: false, warnings };
+
+        // 3. CẢNH BÁO KINH NGHIỆM
+        this._checkExperienceWarnings(warnings, { today, currentYear, tiec, le });
+
+        return {
+            valid: warnings.filter(w => w.severity === 'error').length === 0,
+            warnings
+        };
+    },
+
+    _checkExistence(warnings, { tiec, le, nhap }) {
         [tiec, le, nhap].forEach(d => {
             if (d && d.isInvalid) {
                 warnings.push({ type: 'invalid_date', message: d.msg, severity: 'error' });
             }
         });
-        if (warnings.length > 0) return { valid: false, warnings }; // Dừng ngay nếu sai ngày
+    },
 
-        // 2. ƯU TIÊN NHÌ: NGHỊCH LÝ THỜI GIAN (RED)
-        // Lễ > Tiệc
+    _checkSequence(warnings, data, { tiec, le, nhap }) {
         if (tiec && le) {
-            // So sánh ngày
             const tDate = new Date(tiec.date).setHours(0, 0, 0, 0);
             const lDate = new Date(le.date).setHours(0, 0, 0, 0);
 
             if (lDate > tDate) {
                 warnings.push({ type: 'logic_seq', message: 'Vô lý: Lễ diễn ra SAU Tiệc', severity: 'error' });
-            }
-            // Cùng ngày thì check giờ
-            else if (lDate === tDate) {
-                // Chỉ check nếu cả 2 đều có giờ
+            } else if (lDate === tDate) {
                 const hasTime = data['date.tiec.gio'] && data['date.le.gio'];
                 if (hasTime && le.date > tiec.date) {
                     warnings.push({ type: 'logic_time', message: 'Vô lý: Giờ Lễ sau Giờ Tiệc', severity: 'error' });
@@ -78,7 +90,6 @@ export const DateValidator = {
             }
         }
 
-        // Nhập > Tiệc
         if (tiec && nhap) {
             const tDate = new Date(tiec.date).setHours(0, 0, 0, 0);
             const nDate = new Date(nhap.date).setHours(0, 0, 0, 0);
@@ -86,12 +97,9 @@ export const DateValidator = {
                 warnings.push({ type: 'logic_seq', message: 'Vô lý: Nhập tiệc SAU Tiệc', severity: 'error' });
             }
         }
+    },
 
-        if (warnings.length > 0) return { valid: false, warnings }; // Dừng ngay nếu sai logic
-
-        // 3. ƯU TIÊN BA: CẢNH BÁO KINH NGHIỆM (YELLOW)
-
-        // Case: Ngày quá khứ (Kinh nghiệm xương máu)
+    _checkExperienceWarnings(warnings, { today, currentYear, tiec, le }) {
         if (tiec) {
             const checkTiec = new Date(tiec.date).setHours(0, 0, 0, 0);
             if (checkTiec < today.getTime()) {
@@ -99,12 +107,10 @@ export const DateValidator = {
             }
         }
 
-        // Case: Tương lai quá xa (> 2 năm) -> Nghi vấn gõ sai năm
         if (tiec && tiec.date.getFullYear() > currentYear + 2) {
             warnings.push({ type: 'far_future', message: `Năm ${tiec.date.getFullYear()} quá xa?`, severity: 'warning' });
         }
 
-        // Case: Lễ và Tiệc cách nhau quá xa (> 30 ngày) -> Nghi vấn sai tháng
         if (tiec && le) {
             const diffTime = Math.abs(tiec.date - le.date);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -112,11 +118,6 @@ export const DateValidator = {
                 warnings.push({ type: 'gap_warn', message: 'Lễ cách Tiệc > 1 tháng?', severity: 'warning' });
             }
         }
-
-        return {
-            valid: warnings.filter(w => w.severity === 'error').length === 0,
-            warnings
-        };
     }
 };
 

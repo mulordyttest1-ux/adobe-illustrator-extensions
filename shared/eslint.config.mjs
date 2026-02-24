@@ -1,5 +1,6 @@
 import globals from "globals";
 import js from "@eslint/js";
+import nxPlugin from "@nx/eslint-plugin";
 
 /**
  * ESLint Configuration (Flat Config) — Agent Governance Rules
@@ -13,7 +14,7 @@ export default [
     {
         ignores: [
             "**/bundle.js",
-            "**/libs/**",
+            "**/js/libs/**",
             "dist/**",
             "node_modules/**"
         ]
@@ -24,7 +25,7 @@ export default [
 
     // 3. Main Rules & Globals
     {
-        files: ["**/cep/js/**/*.js", "**/cep/js/**/*.mjs"],
+        files: ["**/cep/js/**/*.js", "**/cep/js/**/*.mjs", "libs/**/*.js", "libs/**/*.ts"],
         languageOptions: {
             ecmaVersion: 2020,
             sourceType: "module",
@@ -130,7 +131,10 @@ export default [
             "eqeqeq": ["error", "always"],          // Luôn dùng ===
             "no-eval": "error",                     // Chặn eval()
             "no-implied-eval": "error",             // Chặn implied eval
-            "no-empty": "warn"
+            "no-empty": "warn",
+
+            // --- Naming Conventions ---
+            "camelcase": ["warn", { "properties": "never", "ignoreDestructuring": true }]
         }
     },
 
@@ -183,6 +187,21 @@ export default [
             "max-lines-per-function": "off",
             "no-undef": "off",
             "no-unused-vars": "off"
+        }
+    },
+
+    // 6. Nx Architecture Enforcement
+    {
+        plugins: { "@nx": nxPlugin },
+        rules: {
+            "@nx/enforce-module-boundaries": ["error", {
+                "enforceBuildableLibDependency": true,
+                "allow": [],
+                "depConstraints": [
+                    { "sourceTag": "scope:domain", "onlyDependOnLibsWithTags": [] },
+                    { "sourceTag": "scope:app", "onlyDependOnLibsWithTags": ["scope:domain"] }
+                ]
+            }]
         }
     }
 ];

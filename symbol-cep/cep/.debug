@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtensionList>
-    <Extension Id="com.dinhson.imposition.panel">
+    <Extension Id="com.dinhson.imposition.panel.dev">
         <HostList>
-            <Host Name="ILST" Port="8088"/>
+            <Host Name="ILST" Port="9088"/>
         </HostList>
     </Extension>
 </ExtensionList>

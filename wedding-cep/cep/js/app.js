@@ -16,15 +16,14 @@ import { DateUtils } from './logic/core/date.js';
 // ============================================================
 // LAYER 1: Domain Logic (depends on Core only)
 // ============================================================
-import { CalendarEngine } from './logic/domain/calendar.js';
-import { NameAnalysis } from './logic/domain/name.js';
-import { WeddingRules } from './logic/domain/rules.js';
-import { TimeAutomation } from './logic/domain/time.js';
-import { VenueAutomation } from './logic/domain/venue.js';
-import { SmartContent } from './logic/domain/smart.js';
-import { ConflictResolver } from './logic/domain/conflict.js';
-import { DataResolver } from './logic/domain/resolver.js';
-import { IsolationChecker } from './logic/domain/isolation.js';
+import {
+    CalendarEngine,
+    NameAnalysis,
+    WeddingRules,
+    TimeAutomation,
+    VenueAutomation,
+    DateLogic
+} from '@wedding/domain';
 
 // ============================================================
 // LAYER 2: Pipeline (depends on Domain)
@@ -60,7 +59,7 @@ import { InputEngine } from './logic/ux/InputEngine.js';
 // ============================================================
 // LAYER 5: Components (depends on UX, Domain)
 // ============================================================
-import { DateLogic } from './logic/DateLogic.js';
+// (DateLogic moved to Layer 1 block)
 import { TabbedPanel } from './components/TabbedPanel.js';
 import { DateGridRenderer } from './components/DateGridRenderer.js';
 import { DateGridDOM } from './components/helpers/DateGridDOM.js';
@@ -106,10 +105,6 @@ window.NameAnalysis = NameAnalysis;
 window.WeddingRules = WeddingRules;
 window.TimeAutomation = TimeAutomation;
 window.VenueAutomation = VenueAutomation;
-window.SmartContent = SmartContent;
-window.ConflictResolver = ConflictResolver;
-window.DataResolver = DataResolver;
-window.IsolationChecker = IsolationChecker;
 
 // Pipeline
 window.Normalizer = Normalizer;
@@ -186,11 +181,11 @@ window.AppConfig = APP_CONFIG;
 
 
 function hideLoading() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    const splash = document.getElementById('loading-overlay');
+    if (splash) {
+        splash.style.opacity = '0';
+        splash.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => { splash.style.display = 'none'; }, 300);
     }
 }
 
@@ -265,6 +260,43 @@ function wireActionButtons() {
 // INITIALIZATION
 // ============================================================
 
+async function _waitForDOM() {
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', resolve);
+        });
+    }
+}
+
+function _initCalendarEngine() {
+    try {
+        const cs = new CSInterface();
+        let rootPath = cs.getSystemPath(CSInterface.EXTENSION);
+        if (rootPath.startsWith('file://')) rootPath = rootPath.substring(7);
+        if (navigator.platform.indexOf('Win') > -1 && rootPath.startsWith('/') && rootPath[2] === ':') {
+            rootPath = rootPath.substring(1);
+        }
+        rootPath = decodeURIComponent(rootPath);
+        const csvPath = rootPath + '/data/ngay.csv';
+
+        let fs;
+        if (typeof window.require === 'function') {
+            fs = window.require('fs');
+        } else if (typeof require === 'function') {
+            fs = require('fs');
+        }
+
+        if (fs && fs.existsSync(csvPath)) {
+            const content = fs.readFileSync(csvPath, 'utf8');
+            CalendarEngine.loadDatabase(content);
+        } else {
+            console.warn('[App] CalendarEngine database not found:', csvPath);
+        }
+    } catch (e) {
+        console.error('[App] Failed to init CalendarEngine:', e);
+    }
+}
+
 async function init() {
     // Auto-select all text on Focus (Tabbing)
     document.addEventListener('focusin', function (e) {
@@ -274,57 +306,53 @@ async function init() {
     });
 
     try {
-        if (document.readyState === 'loading') {
-            await new Promise(resolve => {
-                document.addEventListener('DOMContentLoaded', resolve);
-            });
-        }
+        await _waitForDOM();
+        _initCalendarEngine();
 
         // Check connection silently
-        try { await bridge.testConnection(); } catch { }
+        try { await bridge.testConnection(); } catch (e) {
+            console.warn('[App] Bridge connection failed silently', e);
+        }
 
-        // Initialize tabbed panel with controllers
+        // 1. Preload Core Dependencies
+        await AddressAutocomplete.init();
+        const schema = await SchemaLoader.load();
+
+        // 2. Initialize Tab Navigation & Render Forms
         new TabbedPanel({
             tabsSelector: '.ds-tab',
             panelsSelector: '.ds-tab-panel',
             controllers: {
                 'compact': {
-                    init: async () => {
+                    init: () => {
                         const compactContainer = document.getElementById('compact-content');
-                        if (!compactContainer) return;
-
-                        await AddressAutocomplete.init();
-
-                        SchemaLoader.load().then(schema => {
+                        if (compactContainer && schema) {
+                            compactContainer.innerHTML = ''; // Clear lazy-load spinner
                             window.compactBuilder = new CompactFormBuilder({
                                 container: compactContainer,
                                 schema: schema,
                                 onChange: () => { }
                             }).build();
-
                             wireActionButtons();
-
-                        }).catch(() => {
-                            compactContainer.innerHTML = '<p style="color:red">Lỗi load schema</p>';
-                        });
+                        }
                     }
                 },
-                'settings': {
-                    init: () => { }
-                }
+                'settings': { init: () => { } }
             },
             onTabChange: () => { }
         });
 
-        // Debug buttons
+        // 3. Debug & Utilities
         const reloadBtn = document.getElementById('btn-reload-panel');
         if (reloadBtn) {
             reloadBtn.addEventListener('click', () => location.reload());
         }
 
+        // 5. System Ready
         hideLoading();
 
     } catch (error) {
+        console.error('[App] Boot Failed:', error);
         showError('Lỗi khởi động panel: ' + error.message);
         hideLoading();
     }

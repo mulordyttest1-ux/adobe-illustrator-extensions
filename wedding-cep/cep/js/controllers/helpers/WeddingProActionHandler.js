@@ -78,24 +78,7 @@ export const WeddingProActionHandler = {
             }
 
             const rawData = controller.formBuilder.getData();
-            let processedData = rawData;
-
-            if (typeof WeddingAssembler !== 'undefined') {
-                if (typeof CalendarEngine !== 'undefined' && !CalendarEngine._isLoaded) {
-                    CalendarEngine.loadDatabase();
-                }
-
-                WeddingAssembler.setDependencies({
-                    normalizer: typeof Normalizer !== 'undefined' ? Normalizer : null,
-                    nameAnalysis: typeof NameAnalysis !== 'undefined' ? NameAnalysis : null,
-                    calendarEngine: CalendarEngine,
-                    weddingRules: typeof WeddingRules !== 'undefined' ? WeddingRules : null,
-                    timeAutomation: typeof TimeAutomation !== 'undefined' ? TimeAutomation : null,
-                    venueAutomation: typeof VenueAutomation !== 'undefined' ? VenueAutomation : null
-                });
-
-                processedData = await WeddingAssembler.assemble(rawData, controller.schema);
-            }
+            const processedData = await this._assembleData(rawData, controller.schema);
 
             const result = await bridge.updateWithStrategy(processedData);
 
@@ -108,6 +91,25 @@ export const WeddingProActionHandler = {
         } catch (error) {
             UIFeedback.showToast(error.message, 'error');
         }
+    },
+
+    async _assembleData(rawData, schema) {
+        if (typeof WeddingAssembler === 'undefined') return rawData;
+
+        if (typeof CalendarEngine !== 'undefined' && !CalendarEngine._isLoaded) {
+            CalendarEngine.loadDatabase();
+        }
+
+        WeddingAssembler.setDependencies({
+            normalizer: typeof Normalizer !== 'undefined' ? Normalizer : null,
+            nameAnalysis: typeof NameAnalysis !== 'undefined' ? NameAnalysis : null,
+            calendarEngine: typeof CalendarEngine !== 'undefined' ? CalendarEngine : null,
+            weddingRules: typeof WeddingRules !== 'undefined' ? WeddingRules : null,
+            timeAutomation: typeof TimeAutomation !== 'undefined' ? TimeAutomation : null,
+            venueAutomation: typeof VenueAutomation !== 'undefined' ? VenueAutomation : null
+        });
+
+        return await WeddingAssembler.assemble(rawData, schema);
     },
 
     /**

@@ -8,9 +8,8 @@
  */
 import { DateGridRenderer } from './DateGridRenderer.js';
 import { DateGridDOM } from './helpers/DateGridDOM.js';
-import { CalendarEngine } from '../logic/domain/calendar.js';
+import { CalendarEngine, DateLogic } from '@wedding/domain';
 import { InputEngine } from '../logic/ux/InputEngine.js';
-import { DateLogic } from '../logic/DateLogic.js';
 
 export const DateGridWidget = {
     _refs: {},

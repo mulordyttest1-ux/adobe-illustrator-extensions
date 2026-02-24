@@ -1,6 +1,6 @@
 import { DataValidator } from '../logic/pipeline/DataValidator.js';
 import { KeyNormalizer } from '../controllers/helpers/KeyNormalizer.js';
-import { WeddingRules } from '../logic/domain/rules.js';
+import { WeddingRules } from '@wedding/domain';
 
 /**
  * MODULE: ScanAction
@@ -25,11 +25,8 @@ export const ScanAction = {
         const { bridge, builder, showToast, button } = ctx;
 
         try {
-            // 1. UI: Disable button
-            button.disabled = true;
-            button.textContent = '⏳';
+            this._setButtonState(button, true);
 
-            // 2. Call Bridge to scan document
             console.log('[ScanAction] Starting scan...');
             const result = await bridge.scanDocument();
 
@@ -41,50 +38,12 @@ export const ScanAction = {
 
             console.log('[ScanAction] Raw data count:', result.data.length);
 
-            // 3. DataValidator: Array → Object key-value map
-            const validator = new DataValidator();
-            const analysis = validator.analyze(result.data);
-            console.log('[ScanAction] Healthy Map:', analysis.healthyMap);
-
-            let normalized = KeyNormalizer.normalize(analysis.healthyMap);
-            console.log('[ScanAction] Normalized:', normalized);
-
-            // 4. Domain Enrichment — Ông/Bà prefix
-            normalized = WeddingRules.enrichParentPrefixes(normalized);
-
-            // 5. Inverse Mapping: Storage keys (pos1.vithu) → UI keys (ui.vithu_nam/nu)
-            // Uses TRIGGER_CONFIG from schema to determine which side is bride/groom
-            const triggerConfig = builder?.schema?.TRIGGER_CONFIG || {
-                "Vu Quy": 1, "Thành Hôn": 0, "Tân Hôn": 0, "Báo Hỷ": 0
-            };
-            const hostType = normalized['ceremony.host_type'];
-            const tenLe = normalized['info.ten_le'] || '';
-
-            let isPos1Bride;
-            if (hostType === 'Nhà Gái') {
-                isPos1Bride = true;
-            } else if (hostType === 'Nhà Trai') {
-                isPos1Bride = false;
-            } else {
-                isPos1Bride = WeddingRules.isBrideSide(tenLe, triggerConfig);
-            }
-
-            console.log('[ScanAction] Side inference:', { hostType, tenLe, isPos1Bride });
-
-            if (isPos1Bride) {
-                if (normalized['pos1.vithu']) normalized['ui.vithu_nu'] = normalized['pos1.vithu'];
-                if (normalized['pos2.vithu']) normalized['ui.vithu_nam'] = normalized['pos2.vithu'];
-            } else {
-                if (normalized['pos1.vithu']) normalized['ui.vithu_nam'] = normalized['pos1.vithu'];
-                if (normalized['pos2.vithu']) normalized['ui.vithu_nu'] = normalized['pos2.vithu'];
-            }
+            const normalized = this._processData(result.data, builder);
 
             console.log('[ScanAction] Final Data to UI:', normalized);
 
-            // 5. Push to UI form
             builder.setData(normalized);
 
-            // 6. Trigger date grid recompute
             if (typeof DateGridWidget !== 'undefined') {
                 DateGridWidget.triggerCompute();
             }
@@ -98,9 +57,52 @@ export const ScanAction = {
             return { success: false, error: err.message };
 
         } finally {
-            button.disabled = false;
-            button.textContent = '📥 Scan';
+            this._setButtonState(button, false);
         }
+    },
+
+    _setButtonState(button, isScanning) {
+        button.disabled = isScanning;
+        button.textContent = isScanning ? '⏳' : '📥 Scan';
+    },
+
+    _processData(rawData, builder) {
+        const validator = new DataValidator();
+        const analysis = validator.analyze(rawData);
+        console.log('[ScanAction] Healthy Map:', analysis.healthyMap);
+
+        let normalized = KeyNormalizer.normalize(analysis.healthyMap);
+        console.log('[ScanAction] Normalized:', normalized);
+
+        normalized = WeddingRules.enrichParentPrefixes(normalized);
+
+        const triggerConfig = builder?.schema?.TRIGGER_CONFIG || {
+            "Vu Quy": 1, "Thành Hôn": 0, "Tân Hôn": 0, "Báo Hỷ": 0
+        };
+        const hostType = normalized['ceremony.host_type'];
+        const tenLe = normalized['info.ten_le'] || '';
+
+        const isPos1Bride = this._inferBrideSide(hostType, tenLe, triggerConfig);
+        console.log('[ScanAction] Side inference:', { hostType, tenLe, isPos1Bride });
+
+        return this._mapHostSides(normalized, isPos1Bride);
+    },
+
+    _inferBrideSide(hostType, tenLe, triggerConfig) {
+        if (hostType === 'Nhà Gái') return true;
+        if (hostType === 'Nhà Trai') return false;
+        return WeddingRules.isBrideSide(tenLe, triggerConfig);
+    },
+
+    _mapHostSides(normalized, isPos1Bride) {
+        if (isPos1Bride) {
+            if (normalized['pos1.vithu']) normalized['ui.vithu_nu'] = normalized['pos1.vithu'];
+            if (normalized['pos2.vithu']) normalized['ui.vithu_nam'] = normalized['pos2.vithu'];
+        } else {
+            if (normalized['pos1.vithu']) normalized['ui.vithu_nam'] = normalized['pos1.vithu'];
+            if (normalized['pos2.vithu']) normalized['ui.vithu_nu'] = normalized['pos2.vithu'];
+        }
+        return normalized;
     }
 };
 

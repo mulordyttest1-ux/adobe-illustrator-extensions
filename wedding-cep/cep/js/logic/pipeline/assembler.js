@@ -23,66 +23,74 @@ export const WeddingAssembler = {
 
     async assemble(rawData, schema) {
         // 1. Copy raw data
-        let packet = { ...rawData };
+        const packet = { ...rawData };
 
         // [FIX 1] Chuẩn hóa key Index từ UI (_idx -> _split_idx)
-        // Compact UI dùng "_idx", Logic dùng "_split_idx"
-        for (const key in packet) {
-            if (key.endsWith('_idx')) {
-                const baseKey = key.replace('_idx', '');
-                packet[`${baseKey}_split_idx`] = packet[key];
-            }
-        }
+        this._normalizeKeys(packet);
 
         // [FIX 2] Gộp Date rời rạc từ UI (ngay, thang, nam) thành Date Object
         // Để CalendarEngine có thể chạy được
         this._unifyDates(packet, schema);
 
         // --- PIPELINE CHUẨN ---
+        return await this._runPipeline(packet, schema);
+    },
 
-        // Phase 1: Normalize (Clean text)
+    _normalizeKeys(packet) {
+        for (const key in packet) {
+            if (key.endsWith('_idx')) {
+                const baseKey = key.replace('_idx', '');
+                packet[`${baseKey}_split_idx`] = packet[key];
+            }
+        }
+    },
+
+    async _runPipeline(packet, schema) {
+        let currentPacket = this._runCorePipeline(packet, schema);
+        currentPacket = await this._runDatePipeline(currentPacket, schema);
+        return this._runAutomationPipeline(currentPacket, schema);
+    },
+
+    _runCorePipeline(packet, schema) {
+        let currentPacket = packet;
         if (this._deps.normalizer) {
-            packet = this._deps.normalizer.normalize(packet, schema);
+            currentPacket = this._deps.normalizer.normalize(currentPacket, schema);
         }
-
-        // Phase 2: Name Split (Tự động sinh .ten, .lot, .ho_dau, .dau)
         if (this._deps.nameAnalysis) {
-            packet = this._deps.nameAnalysis.enrichSplitNames(packet);
+            currentPacket = this._deps.nameAnalysis.enrichSplitNames(currentPacket);
         }
-
-        // Phase 3: Parent Prefixes (Ông/Bà)
         if (this._deps.weddingRules) {
-            packet = this._deps.weddingRules.enrichParentPrefixes(packet);
+            currentPacket = this._deps.weddingRules.enrichParentPrefixes(currentPacket);
         }
+        return currentPacket;
+    },
 
-        // Phase 4: Date Expansion (Tính lịch âm, thứ, can chi...)
+    async _runDatePipeline(packet, schema) {
+        let currentPacket = packet;
         if (this._deps.calendarEngine) {
-            // Đảm bảo DB đã load
             if (!this._deps.calendarEngine._isLoaded) {
                 this._deps.calendarEngine.loadDatabase();
             }
-            packet = await this._expandDates(packet, schema);
+            currentPacket = await this._expandDates(currentPacket, schema);
         }
+        return currentPacket;
+    },
 
-        // Phase 5: Time Automation (Giờ chuẩn)
+    _runAutomationPipeline(packet, schema) {
+        let currentPacket = packet;
         if (this._deps.timeAutomation) {
-            packet = this._deps.timeAutomation.enrichTimeLocks(packet, schema);
+            currentPacket = this._deps.timeAutomation.enrichTimeLocks(currentPacket, schema);
         }
-
-        // Phase 6: Venue Automation (Địa điểm tự động)
         if (this._deps.venueAutomation) {
-            packet = this._deps.venueAutomation.detectVenueState(packet);
-            packet = this._deps.venueAutomation.applyAutoVenue(packet, {
+            currentPacket = this._deps.venueAutomation.detectVenueState(currentPacket);
+            currentPacket = this._deps.venueAutomation.applyAutoVenue(currentPacket, {
                 triggerConfig: schema?.TRIGGER_CONFIG || {}
             });
         }
-
-        // Phase 7: Mapping Strategy
         if (this._deps.weddingRules?.enrichMappingStrategy) {
-            packet = this._deps.weddingRules.enrichMappingStrategy(packet, schema?.TRIGGER_CONFIG || {});
+            currentPacket = this._deps.weddingRules.enrichMappingStrategy(currentPacket, schema?.TRIGGER_CONFIG || {});
         }
-
-        return packet;
+        return currentPacket;
     },
 
     /**
