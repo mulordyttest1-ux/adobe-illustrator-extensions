@@ -1,26 +1,79 @@
 const { E2ERunner } = require('../../shared/testing/E2ERunner.cjs');
 
-// Mặc định CEP Panel thứ 2 thường chạy ở cổng 9098 hoặc 8098 (tùy file .debug)
-// Sửa lại port cho trùng khớp với cấu hình của Sếp.
+// Mặc định CEP Panel Symbol chạy ở cổng 9098
 const runner = new E2ERunner({ port: 9098, projectName: 'Symbol CEP' });
 
 // --- TEST 1: Khởi động --- 
 runner.addTest(
-    'Kiểm tra UI đã load thành công chưa',
+    'Kiểm tra UI Command Palette đã render đúng',
     `
         (function() {
-            // Cập nhật đoạn code này dựa theo cấu trúc HTML của symbol-cep
-            // Ví dụ: return document.getElementById('app') !== null;
-            return true;
+            const input = document.getElementById('action-search');
+            const list = document.getElementById('action-list');
+            return input !== null && list !== null;
         })()
     `,
     async (result) => {
-        if (!result) {
-            throw new Error(`UI failed to load`);
-        }
+        if (!result) throw new Error(`UI failed to load (Command Palette not found)`);
     }
 );
 
-// Thêm các Edge Cases (Kịch bản đoán lỗi) cho Sếp vào đây...
+// --- TEST 2: Fuzzy Search ---
+runner.addTest(
+    'Kiểm tra Fuzzy Search lọc đúng kết quả',
+    `
+        (function() {
+            return new Promise((resolve) => {
+                const input = document.getElementById('action-search');
+                // Simulate typing 'a4'
+                input.value = 'a4';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                setTimeout(() => {
+                    const items = document.querySelectorAll('.dropdown-item');
+                    // We should have some results, and they should contain 'a4' or 'A4' (or fuzzy match it)
+                    resolve(items.length > 0);
+                }, 100);
+            });
+        })()
+    `,
+    async (result) => {
+        if (!result) throw new Error(`Fuzzy search failed to filter items`);
+    }
+);
+
+// --- TEST 3: Keyboard Navigation & Enter ---
+runner.addTest(
+    'Kiểm tra Keyboard Navigation (Arrow keys)',
+    `
+        (function() {
+            return new Promise((resolve) => {
+                const input = document.getElementById('action-search');
+                
+                // Clear input to get full list
+                input.value = '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                setTimeout(() => {
+                    // Simulate ArrowDown
+                    const eDown = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true });
+                    input.dispatchEvent(eDown);
+                    
+                    setTimeout(() => {
+                        const items = document.querySelectorAll('.dropdown-item');
+                        if (items.length < 2) return resolve(false);
+                        
+                        // Check if second item has the selected background style or '▶' prefix
+                        const secondItemText = items[1].textContent;
+                        resolve(secondItemText.includes('▶'));
+                    }, 50);
+                }, 50);
+            });
+        })()
+    `,
+    async (result) => {
+        if (!result) throw new Error(`Keyboard navigation (ArrowDown) did not highlight the next item`);
+    }
+);
 
 runner.run();

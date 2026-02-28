@@ -1,11 +1,14 @@
 /**
  * MODULE: NameNormalizer
  * LAYER: Logic/UX/Normalizers
- * PURPOSE: Vietnamese name normalization (Title Case, Unicode NFC, first name extraction)
+ * PURPOSE: Vietnamese name normalization (Title Case, Unicode NFC, ethnic name support)
  * DEPENDENCIES: UnicodeNormalizer (optional)
  * SIDE EFFECTS: None (pure)
  * EXPORTS: NameNormalizer.normalize(), .extractFirstName()
  */
+
+
+import { StringUtils } from '@wedding/domain';
 
 export const NameNormalizer = {
     /**
@@ -28,18 +31,18 @@ export const NameNormalizer = {
         const applied = [];
         let result = value;
 
-        // Step 1: Unicode NFC + basic cleanup
-        if (typeof UnicodeNormalizer !== 'undefined') {
-            result = UnicodeNormalizer.normalize(result);
+        // Step 1: Unicode NFC + basic cleanup (trim + collapse double spaces)
+        // We now use StringUtils.toNFC for standard normalization
+        const originalNFC = result;
+        result = StringUtils.toNFC(result.trim().replace(/\s{2,}/g, ' '));
+        if (result !== originalNFC) {
             applied.push('unicode_nfc');
-        } else {
-            result = result.trim().replace(/\s{2,}/g, ' ');
         }
 
-        // Step 2: Title Case (Viết Hoa Chữ Cái Đầu)
-        const original = result;
-        result = this._toTitleCase(result);
-        if (result !== original) {
+        // Step 2: Smart Title Case (capitalize-UP only, never lowercase)
+        const originalTitle = result;
+        result = StringUtils.toSmartTitleCase(result);
+        if (result !== originalTitle) {
             applied.push('title_case');
         }
 
@@ -47,23 +50,11 @@ export const NameNormalizer = {
     },
 
     /**
-       * Convert to Vietnamese Title Case
-       * Fix: Hỗ trợ viết hoa sau dấu ngoặc đơn, kép, ngoặc nhọn...
+       * Smart Title Case: (Deprecated - moved to StringUtils)
        * @private
        */
     _toTitleCase(str) {
-        if (!str) return '';
-
-        // 1. Dải ký tự tiếng Việt đầy đủ (bao gồm cả các ký tự có dấu)
-        // Thay vì \S, ta chỉ target vào các chữ cái a-z và tiếng Việt
-        // const letterPattern = /[a-zA-ZÀ-ỹ]/;
-
-        return str
-            .toLowerCase()
-            .replace(/(^|[\s'"{([\]])([a-zA-ZÀ-ỹ])/g, (match, prefix, char) => {
-                // Logic: Nếu tìm thấy [Prefix + Chữ cái] thì viết hoa Chữ cái
-                return prefix + char.toUpperCase();
-            });
+        return StringUtils.toSmartTitleCase(str);
     },
 
     /**

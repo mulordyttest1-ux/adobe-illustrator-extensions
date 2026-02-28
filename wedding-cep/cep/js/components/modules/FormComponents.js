@@ -162,7 +162,7 @@ export class FormComponents {
         const actions = [
             { id: 'btn-compact-swap', label: '🔄 Swap', title: 'Hoán đổi POS1 ↔ POS2' },
             { id: 'btn-compact-scan', label: '📥 Scan', title: 'Quét từ AI document' },
-            { id: 'btn-compact-update', label: '📤 Update', title: 'Cập nhật vào AI document' },
+            { id: 'btn-compact-update', label: '📤 Update', title: 'Cập nhật vào AI document' }
         ];
 
         actions.forEach(act => {

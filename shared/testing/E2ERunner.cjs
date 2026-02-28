@@ -29,7 +29,7 @@ class E2ERunner {
                 const test = this.tests[i];
                 console.log(`🧪 [${i + 1}/${this.tests.length}] Testing: ${test.name}`);
 
-                const evaluation = await Runtime.evaluate({ expression: test.expression, returnByValue: true });
+                const evaluation = await Runtime.evaluate({ expression: test.expression, returnByValue: true, awaitPromise: true });
 
                 if (evaluation.exceptionDetails) {
                     console.error(`  ❌ fail: Runtime Exception - ${JSON.stringify(evaluation.exceptionDetails)}`);

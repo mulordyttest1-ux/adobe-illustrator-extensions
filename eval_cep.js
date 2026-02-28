@@ -1,31 +1,48 @@
 const CDP = require('chrome-remote-interface');
+const fs = require('fs');
 
 async function debug() {
     try {
-        const client = await CDP({ port: 8097 });
-        const { Runtime } = client;
+        // Phase 1: Clear cache and reload
+        let client = await CDP({ port: 9098, host: 'localhost' });
+        const { Network, Runtime: RT1 } = client;
+        await Network.enable();
+        await Network.clearBrowserCache();
+        await Network.setCacheDisabled({ cacheDisabled: true });
+        console.log("Cache cleared. Reloading...");
+        await RT1.evaluate({ expression: 'location.reload(true)' });
+        await client.close();
 
+        // Wait for reload
+        await new Promise(r => setTimeout(r, 3000));
+
+        // Phase 2: Reconnect and inspect
+        client = await CDP({ port: 9098, host: 'localhost' });
+        const { Runtime, Page } = client;
         await Runtime.enable();
+        await Page.enable();
 
-        // Let's ask the page some questions!
-        const result1 = await Runtime.evaluate({ expression: 'document.readyState' });
-        console.log("ReadyState:", result1.result.value);
+        // Screenshot
+        const screenshot = await Page.captureScreenshot({ format: 'png' });
+        fs.writeFileSync('panel_screenshot.png', Buffer.from(screenshot.data, 'base64'));
+        console.log("Screenshot saved to panel_screenshot.png");
 
-        const result2 = await Runtime.evaluate({ expression: 'typeof bridge' });
-        console.log("type of bridge:", result2.result.value);
+        // Check input
+        const r1 = await Runtime.evaluate({ expression: '!!document.getElementById("action-search")' });
+        console.log("Input exists:", r1.result.value);
 
-        const result3 = await Runtime.evaluate({ expression: 'typeof window.__adobe_cep__' });
-        console.log("type of window.__adobe_cep__:", result3.result.value);
-
-        const result4 = await Runtime.evaluate({
-            expression: `document.getElementById('splash-screen') ? document.getElementById('splash-screen').style.display : 'no splash'`
+        const r2 = await Runtime.evaluate({
+            expression: `(function() {
+                var el = document.getElementById("action-search");
+                if (!el) return "NOT FOUND";
+                var cs = window.getComputedStyle(el);
+                return "width=" + cs.width + " height=" + cs.height + " display=" + cs.display + " visibility=" + cs.visibility;
+            })()`
         });
-        console.log("Splash Display:", result4.result.value);
+        console.log("Input style:", r2.result.value);
 
-        const result5 = await Runtime.evaluate({
-            expression: `document.getElementById('ds-app-error') ? document.getElementById('ds-app-error').innerText : 'no error'`
-        });
-        console.log("Error Display Text:", result5.result.value);
+        const r3 = await Runtime.evaluate({ expression: '!!window.Fuse' });
+        console.log("Fuse loaded:", r3.result.value);
 
         await client.close();
     } catch (err) {

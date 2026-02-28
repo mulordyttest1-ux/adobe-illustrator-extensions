@@ -12,7 +12,8 @@ description: Domain knowledge cho Wedding Card system - Entities, Business Rules
 ## 🚀 TL;DR
 1.  **Object:** Thiệp Cưới (Wedding Card) với 2 bên (Nam/Nữ) + Lễ + Tiệc.
 2.  **Logic:** Tự động tách tên (Họ/Đệm/Tên), tự sinh Prefix (Ông/Bà), tự tính ngày (Lễ/Tiệc/Nháp).
-3.  **Flow:** UI (JS) → Packet → Adapter → Illustrator (ES3) update TextFrame.
+3.  **Ethnic Logic:** Hỗ trợ tên dân tộc thiểu số (Smart IDX, Whitelist prefix, Exemption rules cho validation).
+4.  **Flow:** UI (JS) → Packet → Adapter → Illustrator (ES3) update TextFrame.
 4.  **Key Rule:** Font Unicode dựng sẵn. TextFrame name match key schema.
 5.  **Files:** Schema (`Config_Schema.js`), Logic (`NameProcessor.js`), Adapter (`MetadataAdapter.jsx`).
 
@@ -157,6 +158,15 @@ Output:
   pos1.ong.ho_dau = "Nguyễn"
   pos1.ong.dau = "A"
 ```
+
+### Rule 1.b: Ethnic Minority Names (Smart IDX)
+
+**Special Handling:** Ethnic names often have prefixes (`H'`, `Y'`, `K'`) or compound surnames at the end.
+- **Auto-Detection:** Detects patterns like `H'Hen`, `Y Bội`, `Ama`, `Ami`.
+- **Suggest IDX:** 
+    - Defaults to `2` if a gender/standalone prefix is detected (meaning the "Name" is the 2nd word).
+    - Uses a dictionary of ethnic surnames (`Niê`, `Êban`, `Kbuôr`) to suggest splitting.
+- **Capitalization (Smart Title Case):** Uses "Capitalize-UP" logic - only capitalizes the first letter, preserving existing uppercase (e.g., `BlO`).
 
 ### Rule 2: Auto Prefix Generation
 
@@ -341,6 +351,12 @@ Các luật ngầm quan trọng (Tribal Knowledge):
 - Schema Keys: **Case Sensitive** (CamelCase/SnakeCase).
 - **Rule:** Adapter sẽ normalize toLower() khi match names.
 
+### 4. Ethnic Validation Exemptions
+Để hỗ trợ nhập liệu tên dân tộc linh hoạt, hệ thống áp dụng các quy tắc miễn trừ:
+- **Phonetics:** Bỏ qua hoàn toàn check vần (vì tên dân tộc không tuân theo vần tiếng Việt).
+- **Length:** Không báo "Tên quá ngắn" cho các prefix đơn lẻ (`H`, `Y`, `K`) nếu detect là Ethnic.
+- **Special Chars:** Cho phép `'`, `-`, `(`, `)` để nhập biệt danh hoặc kinship terms (`Ama Pui`, `Ami Lan`).
+
 ---
 
 ## 💡 Common Scenarios
@@ -436,6 +452,6 @@ Các luật ngầm quan trọng (Tribal Knowledge):
 
 ---
 
-**Last Updated:** 2026-01-19  
+**Last Updated:** 2026-02-24  
 **Schema Version:** Referenced from Config_Schema.jsx  
-**Status:** Production (v2.0)
+**Status:** Production (v2.1 - Smart IDX & Ethnic Support)

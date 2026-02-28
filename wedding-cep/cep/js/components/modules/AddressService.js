@@ -70,6 +70,9 @@ export class AddressService {
                 return;
             }
 
+            // ĐÓNG TẤT CẢ CÁC LIST CŨ TRƯỚC KHI RENDER LIST MỚI ĐỂ TRÁNH RÁC DOM
+            closeAllLists();
+
             currentFocus = -1; // Reset focus khi có kết quả mới
 
             // Tạo list container...
@@ -90,29 +93,31 @@ export class AddressService {
                 box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             `;
 
+            // --- Adaptive Intelligence ---
+            const prefix = val.substring(0, val.lastIndexOf(lastPart));
+            let adaptiveSeparator = ", "; // Mặc định trọn vẹn ngữ pháp Tiếng Việt
+            if (prefix.includes("-")) {
+                adaptiveSeparator = " - ";
+            }
+
             matches.forEach((match) => {
                 const itemDiv = document.createElement("div");
                 itemDiv.className = "autocomplete-item";
 
-                const fullAddress = AddressAutocomplete.format(match, false);
+                const fullAddress = AddressAutocomplete.format(match, adaptiveSeparator);
                 const highlightHtml = fullAddress.replace(new RegExp(`(${lastPart})`, 'gi'), "<strong>$1</strong>");
                 itemDiv.innerHTML = highlightHtml;
 
                 itemDiv.style.cssText = "padding: 6px 8px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 11px; color: #333;";
 
+                // [FIX 3 - BEST PRACTICE] Ngăn `mousedown` làm mất focus của `input`
+                itemDiv.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                });
+
                 itemDiv.addEventListener("click", () => {
-                    const prefix = val.substring(0, val.lastIndexOf(lastPart)).trim();
+                    const finalString = prefix + fullAddress;
 
-                    let separator = "";
-                    if (prefix) {
-                        if (prefix.endsWith(",") || prefix.endsWith("-")) {
-                            separator = " ";
-                        } else {
-                            separator = " - ";
-                        }
-                    }
-
-                    const finalString = prefix + separator + fullAddress;
 
                     input.value = finalString;
                     if (changeCallback) changeCallback(key, finalString);
@@ -151,9 +156,11 @@ export class AddressService {
             const items = list[0].getElementsByTagName("div");
 
             if (e.key === "ArrowDown") {
+                e.preventDefault(); // Ngăn con trỏ text nhảy lung tung
                 currentFocus++;
                 addActive(items);
             } else if (e.key === "ArrowUp") {
+                e.preventDefault(); // Ngăn con trỏ text nhảy lung tung
                 currentFocus--;
                 addActive(items);
             } else if (e.key === "Enter") {
@@ -177,15 +184,12 @@ export class AddressService {
                 closeAllLists();
             }
         });
-        // [MỚI - SIMPLE FIX] Khi mất focus (Tab đi chỗ khác), đóng list sau 200ms
-        // Delay 200ms để nếu người dùng click chuột vào item thì sự kiện click kịp chạy trước khi list biến mất
+        // [MỚI - THEO BEST PRACTICE CỦA CỘNG ĐỒNG]
+        // Vì click vào item đã bị preventDefault (không làm mất focus), 
+        // sự kiện blur dưới đây CHỈ chạy khi user thực sự nhấn phím Tab hoặc click ra ngoài hẳn.
         input.addEventListener("blur", () => {
-            setTimeout(() => {
-                closeAllLists();
-            }, 200);
+            closeAllLists();
         });
-        // Đóng list khi click ra ngoài
-        document.addEventListener("click", (e) => { if (e.target !== input) closeAllLists(); });
 
         // Đóng list khi scroll container cha (nếu có)
         if (container) container.addEventListener("scroll", () => closeAllLists(), true);

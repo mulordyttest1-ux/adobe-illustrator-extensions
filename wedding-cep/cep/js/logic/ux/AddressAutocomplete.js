@@ -81,15 +81,17 @@ export class AddressAutocomplete {
     /**
      * Format kết quả theo mode
      * @param {Object} match - Kết quả từ search()
-     * @param {boolean} useSuffix - true = dấu phẩy, false = gạch ngang
+     * @param {string} separator - Dấu phân cách (VD: ', ' hoặc ' - ')
      * @returns {string|null}
      */
-    static format(match, useSuffix = false) {
+    static format(match, separator = ", ") {
         if (!match) return null;
 
-        return useSuffix
-            ? `${match.c}, ${match.p}`    // "Phường Tân Lập, Tỉnh Đắk Lắk"
-            : `${match.c} - ${match.p}`;  // "Phường Tân Lập - Tỉnh Đắk Lắk"
+        // Database vn_address_custom.json có tự chứa dấu ' - ' trong match.p (VD: 'Quận 1 - TP.HCM')
+        // Ta đè luôn dấu này bằng separator kế thừa để đồng bộ 100%
+        const cleanP = match.p.replace(/\s*-\s*/g, separator);
+
+        return `${match.c}${separator}${cleanP}`;
     }
 }
 

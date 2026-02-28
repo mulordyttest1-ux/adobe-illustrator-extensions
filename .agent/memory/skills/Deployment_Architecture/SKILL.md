@@ -1,148 +1,105 @@
 ---
-description: Deployment Architecture - Symbolic Link từ CEP Extension Folder đến Google Drive
+name: Deployment_Architecture
+description: Monorepo deployment - Symlink setup cho Wedding CEP và Symbol CEP trong Adobe Illustrator
+version: 2.0
 ---
 
-# Deployment Architecture
+# Deployment Architecture (Monorepo v2.0)
 
-## 🔗 Symbolic Link Setup
+> **Updated:** 2026-02-25 — Chuyển từ Google Drive sang Monorepo
 
-Wedding Scripter sử dụng **symbolic link** để deploy code từ Google Drive vào CEP Extension folder của Adobe.
+---
 
-### Cấu trúc
-
-```
-SOURCE (Google Drive):
-i:\My Drive\script ho tro adobe illustrator\
-
-TARGET (CEP Extension):
-C:\Users\<username>\AppData\Roaming\Adobe\CEP\extensions\com.dinhson.weddingscripter\
-    ↑
-    └── (Symbolic Link)
-```
-
-### Extension ID
+## 🏗️ Monorepo Structure
 
 ```
-com.dinhson.weddingscripter
+c:\Projects\adobe-illustrator-extensions\    ← ROOT
+├── wedding-cep\                             ← Wedding Scripter CEP
+│   ├── cep\                                 ← CEP Panel (HTML/JS/JSX)
+│   │   ├── index.html
+│   │   ├── js\         (ES6+)
+│   │   ├── jsx\        (ES3 ExtendScript)
+│   │   ├── css\
+│   │   └── data\       (schema.json)
+│   └── dist\                                ← Build output
+│
+├── symbol-cep\                              ← Symbol CEP (2nd project)
+│   ├── cep\
+│   └── dist\
+│
+├── shared\                                  ← Shared libs (ESLint, testing)
+│   ├── eslint.config.mjs
+│   └── testing\E2ERunner.cjs
+│
+├── .agent\                                  ← Agent Knowledge Base
+│   ├── workflows\                           ← Workflow Protocol v4.0
+│   ├── memory\skills\                       ← Domain Skills
+│   └── lessons_learned.md                   ← Persistent lessons
+│
+└── package.json                             ← Nx monorepo root
 ```
 
-### Lý do
+---
 
-Dự án được làm việc trên **nhiều máy**, nên nguồn code luôn ở **Google Drive** để sync tự động.
+## 🔗 Symlink Setup
 
-## 🚨 KHI NÀO CẦN BIẾT
+CEP extensions load từ `AppData`, nhưng code thật ở monorepo.
 
-### 1. File Editing
+### Paths
 
-Khi edit file trong project, CEP sẽ load từ **symbolic link target** (AppData), nhưng file thực sự ở **source** (Google Drive).
+| CEP | Source (Monorepo) | Target (AppData Symlink) |
+|:----|:------------------|:-------------------------|
+| Wedding | `c:\Projects\adobe-illustrator-extensions\wedding-cep\cep` | `%APPDATA%\Adobe\CEP\extensions\com.dinhson.weddingscripter` |
+| Symbol | `c:\Projects\adobe-illustrator-extensions\symbol-cep\cep` | `%APPDATA%\Adobe\CEP\extensions\com.dinhson.symbolcep` |
 
-**LUÔN edit file ở:**
-```
-i:\My Drive\script ho tro adobe illustrator\cep\jsx\illustrator.jsx
-```
-
-**CEP sẽ load từ:**
-```
-C:\Users\mulor\AppData\Roaming\Adobe\CEP\extensions\com.dinhson.weddingscripter\jsx\illustrator.jsx
-```
-
-### 2. Testing Changes
-
-Sau khi edit file:
-1. ✅ File đã được sửa ở Google Drive
-2. ⏳ Symbolic link tự động sync (thường instant)
-3. 🔄 **BẮT BUỘC restart Illustrator** để CEP load lại
-
-> **QUAN TRỌNG:** CEP cache file JSX trong memory. Phải restart Illustrator hoàn toàn để thấy thay đổi!
-
-### 3. Debugging File Load
-
-Nếu thay đổi không có hiệu lực:
-
-**Check symbolic link:**
-```powershell
-Get-Item "C:\Users\$env:USERNAME\AppData\Roaming\Adobe\CEP\extensions\com.dinhson.weddingscripter" | Select-Object LinkType, Target
-```
-
-**Expected output:**
-```
-LinkType      Target
---------      ------
-SymbolicLink  {i:\My Drive\script ho tro adobe illustrator\cep}
-```
-
-**Verify file sync:**
-```powershell
-# Check if file exists in both locations
-Test-Path "i:\My Drive\script ho tro adobe illustrator\cep\jsx\illustrator.jsx"
-Test-Path "C:\Users\$env:USERNAME\AppData\Roaming\Adobe\CEP\extensions\com.dinhson.weddingscripter\jsx\illustrator.jsx"
-
-# Compare file timestamps
-(Get-Item "i:\My Drive\script ho tro adobe illustrator\cep\jsx\illustrator.jsx").LastWriteTime
-(Get-Item "C:\Users\$env:USERNAME\AppData\Roaming\Adobe\CEP\extensions\com.dinhson.weddingscripter\jsx\illustrator.jsx").LastWriteTime
-```
-
-## 🛠️ Setup Command (Reference)
-
-CMD setup đã chạy trước đó (trong `/workflows/setup.md` hoặc tương tự):
+### Create Symlink (PowerShell Admin)
 
 ```powershell
-# Create symbolic link
-$source = "i:\My Drive\script ho tro adobe illustrator\cep"
+# Wedding CEP
+$source = "c:\Projects\adobe-illustrator-extensions\wedding-cep\cep"
 $target = "$env:APPDATA\Adobe\CEP\extensions\com.dinhson.weddingscripter"
+if (Test-Path $target) { Remove-Item $target -Force -Recurse }
+New-Item -ItemType SymbolicLink -Path $target -Target $source
 
-# Remove old if exists
-if (Test-Path $target) {
-    Remove-Item $target -Force -Recurse
-}
-
-# Create new symbolic link
+# Symbol CEP
+$source = "c:\Projects\adobe-illustrator-extensions\symbol-cep\cep"
+$target = "$env:APPDATA\Adobe\CEP\extensions\com.dinhson.symbolcep"
+if (Test-Path $target) { Remove-Item $target -Force -Recurse }
 New-Item -ItemType SymbolicLink -Path $target -Target $source
 ```
 
-## ⚠️ Common Issues
+Hoặc dùng script `.agent/create_symlink.ps1` (đã có sẵn).
 
-### Issue: Thay đổi file không có hiệu lực
+---
 
-**Nguyên nhân:**
-1. Chưa restart Illustrator
-2. Symbolic link bị break
-3. Google Drive đang sync (file lock)
+## 🔧 Build & Test
 
-**Giải pháp:**
-1. Tắt HOÀN TOÀN Illustrator (check Task Manager)
-2. Verify symbolic link
-3. Đợi Google Drive sync xong (icon tick xanh)
-4. Khởi động lại Illustrator
-
-### Issue: CEP panel không load
-
-**Nguyên nhân:**
-- Symbolic link path sai
-- Extension ID trong manifest.xml không khớp
-
-**Giải pháp:**
-```powershell
-# Re-create symbolic link
-$source = "i:\My Drive\script ho tro adobe illustrator\cep"
-$target = "$env:APPDATA\Adobe\CEP\extensions\com.dinhson.weddingscripter"
-
-Remove-Item $target -Force -Recurse -ErrorAction SilentlyContinue
-New-Item -ItemType SymbolicLink -Path $target -Target $source -Force
+```bash
+npm run build:wedding       # Build wedding CEP
+npm run build:symbol        # Build symbol CEP
+npm run lint:wedding        # Lint wedding
+npm run lint:all            # Lint monorepo
+npm run test:e2e            # Smoke test via CDP
+npm run verify              # Full verify (lint + build + e2e + sync)
 ```
 
-## 📝 Best Practices
+---
 
-1. **ALWAYS edit ở Google Drive source** (`i:\My Drive\...`)
-2. **NEVER edit trực tiếp trong AppData** (sẽ bị ghi đè khi sync)
-3. **Restart Illustrator sau mỗi thay đổi JSX**
-4. **Check Google Drive sync status** trước khi test
-5. **Verify file timestamps** nếu nghi ngờ không sync
+## ⚠️ Common Issues
 
-## 🔍 Agent Guidelines
+| Issue | Cause | Fix |
+|:------|:------|:----|
+| Code không thay đổi sau edit | Chưa build lại | `npm run build:wedding` |
+| Panel không load | Symlink bị hỏng | Chạy lại `create_symlink.ps1` |
+| CEP cache file cũ | Cần restart Illustrator | Tắt hoàn toàn AI → mở lại |
+| Debug mode không hoạt động | Registry chưa set | `Set-ItemProperty -Path "HKCU:\Software\Adobe\CSXS.11" -Name "PlayerDebugMode" -Value 1` |
 
-Khi Agent cần:
-- **Edit CEP files:** Luôn edit ở `i:\My Drive\script ho tro adobe illustrator\cep\`
-- **Debug load issues:** Check symbolic link trước
-- **Verify changes:** Remind user restart Illustrator
-- **Test files:** Confirm Google Drive sync complete
+---
+
+## 📝 Agent Guidelines
+
+- **LUÔN edit** ở monorepo (`c:\Projects\adobe-illustrator-extensions\...`)
+- **KHÔNG edit** trực tiếp trong `AppData` (symlink target)
+- **Build TRƯỚC khi test:** `npm run build:wedding`
+- **Restart Illustrator** sau khi sửa JSX files
+- Debug: `http://localhost:8097` (Wedding) hoặc port trong `.debug` file

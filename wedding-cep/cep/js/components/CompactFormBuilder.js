@@ -94,6 +94,22 @@ export class CompactFormBuilder {
         if (hasIdx && idx) {
             idx.tabIndex = this._idxLocked ? -1 : this._tabIndex++;
             this.refs[`${key}_idx`] = idx;
+
+            // Smart IDX: auto-detect ethnic names on blur
+            ta.addEventListener('blur', () => {
+                if (this._idxLocked && typeof NameValidator !== 'undefined') {
+                    const suggested = NameValidator.suggestIdx(ta.value);
+                    if (suggested !== 0) {
+                        idx.value = suggested;
+                        idx.style.backgroundColor = '#fff3cd';
+                        idx.title = 'Đã tự nhận diện tên đồng bào';
+                    } else {
+                        idx.value = 0;
+                        idx.style.backgroundColor = '';
+                        idx.title = '';
+                    }
+                }
+            });
         }
 
         return wrapper;

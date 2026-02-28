@@ -2,7 +2,7 @@
 <ExtensionList>
     <Extension Id="com.dinhson.imposition.panel.dev">
         <HostList>
-            <Host Name="ILST" Port="9088"/>
+            <Host Name="ILST" Port="9098"/>
         </HostList>
     </Extension>
 </ExtensionList>

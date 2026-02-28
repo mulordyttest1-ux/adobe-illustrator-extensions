@@ -48,6 +48,14 @@ export const ScanAction = {
                 DateGridWidget.triggerCompute();
             }
 
+            // Smart IDX: trigger blur on name fields to auto-detect ethnic names
+            setTimeout(() => {
+                const container = builder.container || document;
+                container.querySelectorAll('textarea.compact-input').forEach(ta => {
+                    if (ta.value) ta.dispatchEvent(new Event('blur'));
+                });
+            }, 0);
+
             const count = Object.keys(normalized).length;
             showToast('Đã scan ' + count + ' trường dữ liệu!', 'success');
             return { success: true, count };

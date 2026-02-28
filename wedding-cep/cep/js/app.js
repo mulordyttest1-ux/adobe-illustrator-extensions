@@ -48,6 +48,7 @@ import { UX_PATTERNS } from './logic/ux/constants/patterns.js';
 import { UnicodeNormalizer } from './logic/ux/core/UnicodeNormalizer.js';
 import { VietnamesePhonetics } from './logic/ux/validators/VietnamesePhonetics.js';
 import { NameNormalizer } from './logic/ux/normalizers/NameNormalizer.js';
+import { EthnicNameNormalizer } from './logic/ux/normalizers/EthnicNameNormalizer.js';
 import { AddressNormalizer } from './logic/ux/normalizers/AddressNormalizer.js';
 import { DateNormalizer } from './logic/ux/normalizers/DateNormalizer.js';
 import { NameValidator } from './logic/ux/validators/NameValidator.js';
@@ -131,6 +132,7 @@ window.AddressValidator = AddressValidator;
 window.DateValidator = DateValidator;
 window.AddressAutocomplete = AddressAutocomplete;
 window.InputEngine = InputEngine;
+window.EthnicNameNormalizer = EthnicNameNormalizer;
 
 // Components
 window.DateLogic = DateLogic;
@@ -254,6 +256,11 @@ function wireActionButtons() {
             });
         });
     }
+
+    const reloadBtn = document.getElementById('btn-reload-panel');
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', () => location.reload());
+    }
 }
 
 // ============================================================
@@ -297,6 +304,40 @@ function _initCalendarEngine() {
     }
 }
 
+function _initEthnicNameNormalizer() {
+    try {
+        const cs = new CSInterface();
+        let rootPath = cs.getSystemPath(CSInterface.EXTENSION);
+        if (rootPath.startsWith('file://')) rootPath = rootPath.substring(7);
+        if (navigator.platform.indexOf('Win') > -1 && rootPath.startsWith('/') && rootPath[2] === ':') {
+            rootPath = rootPath.substring(1);
+        }
+        rootPath = decodeURIComponent(rootPath);
+        const jsonPath = rootPath + '/data/ethnic_names.json';
+
+        let fs;
+        if (typeof window.require === 'function') {
+            fs = window.require('fs');
+        } else if (typeof require === 'function') {
+            fs = require('fs');
+        }
+
+        if (fs && fs.existsSync(jsonPath)) {
+            const content = fs.readFileSync(jsonPath, 'utf8');
+            const data = JSON.parse(content);
+            EthnicNameNormalizer.init(data);
+
+            // Bridge: inject suggestIdx from UX layer → Domain layer
+            NameAnalysis.setSuggestIdxFn((name) => NameValidator.suggestIdx(name));
+            console.log('[App] EthnicNameNormalizer ready');
+        } else {
+            console.warn('[App] ethnic_names.json not found:', jsonPath);
+        }
+    } catch (e) {
+        console.error('[App] Failed to init EthnicNameNormalizer:', e);
+    }
+}
+
 async function init() {
     // Auto-select all text on Focus (Tabbing)
     document.addEventListener('focusin', function (e) {
@@ -316,6 +357,7 @@ async function init() {
 
         // 1. Preload Core Dependencies
         await AddressAutocomplete.init();
+        _initEthnicNameNormalizer();
         const schema = await SchemaLoader.load();
 
         // 2. Initialize Tab Navigation & Render Forms
@@ -343,11 +385,9 @@ async function init() {
         });
 
         // 3. Debug & Utilities
-        const reloadBtn = document.getElementById('btn-reload-panel');
-        if (reloadBtn) {
-            reloadBtn.addEventListener('click', () => location.reload());
-        }
+        // Reload button now wired via wireActionButtons() inside Compact Tab logic
 
+        // 5. System Ready
         // 5. System Ready
         hideLoading();
 

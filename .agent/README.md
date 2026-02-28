@@ -25,11 +25,12 @@
 │   ├── templates/ (Biểu mẫu Markdown)
 │   └── API_SURFACE.md / DEPENDENCY_MAP.md
 │
-├── workflows/ (Quy trình chuẩn - Slash Commands)
-│   ├── feature_development.md
-│   ├── lint.md
-│   ├── pre-flight.md
-│   └── safe_refactor.md
+├── workflows/ (Pipeline v4.0 — Plan → Act → Reflect)
+│   ├── core_protocol.md ⭐ (ALWAYS loaded)
+│   └── skills/ (Progressive Loading)
+│       ├── ideation/ feature_dev/ refactoring/
+│       ├── testing/ lint/ model_selection/
+│       └── handoff/
 │
 └── scripts/ (PowerShell Utilities)
     ├── create_symlink.ps1
