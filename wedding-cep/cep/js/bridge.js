@@ -99,6 +99,10 @@ export class Bridge {
     async collectFrames() { return this.call('collectFrames'); }
     async applyPlan(plans) { return this.call('applyPlan', plans); }
 
+    // SCHEMA INJECTION
+    async readSelectionObjects() { return this.call('readSelectionObjects'); }
+    async applyTextChanges(changes) { return this.call('applyTextChanges', changes); }
+
     // Logic Update thông minh
     async updateWithStrategy(packet) {
         try {

@@ -138,7 +138,9 @@
         <header class="app-header">
             <span class="app-title">🎊 Wedding Scripter</span>
             <span class="app-version">v1.0.0</span>
-            <button id="btn-reload-panel" title="Làm mới Panel" style="padding: 2px 6px; font-size: 10px; cursor: pointer; float: right; margin-top: 2px;">🔄 Reload</button>
+            <button id="btn-reload-panel" title="Làm mới Panel"
+                style="padding: 2px 6px; font-size: 10px; cursor: pointer; float: right; margin-top: 2px;">🔄
+                Reload</button>
         </header>
 
         <!-- Main Content with Tabs -->
@@ -148,6 +150,9 @@
                 <nav class="ds-tabs" role="tablist">
                     <button class="ds-tab active" data-tab="compact" role="tab" aria-selected="true">
                         Compact
+                    </button>
+                    <button class="ds-tab" data-tab="schema" role="tab" aria-selected="false">
+                        🪄 Schema
                     </button>
                     <button class="ds-tab" data-tab="settings" role="tab" aria-selected="false">
                         Cài đặt
@@ -166,7 +171,17 @@
                         </div>
                     </section>
 
-                    <!-- Tab 2: Settings -->
+                    <!-- Tab 2: Manual Schema Injector -->
+                    <section id="tab-schema" class="ds-tab-panel" role="tabpanel">
+                        <div id="schema-content">
+                            <!-- Will be loaded by SchemaTabComponents -->
+                            <div class="ds-flex-center ds-text-muted ds-p-lg">
+                                <span>Đang tải Schema Tools...</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Tab 3: Settings -->
                     <section id="tab-settings" class="ds-tab-panel" role="tabpanel">
                         <div class="ds-panel">
                             <div class="ds-panel-header">Thông tin</div>

@@ -120,6 +120,94 @@ $.global.IllustratorBridge = {
         return sendResult({ success: true, message: "Pong" });
     },
 
+    // --- SCHEMA INJECTION (PHASE 1) ---
+    readSelectionObjects: function () {
+        try {
+            if (app.documents.length === 0) return sendResult({ success: false, error: "No document open" });
+            var doc = app.activeDocument;
+
+            if (!doc.selection || doc.selection.length === 0) {
+                return sendResult({ success: true, data: [] });
+            }
+
+            var _collectInSelection = function (items) {
+                var collected = [];
+                for (var k = 0; k < items.length; k++) {
+                    var obj = items[k];
+                    if (obj.typename === "TextFrame") {
+                        collected.push(obj);
+                    } else if (obj.typename === "GroupItem") {
+                        collected = collected.concat(_collectInSelection(obj.pageItems));
+                    }
+                }
+                return collected;
+            };
+
+            var frames = _collectInSelection(doc.selection);
+
+
+            var results = [];
+            for (var i = 0; i < frames.length; i++) {
+                var item = frames[i];
+                try {
+                    results.push({
+                        id: i,
+                        text: item.contents,
+                        uuid: item.uuid || ("tmp_" + i),
+                        top: item.top,
+                        left: item.left
+                    });
+                } catch (e) { }
+            }
+            return sendResult({ success: true, data: results });
+        } catch (e) {
+            return sendResult({ success: false, error: e.message });
+        }
+    },
+
+    applyTextChanges: function (payloadJson) {
+        try {
+            var payload = eval('(' + payloadJson + ')');
+            if (!payload || payload.length === 0) return sendResult({ success: true, updated: 0 });
+
+            var doc = app.activeDocument;
+            if (!doc.selection || doc.selection.length === 0) {
+                return sendResult({ success: false, error: "Mất vùng chọn" });
+            }
+
+            var _collectInSelection = function (items) {
+                var collected = [];
+                for (var k = 0; k < items.length; k++) {
+                    var obj = items[k];
+                    if (obj.typename === "TextFrame") {
+                        collected.push(obj);
+                    } else if (obj.typename === "GroupItem") {
+                        collected = collected.concat(_collectInSelection(obj.pageItems));
+                    }
+                }
+                return collected;
+            };
+
+            var frames = _collectInSelection(doc.selection);
+            var updated = 0;
+
+            for (var i = 0; i < payload.length; i++) {
+                var change = payload[i];
+                if (change.id >= 0 && change.id < frames.length) {
+                    var item = frames[change.id];
+                    try {
+                        item.contents = change.newText;
+                        updated++;
+                    } catch (e) { }
+                }
+            }
+            app.redraw();
+            return sendResult({ success: true, updated: updated });
+        } catch (e) {
+            return sendResult({ success: false, error: e.message });
+        }
+    },
+
     // --- COLLECT (Internal Helper) ---
     collectFrames: function () {
         return this.scanWithMetadata();

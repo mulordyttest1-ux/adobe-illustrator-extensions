@@ -29,7 +29,7 @@ Agent đọc frontmatter `skills/*/SKILL.md` rồi chọn skill phù hợp:
 
 | Task Signal | Skill(s) to Load |
 |:------------|:-----------------|
-| **MỌI task (D1=1→5)** | **`skills/community_first/`** (BẮT BUỘC, luôn load) |
+| **MỌI task (D1=1→5)** | Gọi `@/communication_search` TRƯỚC TIÊN để trinh sát |
 | "refactor", "đổi tên", "di chuyển", "tách" | `skills/refactoring/` |
 | "feature mới", "build", "thêm chức năng" | `skills/feature_dev/` + `skills/testing/` |
 | "bug", "lỗi", "fix", "test" | `skills/testing/` |
@@ -55,17 +55,18 @@ Sau khi chọn skill, Agent score D1 và khuyến nghị model:
 
 > ⛔ **HARD STOP TẠI §C1/§C2:** Agent BẮT BUỘC phải tách riêng các lệnh chạy tool `search_web` (§C1) và `grep` (§C2). Quá trình chạy 2 bước này phải độc lập và có kết quả thật. KHÔNG ĐƯỢC tự bịa ra Best Practice hoặc chém gió ra kết quả grep rồi nhảy ngay sang §C3 trong cùng 1 lần chat.
 
-### §C1 — COMMUNITY FIRST 🔴 [BLOCKER] (Trọng tâm Pipeline)
+### §C1 — COMMUNICATION SEARCH 🔴 [BLOCKER] (Trọng tâm Pipeline)
 
-> 🦁 Load **`skills/community_first/SKILL.md`** — BẢN FULL.
-> MỌI task (D1=1 đến D1=5) đều PHẢI chạy. Không ngoại lệ.
+> ⚠️ CẢNH BÁO: BƯỚC NÀY ĐƯỢC CHẠY ĐỘC LẬP QUA LỆNH `@/communication_search`
 
-**Tóm tắt pipeline (chi tiết trong skill file):**
-- **Step 0: DEFINE + QUERY EXPANSION** — 1 câu tiếng Anh + 2-3 search queries
-- **Step 1: SEARCH + LỌC NHIỄU** — `search_web` + Rerank (bỏ noise, giữ W3C/MDN/SO)
-- **Step 2: EXTRACT** — Trích best practice + anti-pattern + edge case
-- **Step 3: ALIGN** — Khớp → tiến. Lệch → DỪNG.
-- **Step 4: Codebase Recon** — Đọc governance, dependency map
+Vấn đề muôn thuở của AI (Parametric Hallucination) là Agent thường bị mù ngữ cảnh codebase khi chạy research. Để khắc phục, phần §C1 này áp dụng **Context Loop**:
+
+1.  **Khảo sát Base Tạm (View Context):** Agent ĐƯỢC QUYỀN `grep_search` hoặc `view_file` xem dự án đang dùng ES3, ES6, React hay Node.js.
+2.  **Quét Web bằng tool `search_web`:** Tìm kiếm Best Practice trên StackOverflow / Github.
+3.  **Đối chiếu (Cross-check):** Mang phương án web về ốp vào context lấy ở bước 1. Nếu trên web bảo "Dùng fetch API" mà code của dự án là ES3 (không có fetch), Agent BẮT BUỘC bỏ cách đó, phải search tiếp "how to make http request in ExtendScript ES3".
+4.  **Báo cáo:** Ghi kết quả cuối cùng (đã sát ngữ cảnh) ra file `.task_steps/C1_document.md`.
+
+*Nếu đang ở bước `@/runbook.md`, Agent BỎ QUA quá trình search bên trên và chỉ **ĐỌC KẾT QUẢ** từ file `C1_document.md`.*
 
 > ⛔ Agent KHÔNG ĐƯỢC nhảy vào code nếu chưa hoàn thành Step 0–3.
 > Suy luận cá nhân mà không kiểm chứng = Parametric Hallucination.

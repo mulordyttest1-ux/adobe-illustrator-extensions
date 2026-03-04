@@ -85,6 +85,8 @@ import { ConfigController } from './controllers/ConfigController.js';
 import { ScanAction } from './actions/ScanAction.js';
 import { UpdateAction } from './actions/UpdateAction.js';
 import { SwapAction } from './actions/SwapAction.js';
+import { ManualInjectAction } from './actions/ManualInjectAction.js';
+import { InjectSchemaAction } from './actions/InjectSchemaAction.js';
 
 // ============================================================
 // LAYER 8: Infrastructure (Bridge, SchemaLoader)
@@ -145,6 +147,8 @@ window.AddressService = AddressService;
 window.FormLogic = FormLogic;
 window.FormComponents = FormComponents;
 window.CompactFormBuilder = CompactFormBuilder;
+import { SchemaTabComponents } from './components/modules/SchemaTabComponents.js';
+window.SchemaTabComponents = SchemaTabComponents;
 
 // Controllers
 window.UIFeedback = UIFeedback;
@@ -156,6 +160,8 @@ window.ConfigController = ConfigController;
 window.ScanAction = ScanAction;
 window.UpdateAction = UpdateAction;
 window.SwapAction = SwapAction;
+window.ManualInjectAction = ManualInjectAction;
+window.InjectSchemaAction = InjectSchemaAction;
 
 // Infrastructure
 window.SchemaLoader = SchemaLoader;
@@ -256,6 +262,8 @@ function wireActionButtons() {
             });
         });
     }
+
+
 
     const reloadBtn = document.getElementById('btn-reload-panel');
     if (reloadBtn) {
@@ -376,6 +384,48 @@ async function init() {
                                 onChange: () => { }
                             }).build();
                             wireActionButtons();
+                        }
+                    }
+                },
+                'schema': {
+                    init: () => {
+                        const schemaContainer = document.getElementById('schema-content');
+                        if (schemaContainer) {
+                            // Render UI
+                            const schemaRefs = {};
+                            const schemaBuilder = new SchemaTabComponents(schemaContainer, schemaRefs);
+                            schemaBuilder.render();
+
+                            // Wire Action Auto
+                            const btnAuto = schemaRefs['btn-inject-auto'];
+                            if (btnAuto) {
+                                btnAuto.addEventListener('click', () => {
+                                    InjectSchemaAction.execute({ bridge, showToast, button: btnAuto });
+                                });
+                            }
+
+                            // Wire Action Bulk
+                            ['pos1', 'pos2'].forEach(prefix => {
+                                const btn = schemaRefs[`btn-bulk-${prefix}`];
+                                if (btn) {
+                                    btn.addEventListener('click', () => {
+                                        ManualInjectAction.injectBulk({ bridge, showToast, button: btn, prefix });
+                                    });
+                                }
+                            });
+
+                            // Wire Action Single
+                            Object.keys(schemaRefs).forEach(key => {
+                                if (key.startsWith('btn-single-')) {
+                                    const btn = schemaRefs[key];
+                                    btn.addEventListener('click', () => {
+                                        ManualInjectAction.injectSingle({
+                                            bridge, showToast, button: btn,
+                                            schemaValue: btn.dataset.schema
+                                        });
+                                    });
+                                }
+                            });
                         }
                     }
                 },

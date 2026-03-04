@@ -8,17 +8,18 @@ version: 1.0
 
 > Load khi context sắp đầy, đổi conversation, hoặc switch model.
 
-## §H1 — SESSION CHECKPOINT (Khi context sắp đầy hoặc task dở dang)
-- [ ] Ghi state hiện tại vào `task.md` (progress %)
-- [ ] Ghi tóm tắt findings vào compliance report
-- [ ] Kiểm tra `task.md` đã cập nhật đúng trạng thái
-- [ ] Ghi "RESUME POINT: [mô tả bước tiếp theo]" vào `task.md`
+## §H1 — DỌN DẸP VÀ CHỐT TRẠNG THÁI (State Preservation)
+*Khi context sắp đầy, token burn cao, hoặc kết thúc Milestone*
+- [ ] Xóa bỏ/đánh dấu hoàn tất các tác vụ cũ trong `task.md`.
+- [ ] Tổng hợp các bài học, quyết định kỹ thuật sâu sắc vào file `.task_steps/Memory.md` (Living Documentation).
+- [ ] Ghi chú "RESUME POINT: [Việc cần làm ngay trong Session tiếp theo]" ở đỉnh file `task.md`.
+- [ ] Đảm bảo `C1_document.md` hoặc `IMPLEMENTATION_PLAN` vẫn phản ánh đúng thực tế.
 
-## §H2 — RESUME (Khi mở conversation mới)
-- [ ] Đọc `task.md` → Tìm "RESUME POINT"
-- [ ] Đọc compliance report → Nắm context
-- [ ] Đọc `GOVERNANCE.md` → Cập nhật state
-- [ ] Tiếp tục từ bước ghi trong RESUME POINT
+## §H2 — KHÔI PHỤC NGỮ CẢNH (Khi mở Cuộc trò chuyện mới)
+- [ ] Đọc file `task.md` → Tìm "RESUME POINT" làm mục tiêu trọng tâm tức khắc.
+- [ ] Đọc file `.task_steps/Memory.md` → Load nguyên tắc kiến trúc (Architecture constraints).
+- [ ] KHÔNG dùng lệnh `view_file` đọc toàn cục dự án để tiết kiệm Token, chỉ đọc 1-2 file codebase thật sự cần sửa.
+- [ ] Tiếp tục code từ bước RESUME POINT.
 
 ## §H3 — MODEL SWITCH (Khi chuyển model theo §M5)
 1. Agent hoàn thành §M5 → Output recommendation
