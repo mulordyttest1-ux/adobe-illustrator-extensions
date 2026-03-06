@@ -271,6 +271,72 @@ function wireActionButtons() {
     }
 }
 
+function _wireSchemaActions(schemaRefs, bridge, showToast) {
+    // Wire Action Auto
+    const btnAuto = schemaRefs['btn-inject-auto'];
+    if (btnAuto) {
+        btnAuto.addEventListener('click', () => {
+            InjectSchemaAction.execute({ bridge, showToast, button: btnAuto });
+        });
+    }
+
+    // Wire Action Bulk
+    ['pos1', 'pos2'].forEach(prefix => {
+        const btn = schemaRefs[`btn-bulk-${prefix}`];
+        if (btn) {
+            btn.addEventListener('click', () => {
+                ManualInjectAction.injectBulk({ bridge, showToast, button: btn, prefix });
+            });
+        }
+    });
+
+    // Wire Action Date (10 nút date.tiec.* + 2 nút clone)
+    Object.keys(schemaRefs).forEach(key => {
+        if (key.startsWith('btn-date-')) {
+            const btn = schemaRefs[key];
+            if (key === 'btn-date-clone-le' || key === 'btn-date-clone-nhap') {
+                // Nút Clone
+                btn.addEventListener('click', () => {
+                    ManualInjectAction.injectDateClone({
+                        bridge, showToast, button: btn,
+                        targetMoc: btn.dataset.cloneTarget
+                    });
+                });
+            } else {
+                // Nút tiêm đơn date
+                btn.addEventListener('click', () => {
+                    ManualInjectAction.injectSingle({
+                        bridge, showToast, button: btn,
+                        schemaValue: btn.dataset.schema
+                    });
+                });
+            }
+        }
+    });
+
+    // Wire Action Single (bao gồm nút compound ho+ten, lot+ten)
+    Object.keys(schemaRefs).forEach(key => {
+        if (key.startsWith('btn-single-')) {
+            const btn = schemaRefs[key];
+            btn.addEventListener('click', () => {
+                const schemaValue = btn.dataset.schema;
+                // Nút compound: value có dạng "key1|key2"
+                if (schemaValue && schemaValue.includes('|')) {
+                    ManualInjectAction.injectCompound({
+                        bridge, showToast, button: btn,
+                        schemaValue
+                    });
+                } else {
+                    ManualInjectAction.injectSingle({
+                        bridge, showToast, button: btn,
+                        schemaValue
+                    });
+                }
+            });
+        }
+    });
+}
+
 // ============================================================
 // INITIALIZATION
 // ============================================================
@@ -396,69 +462,8 @@ async function init() {
                             const schemaBuilder = new SchemaTabComponents(schemaContainer, schemaRefs);
                             schemaBuilder.render();
 
-                            // Wire Action Auto
-                            const btnAuto = schemaRefs['btn-inject-auto'];
-                            if (btnAuto) {
-                                btnAuto.addEventListener('click', () => {
-                                    InjectSchemaAction.execute({ bridge, showToast, button: btnAuto });
-                                });
-                            }
-
-                            // Wire Action Bulk
-                            ['pos1', 'pos2'].forEach(prefix => {
-                                const btn = schemaRefs[`btn-bulk-${prefix}`];
-                                if (btn) {
-                                    btn.addEventListener('click', () => {
-                                        ManualInjectAction.injectBulk({ bridge, showToast, button: btn, prefix });
-                                    });
-                                }
-                            });
-
-                            // Wire Action Date (10 nút date.tiec.* + 2 nút clone)
-                            Object.keys(schemaRefs).forEach(key => {
-                                if (key.startsWith('btn-date-')) {
-                                    const btn = schemaRefs[key];
-                                    if (key === 'btn-date-clone-le' || key === 'btn-date-clone-nhap') {
-                                        // Nút Clone
-                                        btn.addEventListener('click', () => {
-                                            ManualInjectAction.injectDateClone({
-                                                bridge, showToast, button: btn,
-                                                targetMoc: btn.dataset.cloneTarget
-                                            });
-                                        });
-                                    } else {
-                                        // Nút tiêm đơn date
-                                        btn.addEventListener('click', () => {
-                                            ManualInjectAction.injectSingle({
-                                                bridge, showToast, button: btn,
-                                                schemaValue: btn.dataset.schema
-                                            });
-                                        });
-                                    }
-                                }
-                            });
-
-                            // Wire Action Single (bao gồm nút compound ho+ten, lot+ten)
-                            Object.keys(schemaRefs).forEach(key => {
-                                if (key.startsWith('btn-single-')) {
-                                    const btn = schemaRefs[key];
-                                    btn.addEventListener('click', () => {
-                                        const schemaValue = btn.dataset.schema;
-                                        // Nút compound: value có dạng "key1|key2"
-                                        if (schemaValue && schemaValue.includes('|')) {
-                                            ManualInjectAction.injectCompound({
-                                                bridge, showToast, button: btn,
-                                                schemaValue
-                                            });
-                                        } else {
-                                            ManualInjectAction.injectSingle({
-                                                bridge, showToast, button: btn,
-                                                schemaValue
-                                            });
-                                        }
-                                    });
-                                }
-                            });
+                            // Wire Action
+                            _wireSchemaActions(schemaRefs, bridge, showToast);
                         }
                     }
                 },

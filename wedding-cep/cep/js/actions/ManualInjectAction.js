@@ -16,15 +16,12 @@ export const ManualInjectAction = {
 
             const frames = await this._fetchFrames(bridge, showToast);
             if (!frames) return;
-
-            const keyMatch = schemaValue.match(/\{([\w.]+)\}/);
-            const key = keyMatch ? keyMatch[1] : schemaValue;
             const plans = frames.map(frame => ({
                 id: frame.id,
                 plan: {
                     mode: 'DIRECT',
                     content: schemaValue, // Schema key trực tiếp vào content
-                    meta: { type: 'stateful', keys: [key], mappings: [] }
+                    meta: { type: 'stateful', keys: [], mappings: [] }
                 }
             }));
 
@@ -65,7 +62,7 @@ export const ManualInjectAction = {
                 plan: {
                     mode: 'DIRECT',
                     content: compoundContent,
-                    meta: { type: 'stateful', keys, mappings: [] }
+                    meta: { type: 'stateful', keys: [], mappings: [] }
                 }
             }));
 
@@ -118,14 +115,12 @@ export const ManualInjectAction = {
 
             for (let i = 0; i < sortedFrames.length; i++) {
                 if (variables[i]) {
-                    const keyMatch = variables[i].match(/\{([\w.]+)\}/);
-                    const key = keyMatch ? keyMatch[1] : variables[i];
                     plans.push({
                         id: sortedFrames[i].id,
                         plan: {
                             mode: 'DIRECT',
                             content: variables[i], // Schema key trực tiếp vào content
-                            meta: { type: 'stateful', keys: [key], mappings: [] }
+                            meta: { type: 'stateful', keys: [], mappings: [] }
                         }
                     });
                 }
@@ -166,17 +161,13 @@ export const ManualInjectAction = {
 
                 // Swap tiec → targetMoc trong content
                 const newContent = content.replace(/date\.tiec\./g, `date.${targetMoc}.`);
-                const newKeys = matches.map(m => {
-                    const km = m.match(/\{([\w.]+)\}/);
-                    return km ? km[1].replace('date.tiec.', `date.${targetMoc}.`) : m;
-                });
 
                 plans.push({
                     id: frame.id,
                     plan: {
                         mode: 'DIRECT',
                         content: newContent,
-                        meta: { type: 'stateful', keys: newKeys, mappings: [] }
+                        meta: { type: 'stateful', keys: [], mappings: [] }
                     }
                 });
             }

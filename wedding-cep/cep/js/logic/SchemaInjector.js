@@ -204,7 +204,7 @@ export class SchemaInjector {
                         replacements: filteredReplacements,
                         meta: {
                             type: "stateful",
-                            keys: keysInOrder,
+                            keys: [], // Truyền rỗng để báo mốc xóa metadata cũ
                             mappings: []
                         }
                     }
