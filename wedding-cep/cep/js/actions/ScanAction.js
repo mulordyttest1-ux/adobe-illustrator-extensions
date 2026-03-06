@@ -1,6 +1,7 @@
 import { DataValidator } from '../logic/pipeline/DataValidator.js';
 import { KeyNormalizer } from '../controllers/helpers/KeyNormalizer.js';
 import { WeddingRules } from '@wedding/domain';
+import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
 
 /**
  * MODULE: ScanAction
@@ -17,12 +18,11 @@ export const ScanAction = {
      * @param {Object} ctx - Action context
      * @param {Object} ctx.bridge - Bridge instance
      * @param {Object} ctx.builder - CompactFormBuilder instance
-     * @param {Function} ctx.showToast - Toast notification function
      * @param {HTMLButtonElement} ctx.button - Scan button element
      * @returns {Promise<{success: boolean, count?: number, error?: string}>}
      */
     async execute(ctx) {
-        const { bridge, builder, showToast, button } = ctx;
+        const { bridge, builder, button } = ctx;
 
         try {
             this._setButtonState(button, true);
@@ -32,7 +32,7 @@ export const ScanAction = {
 
             if (!result || !result.success || !result.data) {
                 console.error('[ScanAction] Bridge scan failed:', result);
-                showToast('Scan thất bại: ' + (result?.error || 'Không có dữ liệu'), 'error');
+                UIFeedback.showToast('Scan thất bại: ' + (result?.error || 'Không có dữ liệu'), 'error');
                 return { success: false, error: result?.error || 'No data' };
             }
 
@@ -57,11 +57,11 @@ export const ScanAction = {
             }, 0);
 
             const count = Object.keys(normalized).length;
-            showToast('Đã scan ' + count + ' trường dữ liệu!', 'success');
+            UIFeedback.showToast('Đã scan ' + count + ' trường dữ liệu!', 'success');
             return { success: true, count };
 
         } catch (err) {
-            showToast('Scan lỗi: ' + err.message, 'error');
+            UIFeedback.showToast('Scan lỗi: ' + err.message, 'error');
             return { success: false, error: err.message };
 
         } finally {

@@ -117,6 +117,7 @@
           - TabbedPanel.js
         - /controllers
           - ConfigController.js
+          - DateGridController.js
           - /helpers
             - KeyNormalizer.js
             - KeyNormalizer.test.js

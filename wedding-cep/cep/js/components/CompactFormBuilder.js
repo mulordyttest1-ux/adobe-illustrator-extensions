@@ -13,7 +13,7 @@ import { AddressService } from './modules/AddressService.js';
 import { FormLogic } from './modules/FormLogic.js';
 import { FormComponents } from './modules/FormComponents.js';
 import { InputEngine } from '../logic/ux/InputEngine.js';
-// import { DateGridWidget } from './DateGridWidget.js';
+import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
 
 export class CompactFormBuilder {
     constructor(options = {}) {
@@ -193,10 +193,8 @@ export class CompactFormBuilder {
                 element.title = result.warnings.map(w => w.message).join('\n');
 
                 // c. [FIX] HIỆN TOAST (Chỉ hiện lỗi đầu tiên để đỡ rối)
-                if (typeof showToast === 'function') {
-                    const firstMsg = result.warnings[0].message;
-                    showToast(firstMsg, isError ? 'error' : 'warning');
-                }
+                const firstMsg = result.warnings[0].message;
+                UIFeedback.showToast(firstMsg, isError ? 'error' : 'warning');
             } else {
                 // Reset về trạng thái bình thường nếu hết lỗi
                 element.style.borderColor = '';

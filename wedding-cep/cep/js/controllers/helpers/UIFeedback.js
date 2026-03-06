@@ -25,6 +25,18 @@ export const UIFeedback = {
     },
 
     /**
+     * Tắt trạng thái Loading Overlay toàn màn hình (chuyển từ app.js)
+     */
+    hideLoading() {
+        const splash = document.getElementById('loading-overlay');
+        if (splash) {
+            splash.style.opacity = '0';
+            splash.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => { splash.style.display = 'none'; }, 300);
+        }
+    },
+
+    /**
      * Show error state in a container.
      * @param {HTMLElement} container - Container element
      * @param {string} message - Error message

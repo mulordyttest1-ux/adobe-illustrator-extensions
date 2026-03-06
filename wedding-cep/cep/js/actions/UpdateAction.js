@@ -1,3 +1,5 @@
+import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+
 /**
  * MODULE: UpdateAction
  * LAYER: Entry/Actions
@@ -13,12 +15,11 @@ export const UpdateAction = {
      * @param {Object} ctx - Action context
      * @param {Object} ctx.bridge - Bridge instance
      * @param {Object} ctx.builder - CompactFormBuilder instance
-     * @param {Function} ctx.showToast - Toast notification function
      * @param {HTMLButtonElement} ctx.button - Update button element  
      * @returns {Promise<{success: boolean, updated?: number, error?: string}>}
      */
     async execute(ctx) {
-        const { bridge, builder, showToast, button } = ctx;
+        const { bridge, builder, button } = ctx;
 
         try {
             this._setButtonState(button, true);
@@ -29,15 +30,15 @@ export const UpdateAction = {
             const result = await bridge.updateWithStrategy(processedData);
 
             if (result && result.success) {
-                showToast(`Đã cập nhật thông minh ${result.updated} vị trí!`, 'success');
+                UIFeedback.showToast(`Đã cập nhật thông minh ${result.updated} vị trí!`, 'success');
                 return { success: true, updated: result.updated };
             } else {
-                showToast('Lỗi: ' + (result?.error || 'Unknown error'), 'error');
+                UIFeedback.showToast('Lỗi: ' + (result?.error || 'Unknown error'), 'error');
                 return { success: false, error: result?.error };
             }
 
         } catch (err) {
-            showToast('Update lỗi: ' + err.message, 'error');
+            UIFeedback.showToast('Update lỗi: ' + err.message, 'error');
             return { success: false, error: err.message };
 
         } finally {

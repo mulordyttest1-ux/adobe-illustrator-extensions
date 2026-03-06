@@ -6,6 +6,7 @@
  * SIDE EFFECTS: DOM (input values, class toggles, styles)
  * EXPORTS: DateGridDOM.getSolarState(), .getLunarState(), .updateLunarUI(), .updateSolarUI(), etc.
  */
+import { UIFeedback } from '../../controllers/helpers/UIFeedback.js';
 
 export const DateGridDOM = {
     /**
@@ -178,7 +179,7 @@ export const DateGridDOM = {
             const firstMsg = result.warnings[0].message;
             const grid = refs['date.tiec.ngay']?.closest('.date-grid');
             if (grid) grid.title = "⚠️ LÚC NÀY: " + firstMsg;
-            if (typeof showToast === 'function') showToast(firstMsg, 'warning');
+            UIFeedback.showToast(firstMsg, 'warning');
         }
     },
 

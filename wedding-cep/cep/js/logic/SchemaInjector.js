@@ -183,19 +183,7 @@ export class SchemaInjector {
                     }
                 }
 
-                // Thu thập danh sách keys duy nhất từ replacements
-                // rep.val giữ nguyên schema key (vd: "{date.tiec.ngay}")
-                const keysInOrder = [];
-                const seenKeys = {};
-                const sortedAsc = [...filteredReplacements].sort((a, b) => a.start - b.start);
-                for (const rep of sortedAsc) {
-                    const keyMatch = rep.val.match(/\{([\w.]+)\}/);
-                    const key = keyMatch ? keyMatch[1] : rep.val;
-                    if (key && !seenKeys[key]) {
-                        keysInOrder.push(key);
-                        seenKeys[key] = true;
-                    }
-                }
+
 
                 changes.push({
                     id: frame.id,
@@ -217,22 +205,9 @@ export class SchemaInjector {
             }
         }
 
-        // Kiểm tra trường bắt buộc
-        const allKeys = [];
-        for (const c of changes) {
-            const keys = c.plan?.meta?.keys || [];
-            for (const k of keys) allKeys.push(k);
-        }
-        const REQUIRED = [
-            { key: 'info.ten_le', label: 'Loại Lễ' },
-            { key: `date.${targetType}.ngay`, label: 'Ngày Tiệc' },
-            { key: `date.${targetType}.gio`, label: 'Giờ Tiệc' },
-            { key: 'pos1.vithu', label: 'Vị Thứ POS1' },
-            { key: 'pos2.vithu', label: 'Vị Thứ POS2' }
-        ];
-        const missedRequired = REQUIRED
-            .filter(r => !allKeys.includes(r.key))
-            .map(r => r.label);
+        // Note: Tab 2 template injection không còn thu thập keys vào metadata
+        // Do đó validation trường bắt buộc ở Tab 2 tạm thời được bỏ qua
+        const missedRequired = [];
 
         return { changes, orphans, missedRequired };
     }

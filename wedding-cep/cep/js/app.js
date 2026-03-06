@@ -188,42 +188,6 @@ window.AppConfig = APP_CONFIG;
 
 
 
-function hideLoading() {
-    const splash = document.getElementById('loading-overlay');
-    if (splash) {
-        splash.style.opacity = '0';
-        splash.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => { splash.style.display = 'none'; }, 300);
-    }
-}
-
-function showError(message) {
-    const app = document.getElementById('app');
-    if (app) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'ds-alert ds-alert-danger';
-        errorDiv.innerHTML = `<strong>Lỗi:</strong> ${message}`;
-        app.prepend(errorDiv);
-    }
-}
-
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 5000);
-}
-window.showToast = showToast;
-
 // ============================================================
 // BUTTON WIRING (delegates to Action modules)
 // ============================================================
@@ -235,7 +199,6 @@ function wireActionButtons() {
             ScanAction.execute({
                 bridge: bridge,
                 builder: window.compactBuilder,
-                showToast: showToast,
                 button: scanBtn
             });
         });
@@ -247,7 +210,6 @@ function wireActionButtons() {
             UpdateAction.execute({
                 bridge: bridge,
                 builder: window.compactBuilder,
-                showToast: showToast,
                 button: updateBtn
             });
         });
@@ -257,8 +219,7 @@ function wireActionButtons() {
     if (swapBtn) {
         swapBtn.addEventListener('click', () => {
             SwapAction.execute({
-                builder: window.compactBuilder,
-                showToast: showToast
+                builder: window.compactBuilder
             });
         });
     }
@@ -271,12 +232,12 @@ function wireActionButtons() {
     }
 }
 
-function _wireSchemaActions(schemaRefs, bridge, showToast) {
+function _wireSchemaActions(schemaRefs, bridge) {
     // Wire Action Auto
     const btnAuto = schemaRefs['btn-inject-auto'];
     if (btnAuto) {
         btnAuto.addEventListener('click', () => {
-            InjectSchemaAction.execute({ bridge, showToast, button: btnAuto });
+            InjectSchemaAction.execute({ bridge, button: btnAuto });
         });
     }
 
@@ -285,7 +246,7 @@ function _wireSchemaActions(schemaRefs, bridge, showToast) {
         const btn = schemaRefs[`btn-bulk-${prefix}`];
         if (btn) {
             btn.addEventListener('click', () => {
-                ManualInjectAction.injectBulk({ bridge, showToast, button: btn, prefix });
+                ManualInjectAction.injectBulk({ bridge, button: btn, prefix });
             });
         }
     });
@@ -323,12 +284,12 @@ function _wireSchemaActions(schemaRefs, bridge, showToast) {
                 // Nút compound: value có dạng "key1|key2"
                 if (schemaValue && schemaValue.includes('|')) {
                     ManualInjectAction.injectCompound({
-                        bridge, showToast, button: btn,
+                        bridge, button: btn,
                         schemaValue
                     });
                 } else {
                     ManualInjectAction.injectSingle({
-                        bridge, showToast, button: btn,
+                        bridge, button: btn,
                         schemaValue
                     });
                 }
@@ -463,7 +424,7 @@ async function init() {
                             schemaBuilder.render();
 
                             // Wire Action
-                            _wireSchemaActions(schemaRefs, bridge, showToast);
+                            _wireSchemaActions(schemaRefs, bridge);
                         }
                     }
                 },
@@ -476,13 +437,12 @@ async function init() {
         // Reload button now wired via wireActionButtons() inside Compact Tab logic
 
         // 5. System Ready
-        // 5. System Ready
-        hideLoading();
+        UIFeedback.hideLoading();
 
     } catch (error) {
         console.error('[App] Boot Failed:', error);
-        showError('Lỗi khởi động panel: ' + error.message);
-        hideLoading();
+        UIFeedback.showError(document.getElementById('app'), 'Lỗi khởi động panel: ' + error.message);
+        UIFeedback.hideLoading();
     }
 }
 

@@ -1,3 +1,5 @@
+import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+
 /**
  * MODULE: SwapAction
  * LAYER: Entry/Actions
@@ -12,11 +14,10 @@ export const SwapAction = {
      * Execute swap action.
      * @param {Object} ctx - Action context
      * @param {Object} ctx.builder - CompactFormBuilder instance
-     * @param {Function} ctx.showToast - Toast notification function
      * @returns {{success: boolean}}
      */
     execute(ctx) {
-        const { builder, showToast } = ctx;
+        const { builder } = ctx;
 
         // 1. Get current form data
         const data = builder.getData();
@@ -41,7 +42,7 @@ export const SwapAction = {
         // 4. Update auto-venue fields if checked
         this._updateAutoVenues(builder, swapped);
 
-        showToast('Đã hoán đổi POS!', 'success');
+        UIFeedback.showToast('Đã hoán đổi POS!', 'success');
         return { success: true };
     },
 
