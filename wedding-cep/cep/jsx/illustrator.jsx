@@ -153,6 +153,7 @@ $.global.IllustratorBridge = {
                     results.push({
                         id: i,
                         text: item.contents,
+                        note: item.note || '',
                         uuid: item.uuid || ("tmp_" + i),
                         top: item.top,
                         left: item.left
@@ -164,6 +165,41 @@ $.global.IllustratorBridge = {
             return sendResult({ success: false, error: e.message });
         }
     },
+
+    selectFramesById: function (payloadJson) {
+        try {
+            var doc = app.activeDocument;
+            var ids = eval('(' + payloadJson + ')');
+            if (!ids || ids.length === 0) return sendResult({ success: true, selected: 0 });
+
+            // Collect all textframes từ selection (lần scan gần nhất dùng index làm id)
+            var sel = doc.selection;
+            var _collectInSelection = function (items) {
+                var collected = [];
+                for (var k = 0; k < items.length; k++) {
+                    var obj = items[k];
+                    if (obj.typename === 'TextFrame') collected.push(obj);
+                    else if (obj.typename === 'GroupItem') collected = collected.concat(_collectInSelection(obj.pageItems));
+                }
+                return collected;
+            };
+            var allFrames = _collectInSelection(sel);
+
+            // Deselect all, rồi select chỉ các frame khớp id
+            doc.selection = null;
+            var toSelect = [];
+            for (var i = 0; i < ids.length; i++) {
+                if (allFrames[ids[i]]) toSelect.push(allFrames[ids[i]]);
+            }
+            if (toSelect.length > 0) doc.selection = toSelect;
+
+            return sendResult({ success: true, selected: toSelect.length });
+        } catch (e) {
+            return sendResult({ success: false, error: e.message });
+        }
+    },
+
+
 
     applyTextChanges: function (payloadJson) {
         try {
@@ -377,14 +413,10 @@ $.global.IllustratorBridge = {
                     }
                     // CASE 2: DIRECT (Ghi đè toàn bộ - Luôn bọc Marker)
                     else if (plan.mode === "DIRECT") {
-                        // [FIX] Clean marker cũ trong content mới (nếu có) để tránh double
+                        // Ghi schema key trực tiếp vào content (không bọc U200B)
                         var cleanVal = String(plan.content).replace(/\u200B/g, "");
-
-                        // Chuẩn hóa xuống dòng
                         var val = cleanVal.replace(/\n/g, "\r");
-
-                        // Bọc marker chuẩn duy nhất
-                        item.contents = "\u200B" + val + "\u200B";
+                        item.contents = val;
                         updated++;
                     }
 

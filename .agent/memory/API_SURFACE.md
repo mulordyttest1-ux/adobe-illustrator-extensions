@@ -3,6 +3,7 @@
 > **AUTO-GENERATED FILE** by `npm run agent:sync`. Do not edit manually.
 
 <repository_surface>
+  - /.task_steps
   - clear_cache.js
   - debug_cep.js
   - debug_check.js
@@ -93,6 +94,8 @@
     - /cep
       - /js
         - /actions
+          - InjectSchemaAction.js
+          - ManualInjectAction.js
           - ScanAction.js
           - SwapAction.js
           - UpdateAction.js
@@ -110,6 +113,7 @@
             - AddressService.js
             - FormComponents.js
             - FormLogic.js
+            - SchemaTabComponents.js
           - TabbedPanel.js
         - /controllers
           - ConfigController.js
@@ -135,6 +139,7 @@
             - validator.js
           - /schema
             - SchemaUtils.js
+          - SchemaInjector.js
           - /strategies
             - FreshStrategy.js
             - SmartComplexStrategy.js

@@ -18,6 +18,8 @@ export class SchemaInjector {
         }
 
         const changes = [];
+        const orphans = [];
+
 
         for (const frame of frames) {
             const originalText = frame.text || "";
@@ -181,19 +183,61 @@ export class SchemaInjector {
                     }
                 }
 
+                // Thu thập danh sách keys duy nhất từ replacements
+                // rep.val giữ nguyên schema key (vd: "{date.tiec.ngay}")
+                const keysInOrder = [];
+                const seenKeys = {};
+                const sortedAsc = [...filteredReplacements].sort((a, b) => a.start - b.start);
+                for (const rep of sortedAsc) {
+                    const keyMatch = rep.val.match(/\{([\w.]+)\}/);
+                    const key = keyMatch ? keyMatch[1] : rep.val;
+                    if (key && !seenKeys[key]) {
+                        keysInOrder.push(key);
+                        seenKeys[key] = true;
+                    }
+                }
+
                 changes.push({
                     id: frame.id,
                     plan: {
                         mode: "ATOMIC",
-                        replacements: filteredReplacements
+                        replacements: filteredReplacements,
+                        meta: {
+                            type: "stateful",
+                            keys: keysInOrder,
+                            mappings: []
+                        }
                     }
                 });
+            } else {
+                // Kiểm tra số rời: frame chỉ chứa số thuần, không được tiêm gì
+                if (/^\s*\d{1,4}\s*$/.test(originalText)) {
+                    orphans.push(frame);
+                }
             }
         }
 
-        return changes;
+        // Kiểm tra trường bắt buộc
+        const allKeys = [];
+        for (const c of changes) {
+            const keys = c.plan?.meta?.keys || [];
+            for (const k of keys) allKeys.push(k);
+        }
+        const REQUIRED = [
+            { key: 'info.ten_le', label: 'Loại Lễ' },
+            { key: `date.${targetType}.ngay`, label: 'Ngày Tiệc' },
+            { key: `date.${targetType}.gio`, label: 'Giờ Tiệc' },
+            { key: 'pos1.vithu', label: 'Vị Thứ POS1' },
+            { key: 'pos2.vithu', label: 'Vị Thứ POS2' }
+        ];
+        const missedRequired = REQUIRED
+            .filter(r => !allKeys.includes(r.key))
+            .map(r => r.label);
+
+        return { changes, orphans, missedRequired };
     }
 }
 
 // Bơm ra Global để phục vụ CDP Live Testing
 if (typeof window !== 'undefined') window.SchemaInjector = SchemaInjector;
+

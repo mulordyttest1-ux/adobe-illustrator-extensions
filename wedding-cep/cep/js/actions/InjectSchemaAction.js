@@ -10,13 +10,37 @@ export const InjectSchemaAction = {
             const frames = await this._fetchFrames(bridge, showToast);
             if (!frames) return { success: false, error: 'No selection' };
 
-            const changes = SchemaInjector.computeChanges(frames, targetType);
-            if (changes.length === 0) {
+            const { changes, orphans, missedRequired } = SchemaInjector.computeChanges(frames, targetType);
+
+            if (changes.length === 0 && orphans.length === 0) {
                 showToast('Không tìm thấy từ khóa nào cần tiêm Schema trong vùng chọn.', 'info');
                 return { success: true, count: 0 };
             }
 
-            return await this._applyChanges(bridge, changes, showToast);
+            let result = { success: true, count: 0 };
+            if (changes.length > 0) {
+                result = await this._applyChanges(bridge, changes, showToast);
+            }
+
+            // Cảnh báo số rời
+            if (orphans.length > 0) {
+                const orphanIds = orphans.map(f => f.id);
+                bridge.selectFramesById(orphanIds).catch(() => { });
+                showToast(
+                    `⚠️ ${orphans.length} số rời chưa tiêm được — đã chọn để bạn tiêm tay.`,
+                    'warning'
+                );
+            }
+
+            // Cảnh báo trường bắt buộc thiếu
+            if (missedRequired.length > 0) {
+                showToast(
+                    `❌ Thiếu trường bắt buộc: ${missedRequired.join(', ')}. Kiểm tra thiết kế!`,
+                    'error'
+                );
+            }
+
+            return result;
 
         } catch (err) {
             console.error(err);

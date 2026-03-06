@@ -13,7 +13,7 @@ import { EthnicNameNormalizer } from '../normalizers/EthnicNameNormalizer.js';
 export const NameValidator = {
     COMMON_SURNAMES: new Set([
         "Nguyễn", "Trần", "Lê", "Phạm", "Huỳnh", "Hoàng", "Phan", "Vũ", "Võ", "Đặng",
-        "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý"
+        "Bùi", "Đỗ", "Hồ", "Ngô", "Dương","Lương","Đàm","Cao", "Lý"
     ]),
 
     ETHNIC_PATTERN: /(^|\s)(H'|Y'|K'|M'|S'|R'|N'|L'|Niê|Êban|Kbuôr|Ksor|Siu|Rơ|Kpă|Ama|Ami|H|Y)(\s|$)/i,

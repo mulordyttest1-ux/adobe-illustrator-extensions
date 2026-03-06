@@ -17,17 +17,64 @@ export const ManualInjectAction = {
             const frames = await this._fetchFrames(bridge, showToast);
             if (!frames) return;
 
-            const changes = frames.map(frame => ({
+            const keyMatch = schemaValue.match(/\{([\w.]+)\}/);
+            const key = keyMatch ? keyMatch[1] : schemaValue;
+            const plans = frames.map(frame => ({
                 id: frame.id,
-                newText: schemaValue // Đè thẳng chữ cứng vào Text Frame
+                plan: {
+                    mode: 'DIRECT',
+                    content: schemaValue, // Schema key trực tiếp vào content
+                    meta: { type: 'stateful', keys: [key], mappings: [] }
+                }
             }));
 
-            await this._applyChanges(bridge, changes, showToast, `🪄 Đã tiêm ${schemaValue}`);
+            await this._applyChanges(bridge, plans, showToast, `🪄 Đã tiêm ${schemaValue}`);
 
         } catch (err) {
             console.error(err);
             showToast('Lỗi hệ thống: ' + err.message, 'error');
             return;
+        } finally {
+            this._setButtonState(button, false);
+        }
+    },
+
+    /**
+     * Tiêm Compound — 2 keys trên 1 TextFrame (vd: ho_dau + ten)
+     * schemaValue: "{pos1.con_full.ho_dau}|{pos1.con_full.ten}"
+     * Logic: Thay toàn bộ content bằng 2 schema keys nối khoảng trắng.
+     */
+    async injectCompound(ctx) {
+        const { bridge, showToast, button, schemaValue } = ctx;
+        if (!schemaValue) return;
+
+        try {
+            this._setButtonState(button, true);
+
+            const frames = await this._fetchFrames(bridge, showToast);
+            if (!frames) return;
+
+            // Tách keys: "{pos1.con_full.ho_dau}|{pos1.con_full.ten}" → rawKeys
+            const rawKeys = schemaValue.split('|');
+            const keys = rawKeys.map(k => { const m = k.match(/\{([\w.]+)\}/); return m ? m[1] : k; });
+
+            // Content = nối các schema keys bằng khoảng trắng
+            const compoundContent = rawKeys.join(' ');
+            const plans = frames.map(frame => ({
+                id: frame.id,
+                plan: {
+                    mode: 'DIRECT',
+                    content: compoundContent,
+                    meta: { type: 'stateful', keys, mappings: [] }
+                }
+            }));
+
+            if (plans.length === 0) return;
+            await this._applyChanges(bridge, plans, showToast, `🔗 Đã tiêm compound [${keys.join(' + ')}]`);
+
+        } catch (err) {
+            console.error(err);
+            showToast('Lỗi hệ thống: ' + err.message, 'error');
         } finally {
             this._setButtonState(button, false);
         }
@@ -67,18 +114,24 @@ export const ManualInjectAction = {
 
             // Map variables top-down
             const variables = [`{${prefix}.ong}`, `{${prefix}.ba}`, `{${prefix}.diachi}`];
-            const changes = [];
+            const plans = [];
 
             for (let i = 0; i < sortedFrames.length; i++) {
                 if (variables[i]) {
-                    changes.push({
+                    const keyMatch = variables[i].match(/\{([\w.]+)\}/);
+                    const key = keyMatch ? keyMatch[1] : variables[i];
+                    plans.push({
                         id: sortedFrames[i].id,
-                        newText: variables[i]
+                        plan: {
+                            mode: 'DIRECT',
+                            content: variables[i], // Schema key trực tiếp vào content
+                            meta: { type: 'stateful', keys: [key], mappings: [] }
+                        }
                     });
                 }
             }
 
-            await this._applyChanges(bridge, changes, showToast, `☄️ Tiêm cụm Top-Down thành công!`);
+            await this._applyChanges(bridge, plans, showToast, `☄️ Tiêm cụm Top-Down thành công!`);
 
         } catch (err) {
             console.error(err);
@@ -88,6 +141,62 @@ export const ManualInjectAction = {
             this._setButtonState(button, false);
         }
     },
+
+    /**
+     * Clone metadata tiec → le hoặc nhap cho các frame đang chọn.
+     * Frame nào có key chứa "date.tiec." → đổi thành "date.{targetMoc}."
+     */
+    async injectDateClone(ctx) {
+        const { bridge, showToast, button, targetMoc } = ctx; // targetMoc: 'le' | 'nhap'
+
+        try {
+            this._setButtonState(button, true);
+
+            const frames = await this._fetchFrames(bridge, showToast);
+            if (!frames) return;
+
+            const plans = [];
+            for (const frame of frames) {
+                // Content giờ chứa schema key trực tiếp (vd: "{date.tiec.ngay}")
+                // Tìm tất cả date.tiec key trong content
+                const content = frame.text || '';
+                const matches = content.match(/\{date\.tiec\.[^}]+\}/g) || [];
+
+                if (matches.length === 0) continue;
+
+                // Swap tiec → targetMoc trong content
+                const newContent = content.replace(/date\.tiec\./g, `date.${targetMoc}.`);
+                const newKeys = matches.map(m => {
+                    const km = m.match(/\{([\w.]+)\}/);
+                    return km ? km[1].replace('date.tiec.', `date.${targetMoc}.`) : m;
+                });
+
+                plans.push({
+                    id: frame.id,
+                    plan: {
+                        mode: 'DIRECT',
+                        content: newContent,
+                        meta: { type: 'stateful', keys: newKeys, mappings: [] }
+                    }
+                });
+            }
+
+            if (plans.length === 0) {
+                showToast('⚠️ Không tìm thấy frame nào có metadata date.tiec.* để clone.', 'warning');
+                return;
+            }
+
+            await this._applyChanges(bridge, plans, showToast,
+                `📋 Đã clone ${plans.length} frame sang date.${targetMoc}.*`);
+
+        } catch (err) {
+            console.error(err);
+            showToast('Lỗi hệ thống: ' + err.message, 'error');
+        } finally {
+            this._setButtonState(button, false);
+        }
+    },
+
 
     async _fetchFrames(bridge, showToast) {
         const result = await bridge.readSelectionObjects();
@@ -104,14 +213,14 @@ export const ManualInjectAction = {
         return frames;
     },
 
-    async _applyChanges(bridge, changes, showToast, successMsg) {
-        const applyResult = await bridge.applyTextChanges(changes);
+    async _applyChanges(bridge, plans, showToast, successMsg) {
+        const applyResult = await bridge.applyPlan(plans);
         if (!applyResult || !applyResult.success) {
             showToast('Lỗi ghi đè Text: ' + (applyResult?.error || 'Unknown'), 'error');
             return { success: false, error: applyResult?.error };
         }
         showToast(successMsg, 'success');
-        return { success: true, count: changes.length };
+        return { success: true, count: plans.length };
     },
 
     _setButtonState(button, isProcessing) {

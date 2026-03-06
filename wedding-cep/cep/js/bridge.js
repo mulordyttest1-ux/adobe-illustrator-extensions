@@ -101,7 +101,9 @@ export class Bridge {
 
     // SCHEMA INJECTION
     async readSelectionObjects() { return this.call('readSelectionObjects'); }
+    async selectFramesById(ids) { return this.call('selectFramesById', ids); }
     async applyTextChanges(changes) { return this.call('applyTextChanges', changes); }
+
 
     // Logic Update thông minh
     async updateWithStrategy(packet) {
