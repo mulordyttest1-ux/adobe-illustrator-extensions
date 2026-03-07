@@ -174,7 +174,8 @@ export class CompactFormBuilder {
 
     _runInputNormalization(element, key) {
         if (typeof InputEngine !== 'undefined') {
-            const result = InputEngine.process(element.value, key, {}, this.schema);
+            const formData = this.getData();
+            const result = InputEngine.process(element.value, key, { formData }, this.schema);
 
             // 1. Cập nhật giá trị nếu có Normalize (Tự viết hoa, sửa lỗi spacing...)
             if (result.value !== element.value) {

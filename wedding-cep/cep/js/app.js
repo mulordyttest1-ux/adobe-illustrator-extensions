@@ -256,10 +256,9 @@ function _wireSchemaActions(schemaRefs, bridge) {
         if (key.startsWith('btn-date-')) {
             const btn = schemaRefs[key];
             if (key === 'btn-date-clone-le' || key === 'btn-date-clone-nhap') {
-                // Nút Clone
                 btn.addEventListener('click', () => {
                     ManualInjectAction.injectDateClone({
-                        bridge, showToast, button: btn,
+                        bridge, button: btn,
                         targetMoc: btn.dataset.cloneTarget
                     });
                 });
@@ -267,7 +266,7 @@ function _wireSchemaActions(schemaRefs, bridge) {
                 // Nút tiêm đơn date
                 btn.addEventListener('click', () => {
                     ManualInjectAction.injectSingle({
-                        bridge, showToast, button: btn,
+                        bridge, button: btn,
                         schemaValue: btn.dataset.schema
                     });
                 });

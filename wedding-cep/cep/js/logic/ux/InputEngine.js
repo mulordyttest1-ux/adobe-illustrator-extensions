@@ -95,7 +95,7 @@ export const InputEngine = {
                 if (typeof NameValidator !== 'undefined') return NameValidator.validate(value, fieldType);
                 break;
             case 'address':
-                if (typeof AddressValidator !== 'undefined') return AddressValidator.validate(value);
+                if (typeof AddressValidator !== 'undefined') return AddressValidator.validate(value, _options);
                 break;
         }
 

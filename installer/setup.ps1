@@ -2,7 +2,11 @@
 param (
     [Parameter(Mandatory = $true)]
     [ValidateSet("Symlink", "Copy")]
-    [string]$Mode
+    [string]$Mode,
+
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("Wedding", "Symbol")]
+    [string]$Project
 )
 
 # Set UTF-8 encoding for Vietnamese
@@ -12,16 +16,26 @@ $ErrorActionPreference = "Stop"
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-$ExtensionId = "com.dinhson.weddingscripter"
-$ExtensionName = "Wedding Scripter"
+if ($Project -eq "Wedding") {
+    $ExtensionId = "com.dinhson.weddingscripter.dev"
+    $ExtensionName = "Wedding Scripter (Dev)"
+    $SourceDirName = "wedding-cep"
+}
+elseif ($Project -eq "Symbol") {
+    $ExtensionId = "com.dinhson.imposition.panel.dev"
+    $ExtensionName = "Imposition Panel (Dev)"
+    $SourceDirName = "symbol-cep"
+}
 
-# Source: go up from 'installer' folder, then into 'cep'
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SourcePath = Join-Path (Split-Path -Parent $ScriptDir) "cep"
+# Root directory of the monorepo
+$InstallerDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RootDir = Split-Path -Parent $InstallerDir
+$SourcePath = Join-Path $RootDir "$SourceDirName\cep"
 $DestRoot = "$env:APPDATA\Adobe\CEP\extensions"
 $DestPath = "$DestRoot\$ExtensionId"
 
 Write-Host ""
+Write-Host "  [INFO] Project: $Project" -ForegroundColor Cyan
 Write-Host "  [INFO] Extension: $ExtensionName" -ForegroundColor Cyan
 Write-Host "  [INFO] Mode: $Mode" -ForegroundColor Cyan
 Write-Host "  [INFO] Source: $SourcePath" -ForegroundColor Gray
@@ -60,7 +74,7 @@ Write-Host "  [2/4] Kiem tra thu muc nguon..." -ForegroundColor Yellow
 
 if (!(Test-Path $SourcePath)) {
     Write-Host "        [LOI] Khong tim thay thu muc: $SourcePath" -ForegroundColor Red
-    Write-Host "        Vui long dam bao thu muc 'cep' ton tai trong project." -ForegroundColor Red
+    Write-Host "        Vui long dam bao thu muc '$SourceDirName\cep' ton tai trong project." -ForegroundColor Red
     exit 1
 }
 
@@ -90,7 +104,7 @@ if (!(Test-Path $DestRoot)) {
 
 # Remove existing extension if present
 if (Test-Path $DestPath) {
-    Write-Host "        Phat hien phien ban cu, dang xoa..." -ForegroundColor Gray
+    Write-Host "        Phat hien phien ban cu ($ExtensionId), dang xoa..." -ForegroundColor Gray
     try {
         $item = Get-Item $DestPath -Force
         if ($item.Attributes -match "ReparsePoint") {
@@ -145,7 +159,7 @@ Write-Host ""
 Write-Host "  [*] Kiem tra ket qua..." -ForegroundColor Yellow
 
 if (Test-Path "$DestPath\index.html") {
-    Write-Host "        Extension da duoc cai dat thanh cong!" -ForegroundColor Green
+    Write-Host "        Extension ($ExtensionName) da duoc cai dat thanh cong!" -ForegroundColor Green
     Write-Host ""
     Write-Host "  ════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host "   Duong dan: $DestPath" -ForegroundColor White

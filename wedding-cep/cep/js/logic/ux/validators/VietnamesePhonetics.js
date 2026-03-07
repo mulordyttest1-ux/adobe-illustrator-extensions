@@ -66,7 +66,7 @@ export const VietnamesePhonetics = {
     },
 
     _checkSpellingRules(w, word) {
-        if (/\b(k|gh|ngh)(?![ieêyìíỉĩịèéẻẽẹêềếểễệỳýỷỹỵ])\w+/.test(w)) {
+        if (/\b(k(?!h)|gh|ngh)(?![ieêyìíỉĩịèéẻẽẹêềếểễệỳýỷỹỵ])\w+/.test(w)) {
             return { code: 'phonetic_k_gh', message: `K/GH/NGH sai vần: "${word}"` };
         }
         if (/\b(c|ng)(?=[ieêyìíỉĩịèéẻẽẹêềếểễệỳýỷỹỵ])/.test(w)) {

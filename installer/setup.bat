@@ -3,21 +3,21 @@ chcp 65001 >nul 2>&1
 setlocal EnableDelayedExpansion
 
 :: ============================================================================
-:: Wedding Scripter - CEP Panel Installer
+:: CEP Monorepo - Universal Installer
 :: Author: DinhSon
-:: Version: 1.0
+:: Version: 2.0
 :: ============================================================================
 
-title Wedding Scripter - Cai Dat
+title Adobe Illustrator Extensions - Cai Dat
 
 cls
 echo.
 echo  ╔════════════════════════════════════════════════════════════════╗
 echo  ║                                                                ║
-echo  ║     🎊  WEDDING SCRIPTER - CEP Panel Installer  🎊            ║
+echo  ║     🚀  ADOBE ILLUSTRATOR EXTENSIONS - Universal Installer  🚀  ║
 echo  ║                                                                ║
 echo  ║     Tac gia: DinhSon                                           ║
-echo  ║     Phien ban: 1.0                                             ║
+echo  ║     Phien ban: 2.0 (Monorepo)                                  ║
 echo  ║                                                                ║
 echo  ╚════════════════════════════════════════════════════════════════╝
 echo.
@@ -45,9 +45,45 @@ echo  [OK] Dang chay voi quyen Administrator.
 echo.
 
 :: ============================================================================
+:: MENU CHON DU AN
+:: ============================================================================
+:SELECT_PROJECT
+echo  ╔════════════════════════════════════════════════════════════════╗
+echo  ║                   CHON DU AN MUON CAI DAT                      ║
+echo  ╠════════════════════════════════════════════════════════════════╣
+echo  ║                                                                ║
+echo  ║  [1] Wedding Scripter (Project: wedding-cep)                   ║
+echo  ║  [2] Imposition Panel (Project: symbol-cep)                    ║
+echo  ║  [3] Thoat                                                     ║
+echo  ║                                                                ║
+echo  ╚════════════════════════════════════════════════════════════════╝
+echo.
+set /p p_choice="  Nhap lua chon (1, 2, hoac 3): "
+
+if "%p_choice%"=="1" (
+    set TARGET_PROJECT=Wedding
+    goto MENU
+)
+if "%p_choice%"=="2" (
+    set TARGET_PROJECT=Symbol
+    goto MENU
+)
+if "%p_choice%"=="3" goto EXIT
+
+echo.
+echo  [!] Lua chon khong hop le.
+goto SELECT_PROJECT
+
+:: ============================================================================
 :: MENU CHON CHE DO
 :: ============================================================================
 :MENU
+cls
+echo.
+echo  ================================================================
+echo   Dang thiet lap cho: %TARGET_PROJECT%
+echo  ================================================================
+echo.
 echo  ╔════════════════════════════════════════════════════════════════╗
 echo  ║                    CHON CHE DO CAI DAT                         ║
 echo  ╠════════════════════════════════════════════════════════════════╣
@@ -55,25 +91,23 @@ echo  ║                                                                ║
 echo  ║  [1] Developer Mode (SYMLINK)                                  ║
 echo  ║      - Danh cho may cua ban (may chinh)                        ║
 echo  ║      - Code cap nhat tu dong khi sua                           ║
-echo  ║      - Can giu nguyen thu muc Google Drive                     ║
 echo  ║                                                                ║
 echo  ║  [2] Deployment Mode (COPY)                                    ║
 echo  ║      - Danh cho may tram, may in, may nhan vien                ║
-echo  ║      - Copy file doc lap, khong can Google Drive               ║
-echo  ║      - Can chay lai neu co cap nhat moi                        ║
+echo  ║      - Copy file doc lap                                       ║
 echo  ║                                                                ║
-echo  ║  [3] Thoat                                                     ║
+echo  ║  [3] Quay lai chon Project                                     ║
 echo  ║                                                                ║
 echo  ╚════════════════════════════════════════════════════════════════╝
 echo.
-set /p choice="  Nhap lua chon cua ban (1, 2, hoac 3): "
+set /p choice="  Nhap lua chon (1, 2, hoac 3): "
 
 if "%choice%"=="1" goto INSTALL_SYMLINK
 if "%choice%"=="2" goto INSTALL_COPY
-if "%choice%"=="3" goto EXIT
+if "%choice%"=="3" goto SELECT_PROJECT
+
 echo.
-echo  [!] Lua chon khong hop le. Vui long nhap 1, 2 hoac 3.
-echo.
+echo  [!] Lua chon khong hop le.
 goto MENU
 
 :: ============================================================================
@@ -85,7 +119,7 @@ echo  ========================================
 echo   Dang cai dat Developer Mode (Symlink)
 echo  ========================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1" -Mode Symlink
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1" -Mode Symlink -Project %TARGET_PROJECT%
 if %errorLevel% neq 0 (
     echo.
     echo  [X] Cai dat that bai! Vui long kiem tra lai.
@@ -102,7 +136,7 @@ echo  ========================================
 echo   Dang cai dat Deployment Mode (Copy)
 echo  ========================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1" -Mode Copy
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1" -Mode Copy -Project %TARGET_PROJECT%
 if %errorLevel% neq 0 (
     echo.
     echo  [X] Cai dat that bai! Vui long kiem tra lai.
@@ -121,10 +155,14 @@ echo  ║  ✅  CAI DAT THANH CONG!                                       ║
 echo  ║                                                                ║
 echo  ║  Buoc tiep theo:                                               ║
 echo  ║  1. Khoi dong lai Adobe Illustrator                            ║
-echo  ║  2. Vao menu: Window  - Extensions - Wedding Scripter          ║
+echo  ║  2. Vao menu: Window - Extensions                              ║
 echo  ║                                                                ║
 echo  ╚════════════════════════════════════════════════════════════════╝
-goto END
+echo.
+
+set /p again="  Ban co muon cai project khac khong? (C/K): "
+if /i "%again%"=="C" goto SELECT_PROJECT
+goto EXIT
 
 :: ============================================================================
 :: THOAT
@@ -133,10 +171,11 @@ goto END
 echo.
 echo  Tam biet! Hen gap lai.
 echo.
+timeout /t 3
 exit /b 0
 
 :END
 echo.
-echo  Nhan phim bat ky de dong cua so nay...
+echo  Nhan phim bat ky để dong...
 pause >nul
 exit /b 0

@@ -28,6 +28,7 @@
     -   **ES3 Compatibility:** Tất cả file `.jsx` (ExtendScript) phải tương thích ES3 (dùng `var`, không arrow func). Đã có pre-commit hook giám sát.
     -   **File Size & Complexity:** **MAX 200 LOC/file** và Cyclomatic Complexity <= 12. Nếu vượt quá -> Refactor ngay lập tức. Cấm tuyệt đối God Classes.
     -   **Naming Convention:** Biến và hàm *phải* tuân thủ `camelCase` (trừ properties của object). Giám sát bởi ESLint.
+    -   **Human Loop (Vòng Lặp Người-Máy):** Tuyệt đối KHÔNG ĐƯỢC tự ý gõ code viết tính năng mới, sửa Regex, UX, Architecture, Refactor hay làm bất cứ tác vụ thay đổi logic nào nếu CHƯA CHỜ User duyệt Bảng Kế Hoạch (`implementation_plan`). Nguyên tắc: **Mọi task đều phải lên Plan -> Xin Duyệt -> Mới được Code.**
 
 3.  **Security:**
     -   Không hardcode secrets.

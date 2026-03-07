@@ -133,6 +133,13 @@
             - index.js
             - string.js
             - string.test.js
+          - /parsers
+            - AbstractParser.js
+            - DateFallbackParser.js
+            - DateHeuristicParser.js
+            - DateStandaloneParser.js
+            - EventInfoParser.js
+            - TimeStrictParser.js
           - /pipeline
             - assembler.js
             - DataValidator.js
@@ -163,6 +170,8 @@
               - DateValidator.js
               - NameValidator.js
               - VietnamesePhonetics.js
+          - /validators
+            - GlobalDateValidator.js
         - main.js
         - schemaLoader.js
         - types.d.ts

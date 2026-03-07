@@ -422,7 +422,7 @@ $.global.IllustratorBridge = {
 
                     // Update Metadata hoac Xoa Metadata (Kiem tra nguyen tac Xoa tu Tab 2)
                     if (plan.meta) {
-                        if (plan.meta.keys && plan.meta.keys.length === 0) {
+                        if (plan.meta.action === "clear") {
                             item.note = ""; // Xoa sach metadata
                         } else {
                             item.note = JSON.stringify(plan.meta); // Cap nhat metadata tu Tab 1

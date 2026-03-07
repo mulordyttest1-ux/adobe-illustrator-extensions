@@ -22,7 +22,7 @@ export const ManualInjectAction = {
                 plan: {
                     mode: 'DIRECT',
                     content: schemaValue, // Schema key trực tiếp vào content
-                    meta: { type: 'stateful', keys: [], mappings: [] }
+                    meta: { action: 'clear' }
                 }
             }));
 
@@ -63,7 +63,7 @@ export const ManualInjectAction = {
                 plan: {
                     mode: 'DIRECT',
                     content: compoundContent,
-                    meta: { type: 'stateful', keys: [], mappings: [] }
+                    meta: { action: 'clear' }
                 }
             }));
 
@@ -91,8 +91,8 @@ export const ManualInjectAction = {
             const frames = await this._fetchFrames(bridge);
             if (!frames) return;
 
-            if (frames.length !== 3) {
-                UIFeedback.showToast(`⚠️ Vui lòng chọn đúng bộ 3 dòng (Ông, Bà, Đ/C) để tiêm cụm. Bạn đang chọn ${frames.length} dòng.`, 'warning');
+            if (frames.length !== 4) {
+                UIFeedback.showToast(`⚠️ Vui lòng chọn đúng bộ 4 dòng (Đ/C, Ông, Bà, Ông Bà) để tiêm cụm. Bạn đang chọn ${frames.length} dòng.`, 'warning');
                 return;
             }
 
@@ -111,7 +111,7 @@ export const ManualInjectAction = {
             });
 
             // Map variables top-down
-            const variables = [`{${prefix}.ong}`, `{${prefix}.ba}`, `{${prefix}.diachi}`];
+            const variables = [`{${prefix}.diachi}`, `{${prefix}.ong}`, `{${prefix}.ba}`, `{${prefix}.ongba}`];
             const plans = [];
 
             for (let i = 0; i < sortedFrames.length; i++) {
@@ -121,7 +121,7 @@ export const ManualInjectAction = {
                         plan: {
                             mode: 'DIRECT',
                             content: variables[i], // Schema key trực tiếp vào content
-                            meta: { type: 'stateful', keys: [], mappings: [] }
+                            meta: { action: 'clear' }
                         }
                     });
                 }
@@ -168,7 +168,7 @@ export const ManualInjectAction = {
                     plan: {
                         mode: 'DIRECT',
                         content: newContent,
-                        meta: { type: 'stateful', keys: [], mappings: [] }
+                        meta: { action: 'clear' }
                     }
                 });
             }

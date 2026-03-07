@@ -61,19 +61,19 @@ export class SchemaTabComponents {
 
         const desc = document.createElement('div');
         desc.style.cssText = 'font-size: 10px; color: #666; font-style: italic;';
-        desc.innerText = '* Bôi đen cùng lúc Ông + Bà + Địa Chỉ trên AI, sau đó bấm nút để máy tự gán từ Trên (Cao nhất) -> Xuống Dưới.';
+        desc.innerText = '* Bôi đen 4 dòng (Địa Chỉ + Ông + Bà + Ông Bà) trên AI, sau đó bấm nút để máy tự gán từ Trên -> Xuống.';
         body.appendChild(desc);
 
         const btnRow = document.createElement('div');
         btnRow.style.display = 'flex';
         btnRow.style.gap = '8px';
 
-        const bulkPos1Btn = DomFactory.createButton('btn-bulk-pos1', '☄️ Tiêm Cụm POS 1', 'Gán {ong}, {ba}, {diachi} cho POS 1');
+        const bulkPos1Btn = DomFactory.createButton('btn-bulk-pos1', '☄️ Tiêm Cụm POS 1', 'Gán {diachi}, {ong}, {ba}, {ongba} cho POS 1');
         bulkPos1Btn.classList.add('ds-btn-primary');
         bulkPos1Btn.style.flex = '1';
         this.refs['btn-bulk-pos1'] = bulkPos1Btn;
 
-        const bulkPos2Btn = DomFactory.createButton('btn-bulk-pos2', '☄️ Tiêm Cụm POS 2', 'Gán {ong}, {ba}, {diachi} cho POS 2');
+        const bulkPos2Btn = DomFactory.createButton('btn-bulk-pos2', '☄️ Tiêm Cụm POS 2', 'Gán {diachi}, {ong}, {ba}, {ongba} cho POS 2');
         bulkPos2Btn.classList.add('ds-btn-primary');
         bulkPos2Btn.style.flex = '1';
         this.refs['btn-bulk-pos2'] = bulkPos2Btn;
