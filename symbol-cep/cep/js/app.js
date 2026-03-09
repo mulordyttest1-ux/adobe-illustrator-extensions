@@ -1,39 +1,40 @@
-// App Entry Point (No Modules)
-window.Imposition = window.Imposition || {};
+/**
+ * MODULE: App
+ * LAYER: Core/Entry (L2)
+ * PURPOSE: App Entry Point — Imports all feature modules and boots the Panel.
+ */
+import { ActionTab } from './features/imposition/action_tab.js';
+import { ConfigTab } from './features/imposition/config_tab.js';
+import { Bridge } from './bridge.js';
+import { PreflightOrchestrator } from './features/imposition/preflight/PreflightOrchestrator.js';
+import { GarbageRule } from './features/imposition/preflight/rules/GarbageRule.js';
 
 const App = {
-    init: function () {
+    init() {
         console.log("🚀 App Booting...");
 
-        // Host Connection Check
+        // Load Host Logic via CSInterface
         const csInterface = new CSInterface();
-
-        // Status Update
-        const statusEl = document.getElementById('status');
-        if (statusEl) {
-            statusEl.textContent = 'Ready';
-            statusEl.style.color = '#34C759';
-        }
-
-        // Init Features (Global Namespace)
-        if (window.Imposition.actionTab) {
-            window.Imposition.actionTab.init('action-container');
-        }
-        if (window.Imposition.configTab) {
-            window.Imposition.configTab.init('config-container');
-        }
-
-        // Load Host Logic
-        // Note: CSInterface evalScript uses strict paths usually, but evalFile is safer with absolute path
         const extensionRoot = csInterface.getSystemPath(CSInterface.EXTENSION) + "/jsx/";
         csInterface.evalScript('$.evalFile("' + extensionRoot + 'host.jsx")');
+
+        // Initialize dependencies
+        const bridgeInst = new Bridge();
+
+        // Setup Preflight Orchestrator
+        const preflightOrchestrator = new PreflightOrchestrator();
+        preflightOrchestrator.registerRule(GarbageRule);
+
+        // Initialize feature tabs
+        const actionTab = new ActionTab(preflightOrchestrator, bridgeInst);
+        actionTab.init('action-container');
+
+        const configTab = new ConfigTab();
+        configTab.init('config-container');
 
         console.log('✅ App Initialized');
     }
 };
 
-// Global Exposure
-window.App = App;
+document.addEventListener('DOMContentLoaded', () => App.init());
 
-// Auto-boot
-document.addEventListener('DOMContentLoaded', App.init);

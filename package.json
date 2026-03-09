@@ -17,7 +17,7 @@
     "build:all": "npm run build:wedding && npm run build:symbol",
     "test:wedding": "node --test wedding-cep/cep/js/**/*.test.js",
     "test:e2e:wedding": "node wedding-cep/cep/debug_scripts/test_smoke.cjs",
-    "test:e2e:symbol": "node symbol-cep/debug_scripts/test_smoke.cjs",
+    "test:e2e:symbol": "node symbol-cep/cep/debug_scripts/test_smoke.cjs",
     "test:e2e:all": "npm run test:e2e:wedding && npm run test:e2e:symbol",
     "agent:sync": "node scripts/agent-sync.cjs",
     "verify": "npm run lint:all && npm run build:all && npm run test:e2e:all && npm run agent:sync",

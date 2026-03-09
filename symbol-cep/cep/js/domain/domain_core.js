@@ -1,4 +1,5 @@
 /* eslint-disable no-var */
+/* global $ */
 /**
  * MODULE: DomainCore
  * LAYER: Domain/Logic (L1)
@@ -7,11 +8,11 @@
  * SIDE EFFECTS: None (pure math)
  * EXPORTS: ImpositionDomain.PaperSizes, .calculateSheetGeometry(), .calculateFrame()
  */
-// Compatible with: ES3 (ExtendScript) & V8 (CEP/Node)
+// Compatible with: ES3 (ExtendScript)
 
-if (typeof ImpositionDomain === 'undefined') {
-    ImpositionDomain = {};
-}
+var ImpositionDomain = (typeof $ !== 'undefined' && $.global)
+    ? ($.global.ImpositionDomain = $.global.ImpositionDomain || {})
+    : (typeof ImpositionDomain !== 'undefined' ? ImpositionDomain : {});
 
 (function (exports) {
 
@@ -31,7 +32,6 @@ if (typeof ImpositionDomain === 'undefined') {
     /**
      * Calculates the new Sheet Geometry based on Config
      * Pure Math: Input Rect -> Output Rect
-     * Canonical: "Sheet" (Physical Paper) instead of "Artboard" (AI UI)
      */
     exports.calculateSheetGeometry = function (currentRect, payload) {
         var params = payload.rawValues || {};
@@ -55,12 +55,10 @@ if (typeof ImpositionDomain === 'undefined') {
 
     /**
      * Calculates the Imposition Internal Frame (Finish, Print)
-     * SIMPLIFIED: Bleed removed.
      */
     exports.calculateFrame = function (payload, contentBounds) {
         var geo = payload.geometry;
 
-        // Auto-Detect Size logic
         var isAutoSize = false;
         var finishWidthPt, finishHeightPt;
 
@@ -73,7 +71,6 @@ if (typeof ImpositionDomain === 'undefined') {
             finishHeightPt = contentBounds.height;
         }
 
-        // Margin Engine Integration
         var rules = (payload.rules && payload.rules.length > 0)
             ? payload.rules
             : exports.createRulesFromPayload(payload);

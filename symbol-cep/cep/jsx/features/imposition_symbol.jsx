@@ -42,7 +42,8 @@
                 if (!Mods) throw new Error("Modules not ready.");
 
                 // 2. PREPARE DATA
-                var payload = JSON.parse(payloadStr);
+                var payloadStrDecoded = Base64.decode(payloadStr);
+                var payload = JSON.parse(payloadStrDecoded);
                 var doc = app.activeDocument;
                 var sel = app.selection;
 
@@ -217,14 +218,30 @@
 
                 $.writeln(">>> ENGINE FINISHED <<<");
                 $.writeln = originalWriteln;
-                // Trả về log nối chuỗi để JS hiển thị
-                return "success\n--------------------\n" + trace.join("\n");
 
+                // Trả về Structured JSON Payload (Base64) cho Postflight Hook
+                var resultObj = {
+                    success: true,
+                    data: {
+                        itemsProcessed: processedItems.length,
+                        isRotated: alreadyRotated,
+                        // Could expose frame boundaries later if needed by pasteboard
+                        finishSize: frame.finish
+                    },
+                    logs: trace
+                };
+                return Base64.encode(JSON.stringify(resultObj));
 
             } catch (e) {
                 $.writeln("ENGINE ERROR: " + e.message);
                 $.writeln = originalWriteln;
-                return "error: " + e.message + "\nLog:\n" + trace.join("\n");
+
+                var errObj = {
+                    success: false,
+                    error: e.message,
+                    logs: trace
+                };
+                return Base64.encode(JSON.stringify(errObj));
             }
         }
     };

@@ -4,10 +4,10 @@
  * PURPOSE: Compile config schema + user input into Margin Rules
  * DEPENDENCIES: None
  * SIDE EFFECTS: None (pure compilation)
- * EXPORTS: window.ConfigEngine.compileRules(), .validateSchema()
+ * EXPORTS: ConfigEngine.compileRules(), .validateSchema()
  */
 
-window.ConfigEngine = window.ConfigEngine || {};
+export const ConfigEngine = {};
 
 (function (engine) {
 
@@ -137,4 +137,4 @@ window.ConfigEngine = window.ConfigEngine || {};
         });
     }
 
-})(window.ConfigEngine);
+})(ConfigEngine);

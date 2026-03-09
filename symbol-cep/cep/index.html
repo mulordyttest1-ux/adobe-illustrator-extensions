@@ -43,56 +43,33 @@
     </main>
 
     <script>
-        // Simple Tab Switcher
+        // Simple Tab Switcher (inline, not bundled — only UI shell logic)
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.getElementById('tab-' + tabName).style.display = 'block';
 
-            // Toggle Active Class (using style.css classes if available, or inline logic)
-            // For now simple contrast toggle
             const btnAction = document.getElementById('tab-action-btn');
             const btnConfig = document.getElementById('tab-config-btn');
 
             if (tabName === 'action') {
-                btnAction.classList.add('contrast');
-                btnAction.classList.remove('secondary');
-                btnConfig.classList.add('secondary');
-                btnConfig.classList.remove('contrast');
+                btnAction.classList.add('contrast'); btnAction.classList.remove('secondary');
+                btnConfig.classList.add('secondary'); btnConfig.classList.remove('contrast');
             } else {
-                btnConfig.classList.add('contrast');
-                btnConfig.classList.remove('secondary');
-                btnAction.classList.add('secondary');
-                btnAction.classList.remove('contrast');
+                btnConfig.classList.add('contrast'); btnConfig.classList.remove('secondary');
+                btnAction.classList.add('secondary'); btnAction.classList.remove('contrast');
             }
         }
     </script>
 
-    <!-- 1. Vendor (Must be first) -->
+    <!-- 1. Vendor (Must be first — NOT bundled) -->
     <script src="lib/CSInterface.js"></script>
 
-    <!-- 2. Core Config -->
-    <script src="js/config.js"></script>
-    <script src="js/bridge.js"></script>
+    <!-- 2. Fuzzy Search Vendor (NOT bundled) -->
+    <script src="js/libs/fuse.basic.min.js?v=2"></script>
 
-    <!-- 3. Domain Logic (Must load before Features) -->
-    <script src="js/domain/domain_core.js"></script>
-    <script src="js/domain/margin_engine.js"></script>
-    <script src="js/domain/layout_engine.js"></script>
+    <!-- 3. App Bundle (ALL internal code) -->
+    <script src="js/bundle.js"></script>
 
-    <!-- 4. Features (Load order optimized) -->
-    <script src="js/features/imposition/data_store.js"></script>
-    <script src="js/features/imposition/config_engine.js"></script> <!-- Engine -->
-    <script src="js/features/imposition/schema_editor.js"></script> <!-- Schema CRUD -->
-    <script src="js/features/imposition/builtin_presets.js"></script> <!-- Presets -->
-    <script src="js/libs/fuse.basic.min.js?v=2"></script> <!-- Fuzzy Search -->
-    <script src="js/features/imposition/action_tab.js?v=3"></script>
-    <script src="js/features/imposition/config_renderer.js"></script>
-    <script src="js/features/imposition/config_events.js"></script>
-    <script src="js/features/imposition/config_persistence.js"></script>
-    <script src="js/features/imposition/config_tab.js"></script>
-
-    <!-- 4. Main App Boot -->
-    <script src="js/app.js"></script>
 </body>
 
 </html>

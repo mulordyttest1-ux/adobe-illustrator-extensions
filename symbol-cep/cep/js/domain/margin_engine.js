@@ -1,4 +1,5 @@
 /* eslint-disable no-var */
+/* global $ */
 /**
  * MODULE: MarginEngine
  * LAYER: Domain/Logic (L1)
@@ -7,17 +8,16 @@
  * SIDE EFFECTS: None
  * EXPORTS: ImpositionDomain.createRulesFromPayload(), ImpositionDomain.calculateMargins()
  */
-// Compatible with: ES3 (ExtendScript) & V8 (CEP/Node)
+// Compatible with: ES3 (ExtendScript)
 
-if (typeof ImpositionDomain === 'undefined') {
-    ImpositionDomain = {};
-}
+var ImpositionDomain = (typeof $ !== 'undefined' && $.global)
+    ? ($.global.ImpositionDomain = $.global.ImpositionDomain || {})
+    : (typeof ImpositionDomain !== 'undefined' ? ImpositionDomain : {});
 
 (function (exports) {
 
     /**
      * Adapter: Convert payload to Margin Rules
-     * Supports Dynamic Schema (User-Added Fields) via payload.schema
      */
     exports.createRulesFromPayload = function (payload) {
         var rules = [];
@@ -35,10 +35,6 @@ if (typeof ImpositionDomain === 'undefined') {
         return rules;
     };
 
-    /**
-     * Process Stack/Grid Fields in a section
-     * @private
-     */
     function _processSectionFields(sec, raw, rules) {
         if (!sec.fields) return;
         for (var i = 0; i < sec.fields.length; i++) {
@@ -46,10 +42,6 @@ if (typeof ImpositionDomain === 'undefined') {
         }
     }
 
-    /**
-     * Process Matrix Rows in a section
-     * @private
-     */
     function _processSectionRows(sec, raw, rules) {
         if (!sec.rows) return;
         for (var r = 0; r < sec.rows.length; r++) {
@@ -58,8 +50,6 @@ if (typeof ImpositionDomain === 'undefined') {
             for (var key in row.fields) {
                 if (!Object.prototype.hasOwnProperty.call(row.fields, key)) continue;
                 var f = row.fields[key];
-                // Polyfill Binding if UNDEFINED (ConfigEngine logic)
-                // CRITICAL: Do NOT override explicit `binding: false`
                 if (f.binding === undefined) {
                     f.binding = {
                         classification: row.classification,
@@ -71,10 +61,6 @@ if (typeof ImpositionDomain === 'undefined') {
         }
     }
 
-    /**
-     * Process a single field definition into a margin rule
-     * @private
-     */
     function _processField(f, rowId, raw, rules) {
         if (!f.binding) return;
         var val = parseFloat(raw[f.id]) || 0;
@@ -108,17 +94,12 @@ if (typeof ImpositionDomain === 'undefined') {
         return margins;
     };
 
-    /**
-     * Calculate margin for a single edge
-     * @private
-     */
     function _calculateEdgeMargin(ruleList, edge) {
         var edgeRules = [];
         for (var k = 0; k < ruleList.length; k++) {
             if (ruleList[k].edge === edge) edgeRules.push(ruleList[k]);
         }
 
-        // A. Base Calculation (Max of Baseline & Structural)
         var maxBase = 0;
         for (var j = 0; j < edgeRules.length; j++) {
             var r = edgeRules[j];
@@ -127,7 +108,6 @@ if (typeof ImpositionDomain === 'undefined') {
             }
         }
 
-        // B. Additive Calculation
         var totalAdd = 0;
         for (var m = 0; m < edgeRules.length; m++) {
             if (edgeRules[m].type === 'ADDITIVE') {
@@ -135,7 +115,6 @@ if (typeof ImpositionDomain === 'undefined') {
             }
         }
 
-        // C. Absolute Override (Winner takes all)
         for (var n = 0; n < edgeRules.length; n++) {
             if (edgeRules[n].type === 'ABSOLUTE') {
                 return edgeRules[n].val;

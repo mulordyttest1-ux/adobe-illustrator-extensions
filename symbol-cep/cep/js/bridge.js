@@ -1,4 +1,4 @@
-window.Bridge = class Bridge {
+export class Bridge {
     constructor() {
         this.cs = new CSInterface();
         this.hostRoot = this.cs.getSystemPath(CSInterface.EXTENSION) + "/jsx/";
@@ -38,4 +38,5 @@ window.Bridge = class Bridge {
             });
         });
     }
-};
+}
+

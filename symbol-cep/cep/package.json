@@ -1,0 +1,15 @@
+{
+    "name": "imposition-panel-cep",
+    "version": "1.0.0",
+    "description": "Imposition Panel CEP for Adobe Illustrator",
+    "private": true,
+    "scripts": {
+        "test": "node --test js/**/*.test.js",
+        "lint": "eslint js/ --config ../../shared/eslint.config.mjs --ignore-pattern bundle.js"
+    },
+    "nx": {
+        "tags": [
+            "scope:app"
+        ]
+    }
+}

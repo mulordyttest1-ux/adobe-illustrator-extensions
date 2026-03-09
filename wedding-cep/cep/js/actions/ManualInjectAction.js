@@ -110,8 +110,8 @@ export const ManualInjectAction = {
                 return bTop - aTop;
             });
 
-            // Map variables top-down
-            const variables = [`{${prefix}.diachi}`, `{${prefix}.ong}`, `{${prefix}.ba}`, `{${prefix}.ongba}`];
+            // Map variables top-down (Theo Layout mới của Sếp: ÔngBà [Top] -> ĐịaChỉ -> Ông -> Bà)
+            const variables = [`{${prefix}.ongba}`, `{${prefix}.diachi}`, `{${prefix}.ong}`, `{${prefix}.ba}`];
             const plans = [];
 
             for (let i = 0; i < sortedFrames.length; i++) {
@@ -160,17 +160,30 @@ export const ManualInjectAction = {
 
                 if (matches.length === 0) continue;
 
-                // Swap tiec → targetMoc trong content
-                const newContent = content.replace(/date\.tiec\./g, `date.${targetMoc}.`);
+                // Swap tiec → targetMoc in content using ATOMIC mode to preserve RichText format
+                const regex = /\{date\.tiec\.[^}]+\}/g;
+                const replacements = [];
+                let match;
+                while ((match = regex.exec(content)) !== null) {
+                    const oldWord = match[0];
+                    const newWord = oldWord.replace('date.tiec.', `date.${targetMoc}.`);
+                    replacements.push({
+                        start: match.index,
+                        end: match.index + oldWord.length,
+                        val: newWord
+                    });
+                }
 
-                plans.push({
-                    id: frame.id,
-                    plan: {
-                        mode: 'DIRECT',
-                        content: newContent,
-                        meta: { action: 'clear' }
-                    }
-                });
+                if (replacements.length > 0) {
+                    plans.push({
+                        id: frame.id,
+                        plan: {
+                            mode: 'ATOMIC',
+                            replacements: replacements,
+                            meta: { action: 'clear' }
+                        }
+                    });
+                }
             }
 
             if (plans.length === 0) {

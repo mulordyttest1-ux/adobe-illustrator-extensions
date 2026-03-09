@@ -146,7 +146,7 @@ export class DomFactory {
             const chk = document.createElement('input');
             chk.type = 'checkbox';
             chk.className = 'compact-checkbox';
-            chk.checked = true;
+            chk.checked = true; // Bật mặc định Auto-Check theo yêu cầu Sếp
             chk.title = 'Auto';
             wrapper.appendChild(chk);
             result.checkbox = chk;

@@ -18,10 +18,11 @@ version: 1.0
 2. Reload Panel (đóng/mở hoặc CDP reload script)
 3. `npm run test:e2e` hoặc `node test_smoke.cjs`
 
-## §T3 — DEBUGGING
+## §T3 — DEBUGGING & SCRATCHPADS
 - Chrome DevTools: `http://localhost:8097` → Chọn "Wedding Scripter"
 - Console, Network tab hoạt động như web bình thường
-
+- **Isolated Testing (Scratchpads):** Khi cần viết script để test logic rời rạc (như test regex, thuật toán node), **BẮT BUỘC** viết file mới (hoặc dùng lại file cũ) bên trong thư mục `scripts/scratchpads/`. TUYỆT ĐỐI không thảy file test bừa bãi ra root của dự án.
+- **Debug Utilities:** Các script tương tác với môi trường Host/CEP nội bộ nằm ở `scripts/debug_utils/`.
 ## §T4 — HYBRID AGENTIC TESTING
 
 ### Bug Regression (Quy trình Trị Lỗi Tái Phát):

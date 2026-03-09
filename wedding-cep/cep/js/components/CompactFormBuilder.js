@@ -126,6 +126,9 @@ export class CompactFormBuilder {
         if (chk) {
             this.refs[`${key}_auto`] = chk;
             chk.addEventListener('change', () => this._handleChange(`${key}_auto`, chk.checked));
+
+            // Đánh thức Binding Mặc Định lúc mới Load
+            setTimeout(() => this._handleChange(`${key}_auto`, true), 100);
         }
 
         // Delegate to AddressService
@@ -230,28 +233,48 @@ export class CompactFormBuilder {
 
     setData(data) {
         Object.keys(this.refs).forEach(key => {
-            const ref = this.refs[key];
-            const val = data[key];
-
-            if (ref.type === 'radio') {
-                if (val !== undefined) {
-                    ref.elements.forEach(r => r.checked = r.value === val);
-                }
-            } else if (ref.type === 'checkbox') {
-                if (val !== undefined) ref.checked = Boolean(val);
-            } else if (ref.isComputed) {
-                if (val !== undefined && val !== null) {
-                    if (ref.el) {
-                        ref.el.textContent = val;
-                    } else if (ref.value !== undefined) {
-                        ref.value = val;
-                    }
-                }
-            } else {
-                if (val !== undefined) ref.value = val;
-            }
+            this._setRefValue(this.refs[key], data[key]);
         });
         this.data = { ...this.data, ...data };
+    }
+
+    _setRefValue(ref, val) {
+        if (val === undefined) return;
+
+        if (ref.type === 'radio') {
+            this._setRadioValue(ref, val);
+        } else if (ref.type === 'checkbox') {
+            const isTarget = Boolean(val);
+            if (ref.checked !== isTarget) {
+                ref.checked = isTarget;
+                ref.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        } else if (ref.isComputed) {
+            if (val !== null) {
+                if (ref.el) ref.el.textContent = val;
+                else if (ref.value !== undefined) ref.value = val;
+            }
+        } else {
+            if (ref.value !== val) {
+                ref.value = val;
+                ref.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    }
+
+    _setRadioValue(ref, val) {
+        let changed = false;
+        ref.elements.forEach(r => {
+            const isTarget = (r.value === val);
+            if (r.checked !== isTarget) {
+                r.checked = isTarget;
+                if (isTarget) changed = true;
+            }
+        });
+        if (changed) {
+            const checkedRadio = ref.elements.find(r => r.checked);
+            if (checkedRadio) checkedRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 }
 

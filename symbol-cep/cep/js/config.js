@@ -1,7 +1,7 @@
 /**
  * Config được sinh tự động
  */
-window.AppConfig = {
+export const AppConfig = {
     "env": "development",
     "debug": true,
     "logLevel": "verbose",

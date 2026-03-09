@@ -4,11 +4,10 @@
  * PURPOSE: Schema manipulation — add/remove fields dynamically
  * DEPENDENCIES: None (pure object manipulation)
  * SIDE EFFECTS: None (mutates passed schema objects)
- * EXPORTS: window.ConfigEngine.createFieldDefinition, .addField, .removeField
+ * EXPORTS: ConfigEngine.createFieldDefinition, .addField, .removeField
  */
 
-// Attach to existing ConfigEngine namespace
-window.ConfigEngine = window.ConfigEngine || {};
+import { ConfigEngine } from './config_engine.js';
 
 (function (engine) {
 
@@ -145,4 +144,6 @@ window.ConfigEngine = window.ConfigEngine || {};
         return null;
     }
 
-})(window.ConfigEngine);
+})(ConfigEngine);
+
+export { ConfigEngine };

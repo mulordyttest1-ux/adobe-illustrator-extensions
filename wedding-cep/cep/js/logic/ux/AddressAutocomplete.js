@@ -70,7 +70,9 @@ export class AddressAutocomplete {
     static search(query) {
         if (!this.fuse || !query) return [];
 
-        const normalizedQuery = query.toLowerCase().trim();
+        // [FIX - MULTILINE] Ép phẳng ký tự Xuống dòng (\n, \r) thành Khoảng trắng (Best Practice cho Fuse.js)
+        const normalizedQuery = query.replace(/[\n\r]+/g, ' ').toLowerCase().trim();
+
         // Tìm kiếm
         const results = this.fuse.search(normalizedQuery);
 

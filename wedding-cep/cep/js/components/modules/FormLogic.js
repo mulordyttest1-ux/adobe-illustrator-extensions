@@ -70,12 +70,19 @@ export class FormLogic {
 
         const targetHost = (triggers[leValue] === 1) ? valGai : valTrai;
 
+        let changed = false;
         hostRef.elements.forEach(radio => {
-            radio.checked = radio.value === targetHost;
+            const isTarget = (radio.value === targetHost);
+            if (radio.checked !== isTarget) {
+                radio.checked = isTarget;
+                if (isTarget) changed = true;
+            }
         });
 
-        this.builder._handleChange('ceremony.host_type', targetHost);
-        this._updateAllVenueNames(targetHost, refs);
+        if (changed) {
+            const checkedRadio = hostRef.elements.find(r => r.checked);
+            if (checkedRadio) checkedRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     _updateAllVenueNames(hostValue, refs) {
@@ -101,15 +108,19 @@ export class FormLogic {
         const addrEl = refs[`${prefix}.diachi`];
 
         if (tenEl) {
-            tenEl.value = tuGiaLabel;
-            this.builder._handleChange(`${prefix}.ten`, tuGiaLabel);
+            if (tenEl.value !== tuGiaLabel) {
+                tenEl.value = tuGiaLabel;
+                tenEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }
 
         if (addrEl) {
-            addrEl.value = sourceAddr;
-            this.builder._handleChange(`${prefix}.diachi`, sourceAddr);
-            if (prefix === 'ceremony' && typeof InputEngine !== 'undefined') {
-                InputEngine.process(sourceAddr, 'ceremony.diachi', {}, this.builder.schema);
+            if (addrEl.value !== sourceAddr) {
+                addrEl.value = sourceAddr;
+                addrEl.dispatchEvent(new Event('input', { bubbles: true }));
+                if (prefix === 'ceremony' && typeof InputEngine !== 'undefined') {
+                    InputEngine.process(sourceAddr, 'ceremony.diachi', {}, this.builder.schema);
+                }
             }
         }
     }
@@ -120,13 +131,13 @@ export class FormLogic {
 
         if (!inputEl || !checkboxEl) return;
 
-        inputEl.addEventListener('input', () => {
+        inputEl.addEventListener('input', (e) => {
+            // [CẢM BIẾN AI] Lơ đi nếu sự kiện do hàm setData/Máy bắn ra
+            if (!e.isTrusted) return;
+
             if (checkboxEl.checked) {
                 checkboxEl.checked = false;
-                if (this.builder.data) {
-                    const chkKey = Object.keys(this.builder.refs).find(k => this.builder.refs[k] === checkboxEl);
-                    if (chkKey) this.builder._handleChange(chkKey, false);
-                }
+                checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
     }

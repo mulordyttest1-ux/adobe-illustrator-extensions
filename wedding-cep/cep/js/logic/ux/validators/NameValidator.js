@@ -17,7 +17,8 @@ export const NameValidator = {
         "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lương", "Đàm", "Cao", "Đặng", "Lý"
     ]),
 
-    ETHNIC_PATTERN: /(^|\s)(H'|Y'|K'|M'|S'|R'|N'|L'|Nie|Eban|Kbuor|Ksor|Siu|Ro|Kpa|Ama|Ami|H|Y)(\s|$)/i,
+    // Hỗ trợ dính liền nét (Community Standard): sau H/Y có thể là Khoảng Trắng, Gạch Ngang, Nháy Đơn, Cuối Câu, hoặc Chữ Cái Viết Liền
+    ETHNIC_PATTERN: /(^|[\s'-])(H'|Y'|K'|M'|S'|R'|N'|L'|Nie|Eban|Kbuor|Ksor|Siu|Ro|Kpa|Ama|Ami|H|Y)([\s'-]|$|(?=[A-Za-z]))/i,
 
     validate(value, type = 'person_name') {
         if (!value || typeof value !== 'string') return { valid: true, warnings: [] };
@@ -76,8 +77,10 @@ export const NameValidator = {
         checkSurname({ trimmed, isVenue, isEthnic, validator }) {
             if (isVenue || isEthnic || !trimmed.includes(' ')) return null;
 
-            const surname = trimmed.split(/\s+/)[0];
+            // Split bằng cả Khoảng Trắng, Gạch Ngang và Nháy Đơn để bóc tách Họ lõi
+            const surname = trimmed.split(/[\s'-]+/)[0];
             const normSurname = surname.charAt(0).toUpperCase() + surname.slice(1).toLowerCase();
+
             if (!validator.COMMON_SURNAMES.has(normSurname)) {
                 return { type: 'uncommon_surname', message: `Họ lạ: "${surname}"?`, severity: 'info' };
             }
@@ -91,8 +94,8 @@ export const NameValidator = {
             const words = trimmed.split(/\s+/);
 
             // Smart Bypass Pattern (Word-level)
-            // If a word contains ' or matches common ethnic starts, bypass phonetic check for THAT word
-            const wordBypassRegex = /['ʼ']|^Ro|^Kpa|^H'|^Y'|^K'|^M'|^S'|^N'|^L'/i;
+            // If a word contains ' or - or matches common ethnic starts, bypass phonetic check for THAT word
+            const wordBypassRegex = /['ʼ-]|(?<=^|\s)(Ro|Kpa|H'|Y'|K'|M'|S'|N'|L'|H|Y)(?=$|[\s'-])/i;
 
             for (const w of words) {
                 // Clean purely numeric or abbreviation parts

@@ -19,6 +19,7 @@ const args = [
     '--target=es2020',
     '--sourcemap=inline',
     '--charset=utf8',
+    '--external:CSInterface',
 ];
 
 if (isWatch) {

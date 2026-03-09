@@ -1,22 +1,29 @@
-# 🔒 Báo Cáo Scope Lock: `DateGridWidget.js`
+# C2 Mức Độ Ảnh Hưởng (Scope Lock): Postflight Hook
 
-Tuân thủ đúng quy trình Bước §C2 của Runbook: Khoanh vùng rủi ro rò rỉ trước khi Refactor.
+## 1. Mục Tiêu của Pha C2
+Khoanh vùng tất cả các component có nguy cơ "chết chùm" nếu chúng ta lắp ráp sai Module Postflight (như việc nhúng thêm Rule vẽ Pasteboard Legend).
 
-## 1. Điểm Phát Sóng (Exported Interface)
-File `DateGridWidget.js` hiện tại đang "bán" ra ngoài 3 API:
-1. `create(container, dateConfigs, refs)`
-2. `setChangeHandler(fn)`
-3. `triggerCompute()`
+## 2. Các File Can Thiệp và "Người Dùng Tiêu Thụ" (Consumers)
 
-## 2. Các Mối Phụ Thuộc (Consumers / Consumers Context)
-Điềm báo Đỏ: Có tổng cộng 4 Module đang bấu víu vào Widget này.
-1. **`js/components/modules/FormComponents.js`**: Gọi hàm `.create()` và gài hàm Change Handler. Nếu ta đổi Signature hàm `create`, file này sẽ sụp.
-2. **`js/actions/ScanAction.js`**: Thỉnh thoảng gọi hàm `.triggerCompute()` để ép Widget tính toán lại Âm Lịch sau khi Scan.
-3. **`js/controllers/helpers/WeddingProActionHandler.js`**: Cũng gọi `.triggerCompute()` một cách lỏng lẻo thông qua Global Variable.
-4. **`js/app.js`**: Export `DateGridWidget` ra `window.DateGridWidget` -> Gây ra tình trạng Global Scope Coupling.
+### 🔴 File Sửa Đổi: `symbol-cep/cep/jsx/bridge.jsx`
+- **Mục tiêu:** Thêm endpoint `Bridge.drawPasteboardLegend(base64Str)`.
+- **Rủi Ro:** Thấp. Đây là một file Global Proxy.
+- **Consumer của `bridge.jsx`:** Hầu hết quy trình UI. Tuy nhiên do chỉ thêm Hàm độc lập mới nguyên `drawPasteboardLegend` nên KHÔNG ảnh hưởng (Zero footprint) đến các hàm cũ như lưới/rác.
 
-## 3. Bản Án Rủi Ro
-- Nếu nhắm mắt đập đi xây lại `DateGridWidget`, ta phải đặc biệt giữ nguyên cái vỏ bọc 3 API ở phần (1) để hệ thống cũ không bị vỡ.
-- Hoặc ta phải chuyển mảng Logic Validation ra xa, nhưng bắt buộc Controller mới phải chịu trách nhiệm tính toán `triggerCompute()`.
+### 🔴 File Sửa Đổi: `symbol-cep/cep/js/features/imposition/action_tab.js`
+- **Mục tiêu:** Ngay sau lệnh chạy Lõi (`await this._runImpositionEngineAsync()`), ta chèn lệnh kích hoạt Rule `await this.postflightOrchestrator.runAll(...)`.
+- **Rủi Ro:** Trung Bình. Lớp này quản lý UI State (Loading/Done/Error).
+- **Scope Lock (Cách chống vỡ):** Do `action_tab.js` chứa Try/Catch Global của UI, `PostflightOrchestrator` bắt buộc thiết kế dạng Try/Catch độc lập. Nếu Postflight lỗi (ví dụ text dài bị lỗi font), Lõi Imposition (thành phẩm 1000 con tem đắt tiền) vẫn phải được giữ nguyên, không được ném Exception lôi cả cục Thành Phẩm đi chết chung.
 
-👉 **Kết luận Scope Lock:** Code Refactor KHÔNG ĐƯỢC CHẠM vào 4 file Consumer. Chỉ được phép dỡ nội thất (ruột) của `DateGridWidget.js` chuyển sang File mới, còn phần Giao Tiếp bên ngoài vẫn phải giữ nguyên.
+### 🔴 File Sửa Đổi: `symbol-cep/cep/js/app.js`
+- **Mục tiêu:** Nhét instance và constructor chứa `PostflightOrchestrator` xuống nhánh Setup/Init.
+- **Rủi Ro:** Rất Thấp. Chỉ là Factory lắp ráp Inject Dependency ở Bootstrap.
+
+### 🟢 File Sinh Mới: 
+1. `postflight/PostflightOrchestrator.js`
+2. `postflight/rules/PasteboardInfoRule.js`
+- Độc lập hoàn toàn, thừa kế Interface Chain of Responsibility có sẵn.
+
+## 3. Chốt Triển Khai (Go/No-Go)
+- **Ranh Giới Decoupling (An toàn tuyệt đối):** The execution of Core Engine and UI Loading is completely isolated from the specific implementation details of the rules.
+- **Đề nghị:** Chuyển sang §C3 (Duyệt Kế Hoạch Contract đã có ở `implementation_plan.md`).

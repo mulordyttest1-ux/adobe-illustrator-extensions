@@ -56,7 +56,7 @@ export class AddressService {
 
             if (!val || typeof AddressAutocomplete === 'undefined' || !AddressAutocomplete.isReady) return;
 
-            const parts = val.split(/[-,\n]/);
+            const parts = val.split(/[-,]/); // Cắt \n đi, chỉ chia địa chỉ bằng Dấu phẩy hoặc Gạch nối
             const lastPart = parts[parts.length - 1].trim();
 
             if (lastPart.length < 2) {

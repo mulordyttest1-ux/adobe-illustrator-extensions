@@ -4,10 +4,6 @@
 
 <repository_surface>
   - /.task_steps
-  - clear_cache.js
-  - debug_cep.js
-  - debug_check.js
-  - eval_cep.js
   - jest.config.ts
   - jest.preset.js
   - /libs
@@ -31,21 +27,25 @@
   - nx.json
   - package-lock.json
   - package.json
-  - schema_refactor.test.js
   - /scripts
+    - /debug_utils
+      - clear_cache.js
+      - debug_cep.js
+      - debug_check.js
+      - eval_cep.js
+    - /scratchpads
+      - schema_refactor.test.js
   - /shared
     - /testing
   - /symbol-cep
     - /cep
       - /js
-        - /adapters
         - app.js
         - bridge.js
         - bundle.js
         - config.js
         - /domain
           - domain_core.js
-          - field_ids.js
           - layout_engine.js
           - margin_engine.js
         - /features
@@ -58,10 +58,13 @@
             - config_renderer.js
             - config_tab.js
             - data_store.js
+            - /preflight
+              - PreflightOrchestrator.js
+              - /rules
+                - GarbageRule.js
             - schema_editor.js
         - /libs
           - fuse.basic.min.js
-        - /ports
         - types.d.ts
       - /jsx
         - bridge.jsx
@@ -84,10 +87,7 @@
         - utils.jsx
       - /lib
         - CSInterface.js
-    - cep.config.json
-    - /scripts
-      - configure.js
-      - install.js
+      - package.json
   - tsconfig.base.json
   - tsconfig.json
   - /wedding-cep

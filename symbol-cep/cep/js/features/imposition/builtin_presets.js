@@ -17,7 +17,7 @@
  * - frame.margins (Must use frame.yieldPadding)
  */
 
-window.BuiltinPresets = [
+export const BuiltinPresets = [
     {
         id: "standard_imposition",
         name: "Căn Lề Chuẩn (Standard)",
