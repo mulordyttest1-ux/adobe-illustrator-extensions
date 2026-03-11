@@ -100,3 +100,47 @@ $.global.Bridge.clearArtboardGarbage = function () {
         return Base64.encode(JSON.stringify({ success: false, error: e.message }));
     }
 };
+
+$.global.Bridge.drawPasteboardLegend = function (base64Str) {
+    try {
+        if (!app.documents.length) return Base64.encode(JSON.stringify({ success: false, error: "No document" }));
+        var doc = app.activeDocument;
+        var infoText = Base64.decode(base64Str);
+
+        var groupName = "Symbol_Meta_Info";
+        var group;
+        try {
+            group = doc.activeLayer.groupItems.getByName(groupName);
+        } catch (err) {
+            group = doc.activeLayer.groupItems.add();
+            group.name = groupName;
+        }
+
+        group.locked = false;
+        group.hidden = false;
+
+        var activeArtboard = doc.artboards[doc.artboards.getActiveArtboardIndex()];
+        var rect = activeArtboard.artboardRect; // [left, top, right, bottom]
+
+        var x = rect[0];
+        var y = rect[1] + 25; // Offset up into pasteboard (AI Y is positive up)
+
+        var textFrame = group.textFrames.add();
+        textFrame.contents = infoText;
+        textFrame.position = [x, y];
+
+        // Format
+        textFrame.textRange.characterAttributes.size = 8;
+        try {
+            textFrame.textRange.characterAttributes.fillColor = doc.swatches.getByName("[Registration]").color;
+        } catch (err) {
+            // Fallback to black if registration swatch not found
+        }
+
+        group.locked = true;
+
+        return Base64.encode(JSON.stringify({ success: true }));
+    } catch (e) {
+        return Base64.encode(JSON.stringify({ success: false, error: e.message }));
+    }
+};

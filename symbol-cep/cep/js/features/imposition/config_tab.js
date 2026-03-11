@@ -10,7 +10,6 @@
 import { dataStore } from './data_store.js';
 import { ConfigRenderer } from './config_renderer.js';
 import { ConfigEvents } from './config_events.js';
-import { ConfigPersistence } from './config_persistence.js';
 import { BuiltinPresets } from './builtin_presets.js';
 import { ConfigEngine } from './schema_editor.js';
 
@@ -24,15 +23,6 @@ export class ConfigTab {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
         this.render();
-
-        // Restore last used preset
-        const lastId = dataStore.getLastActive();
-        if (lastId) {
-            console.log("Restoring Last Preset:", lastId);
-            ConfigPersistence.loadPreset(lastId, this);
-            const sel = document.getElementById('load-preset-select');
-            if (sel) sel.value = lastId;
-        }
 
         ConfigEvents.bindEvents(this);
     }

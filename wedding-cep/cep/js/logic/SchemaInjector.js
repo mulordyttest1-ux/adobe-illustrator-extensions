@@ -30,8 +30,8 @@ export class SchemaInjector {
         const stage1Pipeline = [
             new EventInfoParser(),
             new TimeStrictParser(),
-            new DateStandaloneParser(),
-            new DateHeuristicParser()
+            new DateHeuristicParser(),
+            new DateStandaloneParser()
         ];
 
         const initialChangesList = [];
@@ -80,10 +80,31 @@ export class SchemaInjector {
             new DateFallbackParser()
         ];
 
+        // [FIX] Khi globalTruth null, thu thập cross-frame orphan numbers cho Self-Infer
+        let crossFrameOrphans = null;
+        if (!globalTruth) {
+            crossFrameOrphans = [];
+            for (const item of initialChangesList) {
+                const text = item.context.originalText;
+                const consumed = item.context.consumedRanges;
+                const numRegex = /\b(\d{1,4})\b/g;
+                let nm;
+                while ((nm = numRegex.exec(text)) !== null) {
+                    const s = nm.index;
+                    const e = s + nm[1].length;
+                    const isConsumed = consumed.some(([cs, ce]) => s < ce && e > cs);
+                    if (!isConsumed) {
+                        crossFrameOrphans.push({ id: item.id, num: parseInt(nm[1], 10), start: s, end: e });
+                    }
+                }
+            }
+        }
+
         for (const item of initialChangesList) {
             const frame = frames.find(f => f.id === item.id);
             const context = item.context;
             context.globalTruth = globalTruth;
+            context.crossFrameOrphans = crossFrameOrphans;
 
             let allReplacements = item.allReplacements;
 

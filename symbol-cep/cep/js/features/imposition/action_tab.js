@@ -13,7 +13,7 @@ import { BuiltinPresets } from './builtin_presets.js';
 import { ConfigEngine } from './schema_editor.js';
 
 export class ActionTab {
-    constructor(preflightOrchestrator = null, bridgeInst = null) {
+    constructor(preflightOrchestrator = null, postflightOrchestrator = null, bridgeInst = null) {
         this.container = null;
         this.csInterface = new CSInterface();
         this.searchTerm = '';
@@ -22,6 +22,7 @@ export class ActionTab {
         this.filteredPresets = [];
         this.fuse = null;
         this.preflightOrchestrator = preflightOrchestrator;
+        this.postflightOrchestrator = postflightOrchestrator;
         this.bridgeInst = bridgeInst;
     }
 
@@ -315,7 +316,15 @@ export class ActionTab {
             // Wait a moment for Illustrator to redraw the UI before postflight
             await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // TODO: Postflight Orchestrator here
+            // --- POSTFLIGHT CHECK ---
+            if (this.postflightOrchestrator && this.bridgeInst) {
+                console.log("🏁 Running Postflight Orchestrator...");
+                await this.postflightOrchestrator.runAll({
+                    bridge: this.bridgeInst,
+                    resultData: engineResult.data,
+                    preset: preset
+                });
+            }
         } catch (fatalErr) {
             console.error("FATAL ERROR IN handleTrigger:", fatalErr);
         }

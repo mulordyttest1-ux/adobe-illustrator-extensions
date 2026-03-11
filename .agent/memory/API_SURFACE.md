@@ -58,6 +58,10 @@
             - config_renderer.js
             - config_tab.js
             - data_store.js
+            - /postflight
+              - PostflightOrchestrator.js
+              - /rules
+                - PasteboardInfoRule.js
             - /preflight
               - PreflightOrchestrator.js
               - /rules

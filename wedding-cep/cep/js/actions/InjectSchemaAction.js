@@ -1,5 +1,7 @@
 import { SchemaInjector } from '../logic/SchemaInjector.js';
 import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+import { LayoutUtils } from '../logic/ux/LayoutUtils.js';
+import { PostflightAction } from './PostflightAction.js';
 
 export const InjectSchemaAction = {
     async execute(ctx, targetType = 'tiec') {
@@ -11,14 +13,17 @@ export const InjectSchemaAction = {
             const frames = await this._fetchFrames(bridge);
             if (!frames) return { success: false, error: 'No selection' };
 
-            const { changes, orphans, missedRequired } = SchemaInjector.computeChanges(frames, targetType);
+            // [BUG #03 FIX] Secondary Sort: Left-to-Right
+            const sortedFrames = LayoutUtils.sortFrames(frames);
+
+            const { changes, orphans, missedRequired } = SchemaInjector.computeChanges(sortedFrames, targetType);
 
             if (changes.length === 0 && orphans.length === 0) {
                 UIFeedback.showToast('Không tìm thấy từ khóa nào cần tiêm Schema trong vùng chọn.', 'info');
                 return { success: true, count: 0 };
             }
 
-            let result = { success: true, count: 0 };
+            let result = { success: true, count: 0, affected: [] };
             if (changes.length > 0) {
                 result = await this._applyChanges(bridge, changes);
             }
@@ -40,6 +45,12 @@ export const InjectSchemaAction = {
                     'error'
                 );
             }
+
+            // TRIGGER POSTFLIGHT VALIDATION (Phase 2 Heuristics)
+            await PostflightAction.execute(ctx, result.affected || [], {
+                missedKeys: missedRequired,
+                phase: 'template'
+            });
 
             return result;
 
@@ -76,7 +87,7 @@ export const InjectSchemaAction = {
 
         const count = applyResult.updated || 0;
         UIFeedback.showToast(`🪄 Đã tiêm thành công ${count} Biến Schema!`, 'success');
-        return { success: true, count };
+        return { success: true, count, affected: applyResult.affected || [] };
     },
 
     _setButtonState(button, isProcessing) {

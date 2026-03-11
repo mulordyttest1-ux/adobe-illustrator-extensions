@@ -1,4 +1,5 @@
 import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+import { PostflightAction } from './PostflightAction.js';
 
 /**
  * MODULE: UpdateAction
@@ -31,6 +32,12 @@ export const UpdateAction = {
 
             if (result && result.success) {
                 UIFeedback.showToast(`Đã cập nhật thông minh ${result.updated} vị trí!`, 'success');
+
+                // TRIGGER POSTFLIGHT VALIDATION (Render Phase)
+                await PostflightAction.execute(ctx, result.affected || [], {
+                    phase: 'render'
+                });
+
                 return { success: true, updated: result.updated };
             } else {
                 UIFeedback.showToast('Lỗi: ' + (result?.error || 'Unknown error'), 'error');

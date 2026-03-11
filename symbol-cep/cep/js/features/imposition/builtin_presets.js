@@ -69,10 +69,7 @@ export const BuiltinPresets = [
                 fields: [
                     {
                         id: "resize_mode",
-                        type: "select", // Changed to select for compactness or radio? Plan said radio. Let's stick to radio if renderer supports, else select. Renderer supports select better in stack. Let's use select for now or stick to plan if renderer supports radio? 
-                        // Looking at config_tab.js, renderFieldStack handles 'select' and 'checkbox'. It falls back to renderFieldGrid for others which uses input type=f.type. 
-                        // Input type='radio' might not render groups well in current 'renderFieldGrid'. 
-                        // Converting plan's radio to SELECT for safety with current renderer.
+                        type: "radio",
                         label: "Chế độ co giãn thiết kế:",
                         options: [
                             { val: "preserve", txt: "🔒 Giữ tỷ lệ (Preserve Ratio) - Không méo" },
@@ -115,6 +112,14 @@ export const BuiltinPresets = [
                         ],
                         default: "tl",
                         binding: false
+                    },
+                    {
+                        id: "info_template",
+                        label: "10. Mẫu thông tin Pasteboard (Template)",
+                        type: "textarea",
+                        placeholder: "{count} tem - Khổ {width}x{height}",
+                        binding: false,
+                        note: "Biến hỗ trợ: {preset_name}, {count}, {width}, {height}, {timestamp}"
                     }
                 ]
             },

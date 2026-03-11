@@ -56,6 +56,7 @@ import { AddressValidator } from './logic/ux/validators/AddressValidator.js';
 import { DateValidator } from './logic/ux/validators/DateValidator.js';
 import { AddressAutocomplete } from './logic/ux/AddressAutocomplete.js';
 import { InputEngine } from './logic/ux/InputEngine.js';
+import { LayoutUtils } from './logic/ux/LayoutUtils.js';
 
 // ============================================================
 // LAYER 5: Components (depends on UX, Domain)
@@ -87,6 +88,7 @@ import { UpdateAction } from './actions/UpdateAction.js';
 import { SwapAction } from './actions/SwapAction.js';
 import { ManualInjectAction } from './actions/ManualInjectAction.js';
 import { InjectSchemaAction } from './actions/InjectSchemaAction.js';
+import { PostflightAction } from './actions/PostflightAction.js';
 
 // ============================================================
 // LAYER 8: Infrastructure (Bridge, SchemaLoader)
@@ -135,6 +137,7 @@ window.DateValidator = DateValidator;
 window.AddressAutocomplete = AddressAutocomplete;
 window.InputEngine = InputEngine;
 window.EthnicNameNormalizer = EthnicNameNormalizer;
+window.LayoutUtils = LayoutUtils;
 
 // Components
 window.DateLogic = DateLogic;
@@ -162,6 +165,7 @@ window.UpdateAction = UpdateAction;
 window.SwapAction = SwapAction;
 window.ManualInjectAction = ManualInjectAction;
 window.InjectSchemaAction = InjectSchemaAction;
+window.PostflightAction = PostflightAction;
 
 // Infrastructure
 window.SchemaLoader = SchemaLoader;

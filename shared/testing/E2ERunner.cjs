@@ -17,8 +17,13 @@ class E2ERunner {
         try {
             console.log(`\n🔌 Connecting to ${this.projectName} (Port ${this.port})...`);
             client = await CDP({ port: this.port, host: 'localhost' });
-            const { Runtime } = client;
+            const { Runtime, Page } = client;
             await Runtime.enable();
+            await Page.enable();
+
+            console.log(`🔄 Reloading Panel to ensure fresh bundle...`);
+            await Page.reload();
+            await new Promise(r => setTimeout(r, 2000));
 
             console.log(`✅ Connected! Running Test Suite for ${this.projectName}...\n`);
 

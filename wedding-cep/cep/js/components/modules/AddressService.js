@@ -48,15 +48,18 @@ export class AddressService {
 
         const performSearch = (val) => {
             // [FIX 1] Chặn hiển thị nếu người dùng đã Tab sang ô khác
-            // Nếu input hiện tại không còn được focus nữa thì hủy tìm kiếm
+            // Không gọi closeAllLists() ở đây để tránh Tự sát DOM tập thể (Anti-pattern)
             if (document.activeElement !== input) {
-                closeAllLists();
                 return;
             }
 
             if (!val || typeof AddressAutocomplete === 'undefined' || !AddressAutocomplete.isReady) return;
 
-            const parts = val.split(/[-,]/); // Cắt \n đi, chỉ chia địa chỉ bằng Dấu phẩy hoặc Gạch nối
+            // [FIX 2 - MULTILINE THRESHOLD] Áp dụng Tokenization Best Practice từ Github:
+            // Khôi phục màng lọc Cắt Dòng (\n, \r) để chia tách.
+            // Mục đích: Luôn gửi "Dòng chót cùng" mà User vừa gõ vào Fuse.js.
+            // Điều này cứu cho cụm đúng (VD: 'lsl') không bị nhấn chìm bởi rác của dòng trên (VD: 'TDP Đoàn Kết')
+            const parts = val.split(/[-,\n\r]/);
             const lastPart = parts[parts.length - 1].trim();
 
             if (lastPart.length < 2) {
@@ -135,9 +138,13 @@ export class AddressService {
 
         const debouncedSearch = DomFactory.debounce((val) => performSearch(val), 300);
 
-        input.addEventListener("input", (_e) => {
+        input.addEventListener("input", (e) => {
+            // [BẢO VỆ CHỐNG NỢ KỸ THUẬT - RAG COMMUNITY BEST PRACTICE]
+            // Khóa chặn mọi Ghost Event do FormLogic/Máy kích hoạt
+            // Tránh cảnh Lễ và Tiệc cùng chạy Debounce rồi phá DOM Dropdown của ô POS 1
+            if (!e.isTrusted) return;
+
             // Không đóng list ngay tại đây để tránh nhấp nháy
-            // closeAllLists(); 
             debouncedSearch(input.value);
         });
 

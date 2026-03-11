@@ -61,11 +61,18 @@ export const ConfigRenderer = {
         const removeBtn = (isEditMode && !f.protected) ?
             `<button type="button" class="btn-remove-field" data-id="${f.id}" style="color:red; background:none; border:none; font-size:10px; padding:0; float:right;">✕</button>` : '';
 
+        const note = f.note ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">${f.note}</div>` : '';
+
+        const inputHtml = f.type === 'textarea'
+            ? `<textarea name="${f.id}" id="${f.id}" ${ph} ${required} style="width:100%; padding: 6px; background: #111; border: 1px solid #444; color: #eee; border-radius: 4px; box-sizing: border-box; min-height: 60px; resize: vertical;">${f.default || ''}</textarea>`
+            : `<input type="${f.type}" name="${f.id}" id="${f.id}" ${step} ${val} ${ph} ${required} style="width:100%; padding: 6px; background: #111; border: 1px solid #444; color: #eee; border-radius: 4px; box-sizing: border-box;">`;
+
         return `
-                <div style="position:relative;">
+                <div style="position:relative; margin-bottom: 8px;">
                     ${removeBtn}
-                    <label style="font-size: 11px;">${f.label}</label>
-                    <input type="${f.type}" name="${f.id}" id="${f.id}" ${step} ${val} ${ph} ${required} style="width:100%;">
+                    <label style="font-size: 11px; display: block; margin-bottom: 2px;">${f.label}</label>
+                    ${inputHtml}
+                    ${note}
                 </div>
             `;
     },
@@ -82,6 +89,9 @@ export const ConfigRenderer = {
         }
         if (f.type === 'select' && f.options) {
             return this._renderSelect(f);
+        }
+        if (f.type === 'radio' && f.options) {
+            return this._renderRadioGroup(f);
         }
         return this.renderFieldGrid(f, isEditMode);
     },
@@ -132,12 +142,37 @@ export const ConfigRenderer = {
             const selected = (f.default === o.val) ? 'selected' : '';
             return `<option value="${o.val}" ${selected}>${o.txt}</option>`;
         }).join('');
+        const note = f.note ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">${f.note}</div>` : '';
         return `
-                <div style="margin-bottom: 5px;">
-                    <label style="font-size: 11px;">${f.label}</label>
-                    <select name="${f.id}" id="${f.id}" style="width: 100%; padding: 5px; background: #333; color: #eee; border: 1px solid #444;">${opts}</select>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; display: block; margin-bottom: 2px;">${f.label}</label>
+                    <select name="${f.id}" id="${f.id}" style="width: 100%; padding: 6px; background: #111; border: 1px solid #444; color: #eee; border-radius: 4px;">${opts}</select>
+                    ${note}
                 </div>
             `;
+    },
+
+    /** @private */
+    _renderRadioGroup(f) {
+        const items = f.options.map(o => {
+            const checked = (f.default === o.val) ? 'checked' : '';
+            return `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <input type="radio" id="${f.id}_${o.val}" name="${f.id}" value="${o.val}" ${checked} style="width: auto; margin: 0;">
+                    <label for="${f.id}_${o.val}" style="margin:0; font-size: 11px; cursor: pointer; color: #ccc;">${o.txt}</label>
+                </div>
+            `;
+        }).join('');
+        const note = f.note ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">${f.note}</div>` : '';
+        return `
+            <div style="margin-bottom: 8px;">
+                <label style="font-size: 11px; display: block; margin-bottom: 4px; color: #888;">${f.label}</label>
+                <div style="background: #1a1a1a; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                    ${items}
+                </div>
+                ${note}
+            </div>
+        `;
     },
 
     /**

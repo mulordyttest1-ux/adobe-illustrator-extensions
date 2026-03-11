@@ -3,6 +3,7 @@
  * Xử lý logic tiêm Schema thủ công (Single mode) và theo Cụm Tọa độ (Bulk mode)
  */
 import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+import { LayoutUtils } from '../logic/ux/LayoutUtils.js';
 
 export const ManualInjectAction = {
     /**
@@ -96,22 +97,11 @@ export const ManualInjectAction = {
                 return;
             }
 
-            // Theo báo cáo C1_document.md: Illustrator tọa độ Y hướng lên. top càng bự -> chữ càng cao.
-            // Sắp xếp Mảng từ Cao -> Thấp. 
-            // Audit Fix: Thêm secondary sort theo 'left' (Trái -> Phải) nếu cùng 'top'.
-            const sortedFrames = [...frames].sort((a, b) => {
-                const aTop = parseFloat(a.top) || 0;
-                const bTop = parseFloat(b.top) || 0;
-                if (Math.abs(aTop - bTop) < 0.1) { // Gần như bằng nhau
-                    const aLeft = parseFloat(a.left) || 0;
-                    const bLeft = parseFloat(b.left) || 0;
-                    return aLeft - bLeft; // Trái sang phải
-                }
-                return bTop - aTop;
-            });
+            // [BUG #03 FIX] Secondary Sort: Left-to-Right
+            const sortedFrames = LayoutUtils.sortFrames(frames);
 
-            // Map variables top-down (Theo Layout mới của Sếp: ÔngBà [Top] -> ĐịaChỉ -> Ông -> Bà)
-            const variables = [`{${prefix}.ongba}`, `{${prefix}.diachi}`, `{${prefix}.ong}`, `{${prefix}.ba}`];
+            // Map variables top-down (Theo Layout: ÔngBà [Top] -> Ông -> Bà -> Địa Chỉ)
+            const variables = [`{${prefix}.ongba}`, `{${prefix}.ong}`, `{${prefix}.ba}`, `{${prefix}.diachi}`];
             const plans = [];
 
             for (let i = 0; i < sortedFrames.length; i++) {

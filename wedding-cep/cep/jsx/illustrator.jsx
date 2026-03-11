@@ -150,11 +150,16 @@ $.global.IllustratorBridge = {
             for (var i = 0; i < frames.length; i++) {
                 var item = frames[i];
                 try {
+                    // [BUG #01 FIX] Generate stable UUID based on content length + coordinates
+                    var contentHash = 0;
+                    try { contentHash = (item.contents && item.contents.length) ? item.contents.length : 0; } catch (e) { }
+                    var stableUuid = item.uuid || ("tf_" + Math.round(item.top || 0) + "_" + Math.round(item.left || 0) + "_" + contentHash + "_" + i);
+
                     results.push({
-                        id: i,
+                        id: stableUuid, // Use UUID instead of index
                         text: item.contents,
                         note: item.note || '',
-                        uuid: item.uuid || ("tmp_" + i),
+                        uuid: stableUuid,
                         top: item.top,
                         left: item.left
                     });
@@ -227,18 +232,31 @@ $.global.IllustratorBridge = {
             var frames = _collectInSelection(doc.selection);
             var updated = 0;
 
+            // [BUG #01 FIX] Create a map for fast frame lookup via our stable UUID
+            var frameMap = {};
+            for (var f = 0; f < frames.length; f++) {
+                var it = frames[f];
+                var cHash = 0;
+                try { cHash = (it.contents && it.contents.length) ? it.contents.length : 0; } catch (e) { }
+                var suid = it.uuid || ("tf_" + Math.round(it.top || 0) + "_" + Math.round(it.left || 0) + "_" + cHash + "_" + f);
+                frameMap[suid] = it;
+            }
+
+            var affected = [];
             for (var i = 0; i < payload.length; i++) {
                 var change = payload[i];
-                if (change.id >= 0 && change.id < frames.length) {
-                    var item = frames[change.id];
+                var item = frameMap[change.id]; // Look up by UUID, not index
+
+                if (item) {
                     try {
                         item.contents = change.newText;
+                        affected.push({ id: change.id, text: change.newText });
                         updated++;
                     } catch (e) { }
                 }
             }
             app.redraw();
-            return sendResult({ success: true, updated: updated });
+            return sendResult({ success: true, updated: updated, affected: affected });
         } catch (e) {
             return sendResult({ success: false, error: e.message });
         }
@@ -310,20 +328,24 @@ $.global.IllustratorBridge = {
                     }
                 }
 
+                // [BUG #01 FIX] Generate stable UUID based on content length + coordinates
+                var cHash = (rawContent && rawContent.length) ? rawContent.length : 0;
+                var suid = item.uuid || ("tf_" + Math.round(item.top || 0) + "_" + Math.round(item.left || 0) + "_" + cHash + "_" + i);
+
                 if (metaKeys.length > 0) {
-                    info = { id: i, type: 'managed', raw_content: rawContent, meta_keys: metaKeys };
+                    info = { id: suid, type: 'managed', raw_content: rawContent, meta_keys: metaKeys, top: item.top, left: item.left };
                 }
                 else if (/\{[\w\.]+\}/.test(rawContent)) {
-                    info = { id: i, type: 'fresh', raw_content: rawContent, meta_keys: [] };
+                    info = { id: suid, type: 'fresh', raw_content: rawContent, meta_keys: [], top: item.top, left: item.left };
                 }
                 else if (rawContent.indexOf(GHOST) !== -1) {
-                    info = { id: i, type: 'marker_only', raw_content: rawContent, meta_keys: [] };
+                    info = { id: suid, type: 'marker_only', raw_content: rawContent, meta_keys: [], top: item.top, left: item.left };
                 }
 
                 // Nếu đang ở chế độ Selection, ta chấp nhận cả những item chưa có gì
                 // Để JS có thể xử lý gán mới
                 if (!info && isSelectionMode) {
-                    info = { id: i, type: 'fresh_selection', raw_content: rawContent, meta_keys: [] };
+                    info = { id: suid, type: 'fresh_selection', raw_content: rawContent, meta_keys: [], top: item.top, left: item.left };
                 }
 
                 if (info) results.push(info);
@@ -374,14 +396,24 @@ $.global.IllustratorBridge = {
                 allItems = doc.textFrames;
             }
 
+            // [BUG #01 FIX] Build frame map for UUID lookup
+            var frameMap = {};
+            for (var f = 0; f < allItems.length; f++) {
+                var it = allItems[f];
+                var cHash = 0;
+                try { cHash = (it.contents && it.contents.length) ? it.contents.length : 0; } catch (e) { }
+                var suid = it.uuid || ("tf_" + Math.round(it.top || 0) + "_" + Math.round(it.left || 0) + "_" + cHash + "_" + f);
+                frameMap[suid] = it;
+            }
+
             // Bắt đầu thực thi Plan
+            var affected = [];
             for (var i = 0; i < plans.length; i++) {
                 var p = plans[i];
 
-                // ID từ Scan gửi xuống chính là Index trong mảng allItems này
-                if (p.id >= allItems.length) continue;
+                var item = frameMap[p.id]; // Look up by UUID, not index
+                if (!item) continue;
 
-                var item = allItems[p.id]; // Lấy đúng đối tượng
                 var plan = p.plan;
 
                 if (!plan || plan.mode === "SKIP") continue;
@@ -410,6 +442,7 @@ $.global.IllustratorBridge = {
                             }
                         }
                         updated++;
+                        affected.push({ id: p.id, text: item.contents });
                     }
                     // CASE 2: DIRECT (Ghi đè toàn bộ - Luôn bọc Marker)
                     else if (plan.mode === "DIRECT") {
@@ -418,6 +451,7 @@ $.global.IllustratorBridge = {
                         var val = cleanVal.replace(/\n/g, "\r");
                         item.contents = val;
                         updated++;
+                        affected.push({ id: p.id, text: item.contents });
                     }
 
                     // Update Metadata hoac Xoa Metadata (Kiem tra nguyen tac Xoa tu Tab 2)
@@ -436,7 +470,7 @@ $.global.IllustratorBridge = {
 
             // Redraw 1 lần cuối cùng
             app.redraw();
-            return sendResult({ success: true, updated: updated });
+            return sendResult({ success: true, updated: updated, affected: affected });
 
         } catch (e) {
             return sendResult({ success: false, error: e.message });

@@ -8,6 +8,9 @@
  */
 
 export const UIFeedback = {
+    _toastQueue: [],
+    _isShowingToast: false,
+
     /**
      * Show loading state in a container.
      * @param {HTMLElement} container - Container element
@@ -57,23 +60,41 @@ export const UIFeedback = {
     },
 
     /**
-     * Show toast notification.
+     * Show toast notification (Queued).
      * @param {string} message - Toast message
-     * @param {string} type - Toast type ('success', 'error', 'info')
+     * @param {string} type - Toast type ('success', 'error', 'info', 'warning')
      */
     showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
 
+        this._toastQueue.push({ message, type });
+        this._processQueue(container);
+    },
+
+    _processQueue(container) {
+        if (this._isShowingToast || this._toastQueue.length === 0) return;
+
+        this._isShowingToast = true;
+        const currentToast = this._toastQueue.shift();
+
         const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
+        toast.className = `toast toast-${currentToast.type}`;
+        toast.textContent = currentToast.message;
 
         container.appendChild(toast);
 
+        // C1 Best Practice: Accessible timeouts
+        const duration = (currentToast.type === 'error' || currentToast.type === 'warning') ? 5000 : 3000;
+
         setTimeout(() => {
-            toast.remove();
-        }, 3000);
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                toast.remove();
+                this._isShowingToast = false;
+                this._processQueue(container);
+            }, 300); // Đợi CSS transition fade out
+        }, duration);
     }
 };
 

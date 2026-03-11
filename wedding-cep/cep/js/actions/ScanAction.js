@@ -2,6 +2,7 @@ import { DataValidator } from '../logic/pipeline/DataValidator.js';
 import { KeyNormalizer } from '../controllers/helpers/KeyNormalizer.js';
 import { WeddingRules } from '@wedding/domain';
 import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+import { LayoutUtils } from '../logic/ux/LayoutUtils.js';
 
 /**
  * MODULE: ScanAction
@@ -38,7 +39,10 @@ export const ScanAction = {
 
             console.log('[ScanAction] Raw data count:', result.data.length);
 
-            const normalized = this._processData(result.data, builder);
+            // [BUG #03 FIX] Secondary Sort: Left-to-Right
+            const sortedFrames = LayoutUtils.sortFrames(result.data);
+
+            const normalized = this._processData(sortedFrames, builder);
 
             console.log('[ScanAction] Final Data to UI:', normalized);
 

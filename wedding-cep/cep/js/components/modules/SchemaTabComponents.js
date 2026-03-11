@@ -68,12 +68,12 @@ export class SchemaTabComponents {
         btnRow.style.display = 'flex';
         btnRow.style.gap = '8px';
 
-        const bulkPos1Btn = DomFactory.createButton('btn-bulk-pos1', '☄️ Tiêm Cụm POS 1', 'Gán {diachi}, {ong}, {ba}, {ongba} cho POS 1');
+        const bulkPos1Btn = DomFactory.createButton('btn-bulk-pos1', '☄️ Tiêm Cụm POS 1', 'Gán {ongba}, {ong}, {ba}, {diachi} cho POS 1');
         bulkPos1Btn.classList.add('ds-btn-primary');
         bulkPos1Btn.style.flex = '1';
         this.refs['btn-bulk-pos1'] = bulkPos1Btn;
 
-        const bulkPos2Btn = DomFactory.createButton('btn-bulk-pos2', '☄️ Tiêm Cụm POS 2', 'Gán {diachi}, {ong}, {ba}, {ongba} cho POS 2');
+        const bulkPos2Btn = DomFactory.createButton('btn-bulk-pos2', '☄️ Tiêm Cụm POS 2', 'Gán {ongba}, {ong}, {ba}, {diachi} cho POS 2');
         bulkPos2Btn.classList.add('ds-btn-primary');
         bulkPos2Btn.style.flex = '1';
         this.refs['btn-bulk-pos2'] = bulkPos2Btn;
