@@ -86,7 +86,7 @@ export const InjectSchemaAction = {
         }
 
         const count = applyResult.updated || 0;
-        UIFeedback.showToast(`🪄 Đã tiêm thành công ${count} Biến Schema!`, 'success');
+        // NOTE: No toast here — PostflightWidget will report success/failure after validation
         return { success: true, count, affected: applyResult.affected || [] };
     },
 

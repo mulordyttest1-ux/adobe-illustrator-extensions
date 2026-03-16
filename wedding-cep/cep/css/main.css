@@ -240,30 +240,50 @@ input[type=number] {
   left: 50%;
   transform: translateX(-50%);
   z-index: 99999 !important;
-  /* Ensure it's on top */
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: center;
-  pointer-events: none;
-  /* Let clicks pass through if needed, though buttons inside might need events */
+  pointer-events: auto;
 }
 
 .toast {
   background-color: #333333 !important;
-  /* Force dark background */
   color: #ffffff !important;
-  /* Force white text */
-  padding: 12px 24px !important;
+  padding: 10px 16px !important;
   border-radius: 4px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease; /* CSS-based transition (not inline) */
   min-width: 200px;
-  text-align: center;
+  max-width: 320px;
+  text-align: left;
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast-hide {
+  opacity: 0 !important;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  margin-left: auto;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  color: #ffffff;
 }
 
 .toast-success {

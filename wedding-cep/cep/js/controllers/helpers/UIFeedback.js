@@ -1,10 +1,32 @@
 /**
  * MODULE: UIFeedback
  * LAYER: Controller/Helpers
- * PURPOSE: Show loading, error, and toast feedback in the UI
- * DEPENDENCIES: None
- * SIDE EFFECTS: DOM (innerHTML, element creation)
- * EXPORTS: UIFeedback.showLoading(), .showError(), .showToast()
+ * PURPOSE: Single Source of Truth for ALL user-facing feedback (toast, loading, error).
+ * DEPENDENCIES: None (pure DOM)
+ * SIDE EFFECTS: DOM only (toast-container, loading-overlay, container element)
+ * EXPORTS: UIFeedback.showToast(), .showLoading(), .hideLoading(), .showError()
+ *
+ * ╔══════════════════════════════════════════════════════════════════╗
+ * ║  ⚠️  AGENT & DEVELOPER CONVENTION CONTRACT  ⚠️                  ║
+ * ╠══════════════════════════════════════════════════════════════════╣
+ * ║  This is the ONLY approved UI feedback API in this project.     ║
+ * ║                                                                  ║
+ * ║  ✅ DO:  UIFeedback.showToast('message', 'success')              ║
+ * ║  ✅ DO:  UIFeedback.showToast('error text', 'error')             ║
+ * ║  ✅ DO:  UIFeedback.showToast('warning', 'warning')              ║
+ * ║  ✅ DO:  UIFeedback.showLoading(container, 'Đang xử lý...')      ║
+ * ║  ✅ DO:  UIFeedback.showError(container, 'Lỗi kết nối')          ║
+ * ║                                                                  ║
+ * ║  ❌ NEVER: alert() / confirm() / prompt()                        ║
+ * ║  ❌ NEVER: document.createElement('div') for notifications       ║
+ * ║  ❌ NEVER: window.showToast (removed, banned by ESLint)          ║
+ * ║  ❌ NEVER: ctx.showToast (removed, banned by ESLint)             ║
+ * ║  ❌ NEVER: inline style for error/loading states                 ║
+ * ╚══════════════════════════════════════════════════════════════════╝
+ *
+ * Toast types: 'success' | 'error' | 'warning' | 'info'
+ * Queuing: multiple calls are queued and shown sequentially (one at a time).
+ * WCAG: role="status"/"alert", aria-live, dismiss button, focus pause built-in.
  */
 
 export const UIFeedback = {
@@ -60,7 +82,7 @@ export const UIFeedback = {
     },
 
     /**
-     * Show toast notification (Queued).
+     * Show toast notification (Queued, WCAG compliant).
      * @param {string} message - Toast message
      * @param {string} type - Toast type ('success', 'error', 'info', 'warning')
      */
@@ -72,29 +94,55 @@ export const UIFeedback = {
         this._processQueue(container);
     },
 
+    _dismissToast(toast, container) {
+        toast.classList.add('toast-hide');
+        setTimeout(() => {
+            if (toast.parentNode) toast.remove();
+            this._isShowingToast = false;
+            this._processQueue(container);
+        }, 320);
+    },
+
     _processQueue(container) {
         if (this._isShowingToast || this._toastQueue.length === 0) return;
 
         this._isShowingToast = true;
-        const currentToast = this._toastQueue.shift();
+        const { message, type } = this._toastQueue.shift();
+
+        // Replace strategy: clear any previous toast immediately so no overlap
+        container.innerHTML = '';
 
         const toast = document.createElement('div');
-        toast.className = `toast toast-${currentToast.type}`;
-        toast.textContent = currentToast.message;
+        // WCAG: role="alert" (assertive) for errors/warnings; role="status" (polite) for others
+        const isUrgent = type === 'error' || type === 'warning';
+        toast.setAttribute('role', isUrgent ? 'alert' : 'status');
+        toast.setAttribute('aria-live', isUrgent ? 'assertive' : 'polite');
+        toast.className = `toast toast-${type}`;
+
+        // Message text
+        const msgSpan = document.createElement('span');
+        msgSpan.textContent = message;
+        toast.appendChild(msgSpan);
+
+        // WCAG 2.2.1: Dismiss button — user must be able to close the toast manually
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        closeBtn.setAttribute('aria-label', 'Đóng thông báo');
+        closeBtn.className = 'toast-close';
+        closeBtn.addEventListener('click', () => this._dismissToast(toast, container));
+        toast.appendChild(closeBtn);
 
         container.appendChild(toast);
 
-        // C1 Best Practice: Accessible timeouts
-        const duration = (currentToast.type === 'error' || currentToast.type === 'warning') ? 5000 : 3000;
+        // Accessible timeout: 5s for error/warning, 3s for success/info
+        const duration = isUrgent ? 5000 : 3000;
+        const timer = setTimeout(() => this._dismissToast(toast, container), duration);
 
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => {
-                toast.remove();
-                this._isShowingToast = false;
-                this._processQueue(container);
-            }, 300); // Đợi CSS transition fade out
-        }, duration);
+        // Pause auto-dismiss on keyboard focus (WCAG 2.2)
+        toast.addEventListener('focusin', () => clearTimeout(timer));
+        toast.addEventListener('focusout', () => {
+            setTimeout(() => this._dismissToast(toast, container), 2000);
+        });
     }
 };
 

@@ -91,44 +91,6 @@
                 transform: rotate(360deg);
             }
         }
-
-        /* Toast notifications */
-        .toast-container {
-            position: fixed;
-            bottom: var(--ds-space-md);
-            right: var(--ds-space-md);
-            z-index: 1001;
-        }
-
-        .toast {
-            padding: var(--ds-space-sm) var(--ds-space-md);
-            border-radius: var(--ds-radius-sm);
-            margin-top: var(--ds-space-sm);
-            box-shadow: var(--ds-shadow-medium);
-            animation: slideIn 0.3s ease;
-        }
-
-        .toast-success {
-            background: var(--ds-accent-success);
-            color: white;
-        }
-
-        .toast-error {
-            background: var(--ds-accent-danger);
-            color: white;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
     </style>
 </head>
 

@@ -4,8 +4,8 @@
  * PURPOSE: CEP Panel entry point — init, tab setup, button wiring (delegates to Action modules)
  * DEPENDENCIES: Bridge, TabbedPanel, SchemaLoader, CompactFormBuilder, ScanAction, UpdateAction, SwapAction
  * SIDE EFFECTS: DOM (loading overlay, error display, toast), CEP Bridge
- * EXPORTS: window.AppConfig, window.showToast
- */
+ * SIDE EFFECTS: DOM (loading overlay, error display, toast), CEP Bridge
+ * EXPORTS: window.AppConfig
 
 (function () {
     'use strict';
@@ -93,7 +93,6 @@
                 ScanAction.execute({
                     bridge: bridge,
                     builder: window.compactBuilder,
-                    showToast: showToast,
                     button: scanBtn
                 });
             });
@@ -105,7 +104,6 @@
                 UpdateAction.execute({
                     bridge: bridge,
                     builder: window.compactBuilder,
-                    showToast: showToast,
                     button: updateBtn
                 });
             });
@@ -115,8 +113,7 @@
         if (swapBtn) {
             swapBtn.addEventListener('click', () => {
                 SwapAction.execute({
-                    builder: window.compactBuilder,
-                    showToast: showToast
+                    builder: window.compactBuilder
                 });
             });
         }
@@ -160,28 +157,11 @@
         }
     }
 
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
-    }
-
     // ========================================
     // GLOBAL EXPORTS
     // ========================================
 
     window.AppConfig = APP_CONFIG;
-    window.showToast = showToast;
 
     // ========================================
     // START APPLICATION

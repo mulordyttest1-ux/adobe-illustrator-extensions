@@ -11,6 +11,7 @@
     ],
     "gender_prefixes": [
         "Y ",
+        "H ",
         "A ",
         "Ma "
     ],
@@ -40,7 +41,8 @@
         "Kđăm",
         "Kdoh",
         "Ktul",
-        "Ksơr"
+        "Ksơr",
+        "Rmah"
     ],
     "surnames_first": [
         "Ksor",

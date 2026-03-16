@@ -3,11 +3,8 @@ export class LeftoverMarkerRule {
      * Bắt lỗi các cặp ngoặc nhọn `{...}` còn sót lại sau khi Inject Schema.
      * Đây là dấu hiệu của việc field bị thiếu data hoặc user gõ sai cú pháp biến.
      */
-    validate(frame, context) {
+    validate(frame, _context) {
         if (!frame || !frame.text) return null;
-
-        // Strict Validation Best Practice: Explicitly require the render phase
-        if (!context || context.phase !== 'render') return null;
 
         // Quét tìm tất cả các pattern giống với schema variable: {ceremony.ten}, {ho+ten}...
         const leftoverRegex = /\{[\w.+]+\}/g;

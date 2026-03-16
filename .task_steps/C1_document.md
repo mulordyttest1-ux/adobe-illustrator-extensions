@@ -1,27 +1,27 @@
-# C1: Research & Analysis - Git Push Summary
+# C1: Research & Analysis - Git Push (March 16)
 
 ## Current State Audit
-- **Files Modified**: 21 files (AddressService, SchemaInjector, action_tab.js, index.html, etc.)
-- **Untracked Files**: 11 items (.task_steps/C2_*, capture_console.cjs, new actions and validators).
-- **Repo Status**: Local is ahead of/diverged from origin by recent manual changes and agentic work.
+- **Files Modified**: 15 files in `wedding-cep`.
+    - UI/Styling: `main.css`, `index.html`, `UIFeedback.js`.
+    - Data: `ethnic_names.json`.
+    - Logic/Actions: `InjectSchemaAction.js`, `PostflightAction.js`, `UpdateAction.js`, `EthnicNameNormalizer.js`, `PostflightValidator.js`.
+    - Config/Entry: `eslint.config.mjs`, `main.js`, `types.d.ts`.
+- **Untracked Files**: 4 new validation rules in `wedding-cep/cep/js/logic/validators/rules/`:
+    - `EmptyOverrideRule.js`
+    - `OrphanDataRule.js`
+    - `SchemaGapRule.js`
+    - `TruncationRule.js`
 
-## Identified Changes by Component
-### Symbol CEP
-- UI updates in `index.html` and `action_tab.js`.
-- Imposition feature configuration and presets updated.
-- JSX bridge bridge updated.
+## Change Summary
+The changes appear to focus on:
+1.  **Ethnic Name Normalization**: Updates to data and logic for handling ethnic names.
+2.  **Postflight System**: Expansion of the Postflight validation system with multiple new rules (EmptyOverride, OrphanData, SchemaGap, Truncation).
+3.  **UI Feedback**: Refinements to how feedback is displayed to the user.
+4.  **Action Layer**: Consistency updates across key action classes.
 
-### Wedding CEP
-- Action layer updates (InjectSchema, Scan, Update, Postflight).
-- Parser fixes (`DateFallbackParser.js`).
-- Logic improvements in `SchemaInjector.js`.
-
-### Shared/Agent Tools
-- `E2ERunner.cjs` updated.
-- New task step documents created for font and board scoping.
-
-## Recommended Action
-Stage all relevant files and commit with a consolidated message reflecting the recent feature development and bug fixes.
+## Technical Risk
+- Low risk: Mostly additive logic (new rules) and minor refinements.
+- No breaking infrastructure changes detected.
 
 ---
 *Signed: Antigravity Researcher*

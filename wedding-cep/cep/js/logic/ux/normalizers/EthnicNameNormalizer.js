@@ -153,13 +153,38 @@ export const EthnicNameNormalizer = {
         const words = normalized.split(/\s+/);
         if (words.length < 2) return 0;
 
-        // Check if LAST word is an ethnic surname → idx = 2
+        // Rule 1: Last word is a known ethnic surname → idx = 2
+        // "Y Jut Êban" → Êban in surnames_last → idx=2
         const lastWord = words[words.length - 1];
         if (this._surnamesLastSet && this._surnamesLastSet.has(lastWord.toLowerCase())) {
             return 2;
         }
 
+        // Rule 2: 3+ word name with H/Y standalone prefix → tên is NOT last word → idx=2
+        // "H Hang Ja" → H prefix + Hang tên + Ja clan → idx=2
+        // Does NOT apply to 2-word "H Loan" where last word IS tên (idx=0 correct)
+        if (words.length >= 3 && this.isEthnic(name) && this._isStandalonePrefixWord(words[0])) {
+            return 2;
+        }
+
         return 0;
+    },
+
+    /**
+     * Check if a single word is a standalone gender prefix (H, Y, K... without apostrophe).
+     * Used by suggestIdx Rule 2 to detect [prefix][tên][clan] structure.
+     * @param {string} word - First word of a name
+     * @returns {boolean}
+     */
+    _isStandalonePrefixWord(word) {
+        const lower = word.toLowerCase();
+        // Single-letter prefix: H, Y, K (match first char of H'/Y'/K' etc.)
+        const isSingleLetter = word.length === 1 &&
+            this._data.prefixes &&
+            this._data.prefixes.some(p => p.charAt(0).toLowerCase() === lower);
+        // Or a full gender prefix entry: "y", "h", "a", "ma"
+        const isGenderPrefix = this._genderPrefixSet && this._genderPrefixSet.has(lower);
+        return isSingleLetter || isGenderPrefix;
     },
 
     // === PRIVATE HELPERS ===

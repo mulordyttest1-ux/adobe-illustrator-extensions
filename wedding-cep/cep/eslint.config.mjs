@@ -97,7 +97,6 @@ export default [
                 SwapAction: "readonly",
 
                 // App utilities
-                showToast: "readonly",
                 bridge: "readonly"
             }
         },
@@ -129,7 +128,36 @@ export default [
             "eqeqeq": ["error", "always"],          // Luôn dùng ===
             "no-eval": "error",                     // Chặn eval()
             "no-implied-eval": "error",             // Chặn implied eval
-            "no-empty": "warn"
+            "no-empty": "warn",
+
+            // ─────────────────────────────────────────────────────────
+            // AGENT CONVENTION ENFORCEMENT — UIFeedback is the ONLY
+            // approved notification API. Agents MUST use UIFeedback.
+            // Any violation below = build-blocking lint error.
+            // ─────────────────────────────────────────────────────────
+
+            // ❌ Ban alert() / confirm() / prompt() — use UIFeedback instead
+            "no-alert": "error",
+
+            // ❌ Ban window.showToast / window.alert / window.confirm
+            "no-restricted-globals": ["error",
+                { "name": "alert",   "message": "Use UIFeedback.showToast() instead." },
+                { "name": "confirm", "message": "Use UIFeedback.showToast() instead." },
+                { "name": "prompt",  "message": "Use UIFeedback.showToast() instead." }
+            ],
+
+            // ❌ Ban window.showToast — it was removed. Use UIFeedback.showToast()
+            "no-restricted-syntax": [
+                "error",
+                {
+                    "selector": "MemberExpression[object.name='window'][property.name='showToast']",
+                    "message": "window.showToast was removed. Use UIFeedback.showToast() instead (import from controllers/helpers/UIFeedback.js)."
+                },
+                {
+                    "selector": "MemberExpression[object.name='ctx'][property.name='showToast']",
+                    "message": "ctx.showToast was removed. Use UIFeedback.showToast() instead (import from controllers/helpers/UIFeedback.js)."
+                }
+            ]
         }
     },
 

@@ -31,11 +31,11 @@ export const UpdateAction = {
             const result = await bridge.updateWithStrategy(processedData);
 
             if (result && result.success) {
-                UIFeedback.showToast(`Đã cập nhật thông minh ${result.updated} vị trí!`, 'success');
-
-                // TRIGGER POSTFLIGHT VALIDATION (Render Phase)
+                // NOTE: No toast here — PostflightWidget reports success/failure after validation
                 await PostflightAction.execute(ctx, result.affected || [], {
-                    phase: 'render'
+                    phase: 'render',
+                    formData: rawData,
+                    schemaKeys: this._extractSchemaKeys()
                 });
 
                 return { success: true, updated: result.updated };
@@ -56,6 +56,42 @@ export const UpdateAction = {
     _setButtonState(button, isUpdating) {
         button.disabled = isUpdating;
         button.textContent = isUpdating ? '⏳' : '📤 Update';
+    },
+
+    /**
+     * Extract flat form-field keys from schema.STRUCTURE (with prefix + DERIVED expansion).
+     * e.g. group prefix=pos1, item key=ong, type=person_name
+     *   → ['pos1.ong', 'pos1.ong.ten', 'pos1.ong.lot', 'pos1.ong.ho_dau', 'pos1.ong.dau']
+     * e.g. item key=date.tiec, type=solar_date
+     *   → ['date.tiec', 'date.tiec.ngay', 'date.tiec.thang', ...]
+     * @returns {string[]}
+     */
+    _extractSchemaKeys() {
+        const schema = typeof SchemaLoader !== 'undefined' ? SchemaLoader.getSync() : null;
+        if (!schema || !Array.isArray(schema.STRUCTURE)) return [];
+
+        const nameSuffixes = (schema.DERIVED?.NAME || []).map(d => d.suffix).filter(Boolean);
+        const dateSuffixes = (schema.DERIVED?.DATE || []).map(d => d.suffix).filter(Boolean);
+
+        return schema.STRUCTURE.flatMap(group => {
+            const prefix = group.prefix || '';
+            return (group.items || []).flatMap(item => {
+                const base = prefix ? `${prefix}.${item.key}` : item.key;
+                const keys = [base];
+
+                // Expand name derivations (person_name type)
+                if (item.type === 'person_name' || item.type === 'name') {
+                    nameSuffixes.forEach(s => keys.push(base + s));
+                }
+
+                // Expand date derivations (date and solar_date types)
+                if (item.type === 'date' || item.type === 'solar_date') {
+                    dateSuffixes.forEach(s => keys.push(base + s));
+                }
+
+                return keys;
+            });
+        });
     },
 
     async _assembleData(rawData) {

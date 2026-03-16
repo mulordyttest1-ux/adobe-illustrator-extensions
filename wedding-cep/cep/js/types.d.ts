@@ -1,12 +1,37 @@
 /**
  * Wedding Scripter — Type Definitions (Agent Governance Layer)
- * 
+ *
  * PURPOSE: Single Source of Truth for all public APIs.
  * Agent MUST consult this file before calling any function.
  * DO NOT add types here without corresponding implementation.
- * 
- * Last Updated: 2026-02-11
+ *
+ * Last Updated: 2026-03-13
  */
+
+// ============================================================
+// ⚡ UI FEEDBACK — READ THIS FIRST (Agent Priority Section)
+// ============================================================
+// ALL user-facing feedback MUST go through UIFeedback.
+// ✅ UIFeedback.showToast(msg, type)   — ephemeral toast
+// ✅ UIFeedback.showError(container, msg) — persistent error in container
+// ✅ UIFeedback.showLoading(container, msg) / .hideLoading()
+// ❌ NEVER use alert() / confirm() / prompt()
+// ❌ NEVER create notification divs manually
+// Source: cep/js/controllers/helpers/UIFeedback.js
+// ============================================================
+
+type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+declare const UIFeedback: {
+    /** Show a queued toast notification. WCAG-compliant (role, aria-live, dismiss). */
+    showToast(message: string, type?: ToastType): void;
+    /** Show loading spinner inside a container element. */
+    showLoading(container: HTMLElement, message: string): void;
+    /** Hide the global fullscreen loading overlay. */
+    hideLoading(): void;
+    /** Render an error state (with retry button) inside a container element. */
+    showError(container: HTMLElement, message: string): void;
+};
 
 // ============================================================
 // COMMON TYPES
@@ -25,7 +50,6 @@ interface ActionResult {
 interface ActionContext {
     bridge: Bridge;
     builder: CompactFormBuilder;
-    showToast: (message: string, type?: 'success' | 'error' | 'warning') => void;
     button: HTMLButtonElement;
 }
 

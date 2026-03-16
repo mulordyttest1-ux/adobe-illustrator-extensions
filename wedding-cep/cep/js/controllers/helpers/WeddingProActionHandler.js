@@ -38,8 +38,7 @@ export const WeddingProActionHandler = {
                 setTimeout(() => DateGridWidget.triggerCompute(), 100);
             }
 
-            if (window.showToast) window.showToast('Đã quét xong: ' + result.count + ' mục', 'success');
-            else UIFeedback.showToast('Đã quét xong: ' + result.count + ' mục', 'success');
+            UIFeedback.showToast('Đã quét xong: ' + result.count + ' mục', 'success');
 
         } else {
             UIFeedback.showError(controller.container, 'Lỗi Scan: ' + result.error);
@@ -157,7 +156,6 @@ export const WeddingProActionHandler = {
 
     // Delegate UI methods to UIFeedback (backward-compatible)
     showLoading(container, message) { UIFeedback.showLoading(container, message); },
-    showError(container, message) { UIFeedback.showError(container, message); },
-    showToast(message, type) { UIFeedback.showToast(message, type); }
+    showError(container, message) { UIFeedback.showError(container, message); }
 };
 
