@@ -35,6 +35,7 @@ export default [
 
                 // Adobe CEP
                 CSInterface: "readonly",
+                SystemPath: "readonly",
 
                 // Symbol CEP Domain
                 ImpositionDomain: "writable",

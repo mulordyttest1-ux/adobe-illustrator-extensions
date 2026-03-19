@@ -1,6 +1,6 @@
 import { DataValidator } from '../logic/pipeline/DataValidator.js';
 import { KeyNormalizer } from '../controllers/helpers/KeyNormalizer.js';
-import { WeddingRules } from '@wedding/domain';
+import { WeddingRules, VenueAutomation } from '@wedding/domain';
 import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
 import { LayoutUtils } from '../logic/ux/LayoutUtils.js';
 
@@ -87,6 +87,9 @@ export const ScanAction = {
         console.log('[ScanAction] Normalized:', normalized);
 
         normalized = WeddingRules.enrichParentPrefixes(normalized);
+
+        // Set ten_auto checkbox state dựa trên tên scan được (Tư Gia = true, khác = false)
+        normalized = VenueAutomation.detectVenueState(normalized);
 
         const triggerConfig = builder?.schema?.TRIGGER_CONFIG || {
             "Vu Quy": 1, "Thành Hôn": 0, "Tân Hôn": 0, "Báo Hỷ": 0

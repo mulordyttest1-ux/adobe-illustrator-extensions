@@ -7,6 +7,7 @@
  * EXPORTS: Bridge
  */
 import { StrategyOrchestrator } from './logic/strategies/StrategyOrchestrator.js';
+import { IngestionSanitizer } from './logic/pipeline/IngestionSanitizer.js';
 
 export class Bridge {
     constructor() {
@@ -93,14 +94,30 @@ export class Bridge {
 
     // --- API Methods ---
     async testConnection() { return this.call('ping').then(r => r && r.success); }
+    
     // [STATELESS] Use new metadata-aware scanner
-    async scanDocument(mode = "auto") { return this.call('scanWithMetadata', { mode }); }
+    async scanDocument(mode = "auto") { 
+        const res = await this.call('scanWithMetadata', { mode });
+        if (res && res.success && res.data) res.data = IngestionSanitizer.sanitizeFrames(res.data);
+        return res;
+    }
+    
     async updateCard(data) { return this.call('updateCard', data); }
-    async collectFrames() { return this.call('collectFrames'); }
+    
+    async collectFrames() { 
+        const res = await this.call('collectFrames');
+        if (res && res.success && res.data) res.data = IngestionSanitizer.sanitizeFrames(res.data);
+        return res;
+    }
+    
     async applyPlan(plans) { return this.call('applyPlan', plans); }
 
     // SCHEMA INJECTION
-    async readSelectionObjects() { return this.call('readSelectionObjects'); }
+    async readSelectionObjects() { 
+        const res = await this.call('readSelectionObjects');
+        if (res && res.success && res.data) res.data = IngestionSanitizer.sanitizeFrames(res.data);
+        return res;
+    }
     async selectFramesById(ids) { return this.call('selectFramesById', ids); }
     async applyTextChanges(changes) { return this.call('applyTextChanges', changes); }
 

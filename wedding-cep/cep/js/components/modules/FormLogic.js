@@ -57,6 +57,8 @@ export class FormLogic {
 
         this._bindManualInputCancellation(refs, 'ceremony');
         this._bindManualInputCancellation(refs, 'venue');
+        this._bindAddrInputCancellation(refs, 'ceremony');
+        this._bindAddrInputCancellation(refs, 'venue');
 
         const currentChecked = hostRef?.elements?.find(r => r.checked);
         const initHost = currentChecked?.value || VAL_TRAI;
@@ -142,6 +144,29 @@ export class FormLogic {
         });
     }
 
+    /**
+     * Khi user gõ trực tiếp vào ô địa chỉ (isTrusted) → uncheck ten_auto → live-sync dừng.
+     * Cùng pattern với _bindManualInputCancellation cho ô tên.
+     * Ô địa chỉ là SSOT — checkbox chỉ là bổ trợ autofill.
+     */
+    _bindAddrInputCancellation(refs, prefix) {
+        const addrEl = refs[`${prefix}.diachi`];
+        const checkboxEl = refs[`${prefix}.ten_auto`];
+
+        if (!addrEl || !checkboxEl) return;
+
+        addrEl.addEventListener('input', (e) => {
+            // [CẢM BIẾN AI] Chỉ hành động khi user gõ thật
+            if (!e.isTrusted) return;
+
+            if (checkboxEl.checked) {
+                checkboxEl.checked = false;
+                checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+
+
     _getSchemaOptions(key) {
         if (!this.builder.schema || !this.builder.schema.STRUCTURE) return [];
 
@@ -159,4 +184,3 @@ export class FormLogic {
         return [];
     }
 }
-

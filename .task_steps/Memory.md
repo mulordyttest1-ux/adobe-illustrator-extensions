@@ -22,3 +22,15 @@
 ## 5. Quy tắc Sắp Xếp Trực Quan 2D (Spatial Layout Sorting)
 - **Ngữ cảnh:** Thiệp cưới được thiết kế ngang dọc lung tung. (Bug #03)
 - **Luật thiết kế:** Khi làm việc với `Bridge.scanDocument` hoặc mảng selection, BẮT BUỘC dùng `LayoutUtils.sortFrames(frames)` để sắp theo trục [Y giảm dần (Top-Down), X tăng dần (Left-to-Right)] trước khi đưa vào Parser. Đảm bảo logic đọc như Mắt Người.
+
+## 6. Kiến Trúc Ingestion Pipeline (Khử Khuẩn Dữ Liệu Raw)
+- **Ngữ cảnh:** Copy text từ CTP (Mẫu In) cũ mang theo hạt `\u200B` hoặc `\u00A0` (khoảng trắng dị), khiến Business Logic (Đặc biệt là Regex) ngậm rác và gãy xương toàn bộ hệ thống.
+- **Luật thiết kế:** Sanitize All Entry Points! Bắt buộc phải có một Lớp Tiền Xử Lý Đầu Vào (Nhập Lệu) chuyên dụng là `IngestionSanitizer` lột rác (anti-ghosting) ngay tại giao diện mạng (`bridge.js` Decode) trước khi chuyển lên cho các logic con. TUYỆT ĐỐI KHÔNG phân mảnh xử lý quét rác `.replace` ở những hàm lõi Business Logic.
+
+## 7. Kiến Trúc SSOT cho Venue Address (Checkbox Autofill Pattern)
+- **Ngữ cảnh:** Checkbox `ten_auto` (Tư Gia) vừa điều khiển auto-fill UI vừa overwrite địa chỉ trong build pipeline → vi phạm SSOT.
+- **Luật thiết kế:**
+  1. **Ô input là SSOT** — `ceremony.diachi` / `venue.diachi` là nguồn duy nhất. Không layer nào được bypass chúng.
+  2. **`applyAutoVenue()` chỉ update TÊN** — TUYỆT ĐỐI KHÔNG touch `ceremony.diachi` / `venue.diachi`.
+  3. **Pattern isTrusted cho địa chỉ** — `_bindAddrInputCancellation()` trong `FormLogic.js`: user gõ thật vào ô địa chỉ → tự uncheck `ten_auto` → live-sync dừng (cùng pattern `_bindManualInputCancellation` cho ô tên).
+  4. **detectVenueState 2 điều kiện** — `ten_auto = true` chỉ khi (a) tên = "Tư Gia" AND (b) `ceremony.diachi === pos1.diachi`. Nếu địa chỉ khác (2 nhà) → uncheck.

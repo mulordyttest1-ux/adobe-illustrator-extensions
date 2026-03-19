@@ -6,6 +6,7 @@
  * SIDE EFFECTS: DOM (loading overlay, error display, toast), CEP Bridge
  * SIDE EFFECTS: DOM (loading overlay, error display, toast), CEP Bridge
  * EXPORTS: window.AppConfig
+ */
 
 (function () {
     'use strict';

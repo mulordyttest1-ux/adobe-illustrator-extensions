@@ -3,7 +3,7 @@ export class SuspiciousDataRule {
      * Tìm dữ liệu rác (số điện thoại, ngày tháng) không nằm trong ngoặc nhọn
      * (Khả năng cao do user để sót text tĩnh mà quên gắn biến Schema)
      */
-    validate(frame, context) {
+    validate(frame, _context) {
         if (!frame || !frame.text) return null;
 
         const results = [];
@@ -20,7 +20,7 @@ export class SuspiciousDataRule {
         }
 
         // 2. Quét Ngày tháng (Định dạng DD/MM hoặc DD-MM)
-        const dateRegex = /\b\d{1,2}[\/\-]\d{1,2}\r?\n?\b/g;
+        const dateRegex = new RegExp("\\b\\d{1,2}[/-]\\d{1,2}\\r?\\n?\\b", "g");
         // Bỏ qua nếu có chữ "ngày" hoặc "tháng" phía trước (đã xử lý logic tốt)
         if (dateRegex.test(frame.text) && !frame.text.includes('ngày') && !frame.text.includes('tháng')) {
             results.push({

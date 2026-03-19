@@ -4,6 +4,7 @@ import { DateStandaloneParser } from './parsers/DateStandaloneParser.js';
 import { DateHeuristicParser } from './parsers/DateHeuristicParser.js';
 import { GlobalDateValidator } from './validators/GlobalDateValidator.js';
 import { DateFallbackParser } from './parsers/DateFallbackParser.js';
+import { IngestionSanitizer } from './pipeline/IngestionSanitizer.js';
 
 export class SchemaInjector {
     /**
@@ -146,6 +147,16 @@ export class SchemaInjector {
                 }
             }
         }
+
+        // Tịnh tiến phục hồi Tọa độ (Source Map Index Restore) trước khi gửi về JSX!
+        changes.forEach(change => {
+            if (change.plan.mode === "ATOMIC") {
+                const frameSrc = frames.find(f => f.id === change.id);
+                if (frameSrc && frameSrc._cleanMap) {
+                    IngestionSanitizer.restoreIndices(change.plan.replacements, frameSrc._cleanMap);
+                }
+            }
+        });
 
         const missedRequired = [];
         return { changes, orphans, missedRequired };

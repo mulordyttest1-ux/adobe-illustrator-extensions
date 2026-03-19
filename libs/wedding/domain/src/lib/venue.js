@@ -29,20 +29,32 @@ export const VenueAutomation = {
      * @returns {Object} Packet với checkbox đã được set
      */
     detectVenueState(packet) {
+        const pos1Addr = packet['pos1.diachi'] || '';
+
+        // ten_auto = true CHỈ KHI THỎA CẢ 2 ĐIỀU KIỆN:
+        // 1. Tên là "Tư Gia" (phát hiện từ scan)
+        // 2. Địa chỉ trùng với pos1.diachi (khẳng định đây là nhà POS 1)
+        // Nếu có "Tư Gia" nhưng địa chỉ khác (nhiều nhà) → uncheck, không autofill
+
         // Detect for Ceremony (Lễ)
         const ceremonyName = packet['ceremony.ten'] || '';
-        if (this.TUGIA_PATTERN.test(ceremonyName)) {
-            packet['ceremony.is_tugia'] = true;
-        }
+        const ceremonyAddr = packet['ceremony.diachi'] || '';
+        const isTugiaCeremony = this.TUGIA_PATTERN.test(ceremonyName)
+            && (ceremonyAddr === pos1Addr);
+        packet['ceremony.is_tugia'] = isTugiaCeremony;
+        packet['ceremony.ten_auto'] = isTugiaCeremony;
 
         // Detect for Venue (Tiệc)
         const venueName = packet['venue.ten'] || '';
-        if (this.TUGIA_PATTERN.test(venueName)) {
-            packet['venue.is_tugia'] = true;
-        }
+        const venueAddr = packet['venue.diachi'] || '';
+        const isTugiaVenue = this.TUGIA_PATTERN.test(venueName)
+            && (venueAddr === pos1Addr);
+        packet['venue.is_tugia'] = isTugiaVenue;
+        packet['venue.ten_auto'] = isTugiaVenue;
 
         return packet;
     },
+
 
     /**
      * Áp dụng thông tin Tư Gia nếu checkbox được bật.
@@ -57,16 +69,15 @@ export const VenueAutomation = {
 
         const labelOwner = this._determineLabelOwner(hostType, tenLe, triggerConfig);
         const labelTugia = this.generateVenueName(labelOwner);
-        const sourceAddr = options.sourceAddress || packet['pos1.diachi'] || '';
 
+        // Chỉ cập nhật TÊN — KHÔNG BAO GIờ touch địa chỉ.
+        // Địa chỉ đã có trong packet từ getData() (DOM input boxes = SSOT).
         if (this._shouldAuto(packet, 'ceremony')) {
             packet['ceremony.ten'] = labelTugia;
-            packet['ceremony.diachi'] = sourceAddr;
         }
 
         if (this._shouldAuto(packet, 'venue')) {
             packet['venue.ten'] = labelTugia;
-            packet['venue.diachi'] = sourceAddr;
         }
 
         return packet;
