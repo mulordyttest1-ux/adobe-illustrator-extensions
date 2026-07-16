@@ -1,184 +1,151 @@
 ---
-description: Core Pipeline — ALWAYS loaded. 3 phases: Plan → Act → Reflect.
-version: 4.6
-last_updated: 2026-02-26
+description: Internal base contract shared by /plan, /build, and /fix. Not a public workflow.
 ---
 
-# Core Protocol v4.6
+# Core Protocol (Internal Base)
 
-> 🔴 Bắt buộc cho MỌI task sửa/thêm/xóa code. Không ngoại lệ.
-> Pipeline: **PLAN → ACT → REFLECT** (3 phases, không phải 2).
+File nay giu protocol dung chung cho 3 workflow public:
 
----
+- `/plan`
+- `/build`
+- `/fix`
 
-## §I0 — IDEATION GATE
+No khong phai public launcher va khong thay the 3 lenh tren.
 
-Khi nhận task **phức tạp** (D1≥3 hoặc task mới hoàn toàn):
-→ Load `skills/ideation/SKILL.md`, chạy §I1–§I4 TRƯỚC khi làm bất cứ gì.
+## Vai tro
 
-Khi nhận task **đơn giản** (fix bug nhỏ, lint, sửa typo):
-→ Bỏ qua §I, nhảy thẳng §C0.
+- Dinh nghia invariant dung chung cho moi workflow.
+- Chot naming cho artifacts nhu C1/C2.
+- Chot validation va reporting contract.
+- Lam "hien phap noi bo", khong canh tranh vai tro voi workflow public.
 
-User gõ `/skip_ideation` → bypass.
+## Instruction precedence
 
----
+1. `AGENTS.md` gan nhat voi code dang sua.
+2. Root `AGENTS.md`.
+3. Workflow hien hanh (`/plan`, `/build`, `/fix`).
+4. Git history va ghi chu cu, neu ban chu dong tra cuu.
 
-## §C0 — AUTO-ROUTE (Chọn Skill) 🔴 [BLOCKER]
+Neu instruction mau thuan nhau, sua tai lieu thay vi giu ca hai cung active.
 
-Agent đọc frontmatter `skills/*/SKILL.md` rồi chọn skill phù hợp:
+## Shared invariants
 
-| Task Signal | Skill(s) to Load |
-|:------------|:-----------------|
-| **MỌI task (D1=1→5)** | Gọi `@/communication_search` TRƯỚC TIÊN để trinh sát |
-| "refactor", "đổi tên", "di chuyển", "tách" | `skills/refactoring/` |
-| "feature mới", "build", "thêm chức năng" | `skills/feature_dev/` + `skills/testing/` |
-| "bug", "lỗi", "fix", "test" | `skills/testing/` |
-| "lint", "architecture" | `skills/lint/` |
-| Task phức tạp (D1≥3) | + `skills/model_selection/` |
-| Task đơn giản (1-2 dòng) | Core + community_first only |
+- Doc root `AGENTS.md` truoc, sau do doc nested `AGENTS.md` gan nhat voi module dang sua.
+- Request moi phai di qua request normalization truoc khi route vao `/plan`, `/build`, hoac `/fix`.
+- He thong nay hoc tu Superpowers ve process quality, nhung van repo-native; khong them plugin/export/command structure ngoai 3 workflow public.
+- `.agent/memory/` chi la tai lieu tham khao; khong xem no la session bootstrap chinh.
+- Khong them reference moi toi legacy slash commands hoac bootstrap files da deprecate.
+- Moi thay doi trong `libs/shared` phai co cross-app impact note.
+- Moi task D1>=2, shared, hoac cross-app phai co Review Gate va Verification Gate truoc khi close-out.
 
-Ambiguous → Hỏi User. Complex → Load nhiều skills (Composition).
+## Task tiers (D1)
 
-### §M — Model Recommendation 🔴 [BLOCKER]
-Sau khi chọn skill, Agent score D1 và khuyến nghị model:
-- **Nếu Recommended = Actual** → Im lặng, tiếp tục.
-- **Nếu Recommended ≠ Actual** → Tư vấn ngắn gọn cho User:
-  ```
-  §M: D1=2 → Task nhẹ, khuyến nghị Flash (tiết kiệm token).
-  ⚡ Sếp có muốn chuyển model không? Nếu không, em tiếp tục.
-  ```
-- **Nếu D1≥3** → Bắt buộc load `skills/model_selection/SKILL.md`, score 6 chiều, in ra OUTPUT CHUẨN như trong docs.
+| D1 | Loai thay doi | Contract |
+|:---|:--------------|:---------|
+| 1 | Docs / typo / thay doi cuc bo rat nho | Co the lam ngan gon, nhung van phai ghi ro scope va validation |
+| 2 | Bug fix hoac thay doi han che trong 1 module | Mini-plan trong chat hoac artifact nho, scope lock ro rang |
+| 3 | Feature, refactor, thay doi cross-module/public API | Can `/plan`, C1 report, va implementation plan ro rang truoc khi code |
 
----
+## Artifact contract
 
-## PHASE 1: PLAN (Read-only — KHÔNG sửa code)
+| Artifact | Muc dich | Ten chuan |
+|:---------|:---------|:----------|
+| Receipt | Normalized request summary | trong chat hoac phan mo dau cua artifact lien quan |
+| C1 | Research va alignment report | `.task_steps/c1_<app>_document.md` |
+| C2 | Scope lock, impact report, va gate receipt | `.task_steps/c2_<app>_scope.md` |
+| Plan | Ke hoach thuc thi | mini-plan trong chat hoac `implementation_plan.md` |
 
-> ⛔ **HARD STOP TẠI §C1/§C2:** Agent BẮT BUỘC phải tách riêng các lệnh chạy tool `search_web` (§C1) và `grep` (§C2). Quá trình chạy 2 bước này phải độc lập và có kết quả thật. KHÔNG ĐƯỢC tự bịa ra Best Practice hoặc chém gió ra kết quả grep rồi nhảy ngay sang §C3 trong cùng 1 lần chat.
+Khong tao artifact moi neu workflow hien hanh da co artifact tuong duong va con dung.
 
-### §C1 — COMMUNICATION SEARCH 🔴 [BLOCKER] (Trọng tâm Pipeline)
+Preferred starting point cho artifact moi:
 
-> ⚠️ CẢNH BÁO: BƯỚC NÀY ĐƯỢC CHẠY ĐỘC LẬP QUA LỆNH `@/communication_search`
+- C1: `.task_steps/templates/c1_template.md`
+- C2: `.task_steps/templates/c2_template.md`
 
-Vấn đề muôn thuở của AI (Parametric Hallucination) là Agent thường bị mù ngữ cảnh codebase khi chạy research. Để khắc phục, phần §C1 này áp dụng **Context Loop**:
+Voi task D1>=3:
 
-1.  **Khảo sát Base Tạm (View Context):** Agent ĐƯỢC QUYỀN `grep_search` hoặc `view_file` xem dự án đang dùng ES3, ES6, React hay Node.js.
-2.  **Quét Web bằng tool `search_web`:** Tìm kiếm Best Practice trên StackOverflow / Github.
-3.  **Đối chiếu (Cross-check):** Mang phương án web về ốp vào context lấy ở bước 1. Nếu trên web bảo "Dùng fetch API" mà code của dự án là ES3 (không có fetch), Agent BẮT BUỘC bỏ cách đó, phải search tiếp "how to make http request in ExtendScript ES3".
-4.  **Báo cáo:** Ghi kết quả cuối cùng (đã sát ngữ cảnh) ra file `.task_steps/C1_document.md`.
+- C1 duoc viet theo 2 pass trong cung mot file.
+- Pass A = `Direction Brief`:
+  - problem restatement
+  - 2-3 options that su
+  - best practices
+  - anti-patterns
+  - edge cases
+  - counterfactuals
+  - chosen direction
+  - ly do loai cac option con lai
+- Pass B = implementation slices sau khi direction da duoc duyet.
+- C1 moi nen theo heading structure tu `c1_template.md`.
 
-*Nếu đang ở bước `@/runbook.md`, Agent BỎ QUA quá trình search bên trên và chỉ **ĐỌC KẾT QUẢ** từ file `C1_document.md`.*
+## Scope lock
 
-> ⛔ Agent KHÔNG ĐƯỢC nhảy vào code nếu chưa hoàn thành Step 0–3.
-> Suy luận cá nhân mà không kiểm chứng = Parametric Hallucination.
+- Liet ke file du kien sua.
+- Tim consumers truc tiep cua module/file quan trong.
+- Danh gia impact theo module, nhat la khi sua `libs/shared`.
+- Giu change set focused; neu scope mo rong dot bien, quay lai `/plan`.
+- C2 phai bat dau bang `## Gate Policy` voi cac truong:
+  - `Workflow: build|fix`
+  - `Task Tier: D1-1|D1-2|D1-3`
+  - `Code Change: yes|no`
+  - `Shared Change: yes|no`
+  - `Cross-App Impact: yes|no`
+- Gate requirement duoc suy ra tu `Gate Policy`, khong ghi co tay bang cac flag trung lap.
 
-### §C2 — SCOPE LOCK 🔴 [BLOCKER] (Khóa phạm vi)
-- [ ] Liệt kê file(s) sẽ sửa (ưu tiên ≤ 3)
-- [ ] Bắt buộc gọi `grep` tìm TẤT CẢ consumers gọi đến module đó. Cấm dùng mắt đoán.
-- [ ] Đánh giá Impact: sửa A có phá B/C không?
-- [ ] Xác nhận KHÔNG break bất kỳ consumer nào
+## Validation contract
 
-**Adaptive Depth Gate (Trace Depth tối thiểu theo SUM):**
+- Docs-only change:
+  - Co the dung gate nhe va skip build/test, nhung phai ghi ly do.
+- Code change trong 1 app:
+  - Chay lint/build/test phu hop voi app do.
+- Shared change hoac public API change:
+  - Nghien ve `lint:all`, build/test rong hon, hoac `verify` neu phu hop.
 
-| SUM (D1+D2+D3) | Min Trace Depth | Min Hypotheses (§E1) |
-|:---:|:---:|:---:|
-| 3–5 | 0 (grep callers chỉ 1 lớp) | 1 (fix trực tiếp) |
-| 6–8 | 1 (grep callers) | 2 |
-| 9–11 | 2 (grep callers of callers) | 3 |
-| 12–15 | 3 (grep + dependency map) | 3 + search_web |
+## Review and verification gates
 
-### §C3 — CONTRACT 🔴 [BLOCKER] (Hợp đồng — Tiered theo D1)
+- `requesting_code_review` la review gate:
+  - bat buoc cho D1>=2
+  - bat buoc cho thay doi vao `libs/shared`
+  - bat buoc cho cross-app impact
+- `verification_before_completion` la verification gate:
+  - bat buoc cho moi code change truoc khi declare xong
+  - neu review gate dan toi sua them code, phai rerun impacted validation truoc khi dong gate
+- Gate receipt duoc append vao cuoi C2:
+  - `## Review Gate` neu required
+  - `## Verification Gate` neu required
+- C2 moi nen theo heading structure tu `c2_template.md`.
+- Lenh enforcement khuyen dung:
+  - `npm run check:gates -- --file .task_steps/<c2-file>.md`
+- Khong noi `check:gates` vao `npm run verify`; day la gate rieng cho task dang thuc hien.
 
-| D1 | Loại | Contract |
-|:--:|:-----|:---------|
-| 1 | Typo, 1-2 dòng | Không cần plan. Sửa → lint → done |
-| 2 | Bug fix, logic nhỏ | **Mini-plan trong chat** (3-5 bullet points, user duyệt) |
-| 3+ | Feature, refactor lớn | **Full `implementation_plan.md`** → User duyệt → mới code |
+## Learning loop
 
-**EVIDENCE CHECKLIST (Bắt buộc chèn vào Plan):**
-```md
-## BẰNG CHỨNG HỢP LỆ (COMPLIANCE EVIDENCE)
-- §C0/§M (Model): D1=[x], Model=[x]
-- §C1 (Community): Đã search "[query]", kết luận: ...
-- §C2 (Scope Lock): Đã grep thấy [x] consumers.
-```
+- `anti-pattern analysis` la preventive loop:
+  - no thuoc request normalization, `/plan`, `community_first`, va `ideation`.
+- `systematic_debugging` la root-cause loop:
+  - bat buoc cho `/fix`
+  - duoc nap trong `/build` neu implementation drift thanh bug investigation
+- `postmortem` la learning loop sau validation:
+  - bat buoc cho `/fix`
+  - ap dung nhe/co dieu kien cho `/build`
+- Lesson chi duoc promote vao `.agent/lessons_learned.md` khi du reusable ngoai task vua lam.
 
-Checklist cho mọi mức:
-- [ ] Import direction đúng chiều (XUỐNG/NGANG, không NGƯỢC)?
-- [ ] Zone Check: 🟢Safe / 🟡Caution / 🔴Danger
-- [ ] Files affected ≤ 5? (nếu > 5 → tách task)
+## Error recovery
 
-**Output Phase 1:** Agent gọi `notify_user` nộp Plan → User approves → qua Phase 2. Mặc định KHÔNG auto-proceed.
+1. Liet ke 3 gia thuyet doc lap.
+2. Isolate de loai tru tung gia thuyet.
+3. Sua root cause, khong patch be mat.
+4. Chay lai validation.
+5. Neu van mo ho hoac scope bien thanh feature/refactor, route ve `/plan`.
 
----
+## Reporting contract
 
-## PHASE 2: ACT (Write mode — sửa code)
+Close-out nen co:
 
-### §C4 — EXECUTE (Thực thi)
-- [ ] Code incremental, phase-by-phase
-- [ ] Giữa chừng: kiểm tra logic bằng mắt, chưa cần build
-- [ ] Build + Lint tập trung ở §C5 (tránh chạy command thừa)
-- [ ] Cập nhật `task.md` real-time
-
-### §C5 — VALIDATE 🔴 [BLOCKER] (Nghiệm thu)
-- [ ] `npm run verify` → XANH 4/4 (Lint, Build, E2E, Sync)
-- [ ] Nếu ĐỎ → chạy §E1 Error Recovery
-- [ ] Cập nhật `types.d.ts` nếu public API thay đổi
-
-### §E1 — ERROR RECOVERY (Khi verify fail hoặc Bug Feedback)
-1. **Identify & Brainstorm (Anti-Tunnel-Vision) 🔴:** KHOAN vội fix. BẮT BUỘC liệt kê rõ 3 Giả Thuyết (Hypotheses) độc lập từ nông đến sâu (VD: 1. Typo/Syntax/Thiếu file → 2. CSS/Logic sai → 3. Môi trường/Cache).
-2. **Isolate & Test Hypotheses:** Dùng công cụ (CDP, bash, Node) để chứng minh hoặc loại trừ từng giả thuyết TRƯỚC khi chọn hướng đi.
-3. **Fix:** Sửa root cause (nguyên nhân gốc rễ đã được chứng minh), KHÔNG patch bề mặt.
-4. **Verify:** Chạy lại §C5 cho kết quả xanh.
-5. **Escalate:** Fail > 3 lần → Hỏi User.
-
-### §E2 — GUARDRAILS (Rào cản cứng)
-- ⛔ KHÔNG xóa file production mà không backup
-- ⛔ KHÔNG sửa > 5 files trong 1 commit logic
-- ⛔ KHÔNG bypass `eslint-disable` cho architecture rules
-- ⛔ KHÔNG auto-update workflow files **trừ khi User yêu cầu trực tiếp**
-- ⚠️ Zone 🔴 → Chỉ sửa khi User yêu cầu + review
-
-**Output Phase 2:** Working code + passing tests.
-
----
-
-## PHASE 3: REFLECT (Learn — rút kinh nghiệm)
-
-### §C6 — HARD GATE ⛔ (Compliance Receipt)
-
-> **QUAN TRỌNG:** Agent KHÔNG ĐƯỢC báo cáo kết quả cho User cho đến khi
-> hoàn thành TẤT CẢ checkboxes dưới đây. Đánh ✅ mà KHÔNG có bằng chứng = VI PHẠM.
-
-**Verification Evidence (BẮT BUỘC paste output thật):**
-- [ ] `npm run lint` → Paste kết quả (hoặc ghi lý do skip nếu chỉ sửa .md)
-- [ ] `npm run test:e2e` → Paste kết quả (hoặc ghi lý do skip)
-- [ ] `npm run build` → Paste kết quả nếu sửa JS/JSX logic
-- [ ] Nếu TẤT CẢ XANH → tiếp. Nếu ĐỎ → chạy §E1, KHÔNG ĐƯỢC skip.
-
-**Compliance Receipt (sau khi có evidence):**
-```
-§C1 RECON: ✅/❌ | §C2 SCOPE: ✅/❌ | §C3 CONTRACT: D[1-5] [loại plan]
-§C4 EXECUTE: ✅/❌ | §C5 VALIDATE: ✅/❌
-Skill(s): [loaded skills]
-Model: [Recommended=Actual → ✅ | hoặc ghi lý do dùng model khác]
-Lint: [PASS/FAIL/SKIP lý do] | Test: [PASS/FAIL/SKIP] | Build: [PASS/FAIL/SKIP]
-Error Recovery: [§E1 invoked? Y/N]
-```
-
-### §RF1 — LESSONS LEARNED
-- Task này có lỗi nào phải fix nhiều lần?
-- Có edge case nào bất ngờ?
-- Có anti-pattern nào agent suýt mắc?
-Output: 1-3 bullets → **Ghi vào `.agent/lessons_learned.md`** (append, không xóa cũ)
-
-### §RF2 — WORKFLOW IMPROVEMENT CHECK
-- Workflow hiện tại có bước nào thừa/thiếu?
-- Có skill nào cần cập nhật?
-Output: Đề xuất (nếu có) → Sếp duyệt → Agent cập nhật
-
-### §RF3 — CONTEXT CLEANUP
-- [ ] Kiểm tra `task.md` đã cập nhật đúng trạng thái
-- [ ] Ghi RESUME POINT nếu task chưa xong
-- [ ] Xóa entries hoàn thành trong task.md
-
-**Output Phase 3:** Evidence + Compliance Receipt + Lessons + Clean state.
+- file/module da sua
+- validation da chay hoac ly do skip
+- `Review Gate` neu task yeu cau
+- `Verification Gate`
+- ket qua `npm run check:gates -- --file <c2>` neu task co C2 gate receipt
+- rui ro con lai
+- cross-app impact neu co
+- postmortem neu workflow hien hanh yeu cau

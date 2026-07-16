@@ -1,5 +1,11 @@
 # Add files here to ignore them from prettier formatting
 /dist
 /coverage
+/.nx
 /.nx/cache
 /.nx/workspace-data
+/local-artifacts
+/.task_steps/archive
+/%APPDATA%
+*/cep/js/bundle.js
+*/cep/.generated

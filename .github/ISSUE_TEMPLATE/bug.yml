@@ -1,0 +1,62 @@
+name: Bug Report
+description: Report a reproducible bug with enough context for agent-driven fixing.
+title: "[Bug] "
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Describe the shortest reproducible sequence.
+      placeholder: |
+        1. Open...
+        2. Click...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: Expected vs actual
+      description: State what should happen and what actually happened.
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: suspected_context
+    attributes:
+      label: Suspected context
+      description: Pick the most likely bounded context, even if you are unsure.
+      options:
+        - wedding-cep / Runtime / Boot
+        - wedding-cep / Workspace / Form Entry
+        - wedding-cep / Date Intelligence
+        - wedding-cep / Input Assistance
+        - wedding-cep / Template Authoring
+        - wedding-cep / Document Sync
+        - wedding-cep / Postflight
+        - wedding-cep / Platform / Illustrator Host
+        - symbol-cep / Runtime / Boot
+        - symbol-cep / Preset / Config
+        - symbol-cep / Preflight
+        - symbol-cep / Engine / Execution
+        - symbol-cep / Postflight / Hooks
+        - symbol-cep / Platform / Illustrator Host
+        - symbol-cep / Data / Persistence
+        - shared / Wedding Domain
+        - shared / Cross-app
+        - unknown
+    validations:
+      required: true
+
+  - type: input
+    id: regression_surface
+    attributes:
+      label: Regression surface
+      description: Name the command, feature, or workflow where this regressed.
+      placeholder: postflight report, wedding update path, symbol postflight hook
+    validations:
+      required: true

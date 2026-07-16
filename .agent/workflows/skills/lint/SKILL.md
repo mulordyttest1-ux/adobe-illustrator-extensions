@@ -1,32 +1,31 @@
 ---
-name: Lint (Nx Enhanced)
-description: Load khi lint fails hoặc cần fix Nx architecture/naming violations.
-version: 1.0
+name: Lint
+description: Run and interpret lint commands for repo changes. Use when validation needs ESLint, when lint fails, or when architecture and naming violations must be resolved.
 ---
 
-# Skill: Lint (Nx Enhanced)
+# Skill: Lint
 
-> Extends Core Protocol §C5.
+Use this skill when workflow validation requires lint or when lint failures are the fastest signal for boundary and style issues.
 
-## §L1 — COMMANDS
+## Commands
 
-// turbo
 ```bash
-npm run lint:wedding    # Wedding CEP
-npm run lint:all        # Toàn bộ Monorepo
+npm run lint:symbol
+npm run lint:wedding
+npm run lint:all
 ```
 
-## §L2 — RULES
+## Priorities
 
-| Rule | Level | Action |
-|:-----|:------|:-------|
-| `@nx/enforce-module-boundaries` | 🛑 Error | BẮT BUỘC sửa. Không `eslint-disable` |
-| `camelcase` | ⚠️ Warning | Sửa nếu đang sửa file đó |
-| `no-var` | 🛑 Error | Đổi sang `const/let` |
-| `complexity` | ⚠️ Warning | Tách hàm nếu > 12 |
-| `no-unused-vars` | 🛑 Error | Xóa biến rác |
+| Rule Type | Expectation |
+|:----------|:------------|
+| architecture boundaries | fix, do not suppress casually |
+| unused variables | delete or justify immediately |
+| naming violations | fix in files you already touch |
+| complexity warnings | refactor if the current task already touches that area |
 
-## §L3 — CONFIG
-- **File:** `shared/eslint.config.mjs`
-- **Plugin:** `@nx/eslint-plugin`
-- **Globals:** `CSInterface`, `Bridge`, etc. (xem trong config)
+## Notes
+
+- repo lint config lives in `shared/eslint.config.mjs`
+- boundary violations matter more than cosmetic cleanup
+- report what failed, what was fixed, and what was intentionally deferred

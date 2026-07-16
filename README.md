@@ -1,94 +1,121 @@
-# Adobe Illustrator Extensions — Monorepo
+# Adobe Illustrator Extensions - Monorepo
 
-> **Monorepo chứa các CEP Extension chuyên dụng cho Adobe Illustrator.**
-> *Được phát triển với kiến trúc Hexagonal (Domain-Driven Design) để đảm bảo tính ổn định và dễ bảo trì.*
+Monorepo chua cac CEP extension chuyen dung cho Adobe Illustrator.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Adobe CEP](https://img.shields.io/badge/Adobe-CEP-FF0000.svg)](https://github.com/Adobe-CEP)
+## Cau truc
 
----
-
-## 📂 Cấu trúc Dự Án
-
-```bash
-├── .agent/              # Governance (workflows, rules, hooks)
-├── shared/              # Shared Tooling (ESLint config, helpers)
-├── symbol-cep/          # [NEW] Imposition Extension (Clean Architecture)
-├── wedding-cep/         # [LEGACY] Wedding Scripter (Đang refactor)
-├── package.json         # Root devDependencies
-└── .gitignore
+```text
+adobe-illustrator-extensions/
+|- AGENTS.md              # Repo-wide instructions for coding agents
+|- .agent/                # Workflows, skills, internal protocol, memory
+|- shared/                # Shared tooling
+|- libs/                  # Shared libraries
+|- symbol-cep/            # Imposition Panel
+|- toolkit-cep/           # Personal Toolkit launcher
+`- wedding-cep/           # Wedding Scripter
 ```
 
----
+## Quick start
 
-## 🚀 Quick Start
+### 1. Yeu cau
 
-### 1. Yêu Cầu (Prerequisites)
-- **Node.js**: v16+ (Khuyên dùng v18 LTS)
-- **Adobe Illustrator**: CC 2020 (v24.0) trở lên.
-- **OS**: Windows / macOS
+- Windows 10/11
+- Node.js 24 LTS va npm 11
+- Git for Windows
+- Adobe Illustrator 2025 va 2026
 
-### 2. Cài Đặt (Installation)
-
-Chạy lệnh sau tại thư mục gốc để cài đặt dependencies và tạo symlink tự động:
+### 2. Cai dat
 
 ```bash
-# 1. Cài đặt dependencies
-npm install
-
-# 2. Tạo Symlink vào thư mục Extensions của Adobe (Yêu cầu Admin/Sudo)
-# Windows:
-Get-Content .agent/create_symlink.ps1 | PowerShell.exe -noprofile -
-# Mac/Linux:
-# sh .agent/create_symlink.sh (Chưa implement)
+npm ci
 ```
 
-> **Lưu ý:** Nếu không chạy script symlink, hãy copy thủ công folder `wedding-cep` và `symbol-cep` vào đường dẫn extensions của Adobe:
-> - **Win:** `C:\Program Files (x86)\Common Files\Adobe\CEP\extensions\`
-> - **Mac:** `/Library/Application Support/Adobe/CEP/extensions/`
+### 3. Dung may development
 
-### 3. Debugging
-1. Mở **Adobe Illustrator**.
-2. Vào menu `Window` > `Extensions` > `Imposition Panel (Dev)` hoặc `Wedding Scripter (Dev)`.
-3. Mở trình duyệt (Chrome) và truy cập cổng debug:
-   - **Symbol CEP:** `http://localhost:9088`
-   - **Wedding CEP:** `http://localhost:9097`
+Một lệnh setup sẽ cài dependency cố định theo lockfile, cài Git hooks, chạy verification, bật `PlayerDebugMode` cho CSXS.11/12 và tạo sáu CEP wrapper live-link:
 
----
+```powershell
+npm run setup:dev
+```
 
-## 🛠️ Development
+Chỉ kiểm tra kế hoạch mà không đổi máy:
 
-### Commands
-| Command | Mô tả |
-| :--- | :--- |
-| `npm run lint:all` | Kiểm tra lỗi cú pháp (Lint) toàn bộ projects. |
-| `npm run lint:symbol` | Chỉ lint project Symbol CEP. |
-| `npm run lint:wedding` | Chỉ lint project Wedding CEP. |
-| `npm run build:wedding` | Build bản production cho Wedding CEP. |
+```powershell
+npm run setup:dev -- --dry-run
+```
 
-### Architecture Guidelines
-Dự án tuân thủ nghiêm ngặt quy chuẩn kiến trúc "Agent Friendly":
-- **Small Files:** Max 150 dòng/file.
-- **Explicit Deps:** Không dùng biến global ẩn.
-- **Layered:** Tách biệt Logic (Domain) và Giao diện (UI).
+Xem hướng dẫn backup/restore, Codex, font và Adobe tại [MACHINE_SETUP.md](MACHINE_SETUP.md).
 
-Xem chi tiết governance tại `.agent/`.
+## Development commands
 
----
+- `npm run lint:symbol`
+- `npm run lint:wedding`
+- `npm run lint:all`
+- `npm run lint:toolkit`
+- `npm run check:encoding`
+- `npm run build:symbol`
+- `npm run build:toolkit`
+- `npm run build:wedding`
+- `npm run build:all`
+- `npm run setup:dev`
+- `npm run doctor:dev`
+- `npm run backup:machine -- --destination <folder>`
+- `npm run restore:machine -- --archive <file> --target <empty-folder>`
+- `npm run install:cep-live-links`
+- `npm run test:smoke:symbol`
+- `npm run test:toolkit`
+- `npm run test:wedding`
+- `npm run test:domain:wedding`
+- `npm run test:smoke:wedding`
+- `npm run test:smoke:toolkit`
+- `npm run test:smoke:all`
+- `npm run test:ci`
+- `npm run test:all`
+- `npm run test:e2e:symbol` (alias cua `test:smoke:symbol`)
+- `npm run test:e2e:toolkit` (alias cua `test:smoke:toolkit`)
+- `npm run test:e2e:wedding` (alias cua `test:smoke:wedding`)
+- `npm run verify`
+- `npm run verify:smoke`
+- `npm run verify:full`
 
-## ⚠️ Known Limitations
-- **Wedding CEP:** Vẫn sử dụng kiến trúc cũ (Monolithic) ở một số module (`CompactFormBuilder`). Đang trong quá trình refactor.
-- **Cross-Platform:** Script tạo symlink hiện chỉ hỗ trợ Windows (PowerShell).
+## Verification lanes
 
----
+- `npm run verify`: gate CI-safe cho lint + build + test khong phu thuoc CEP host
+- `npm run verify:smoke`: smoke tests can panel CEP dang mo va debug port san sang
+- `npm run verify:full`: chay `verify` truoc, sau do chay them smoke lane local
 
-## 🤝 Contributing
-1. Fork dự án.
-2. Tạo branch feature (`git checkout -b feature/AmazingFeature`).
-3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`).
-4. Push lên branch (`git push origin feature/AmazingFeature`).
-5. Open một Pull Request.
+## Debug ports
 
----
+- Symbol CEP: `http://localhost:9198`
+- Toolkit CEP: `http://localhost:9099` (Illustrator 2026 test lane)
+- Wedding CEP: `http://localhost:9197`
 
-*(c) 2024-2026 DinhSon. All rights reserved.*
+## Governance
+
+- Day-to-day coding instructions: `AGENTS.md`
+- Agent operating model: `AGENT_OPERATING_MODEL.md`
+- Scoped instructions: `symbol-cep/AGENTS.md`, `wedding-cep/AGENTS.md`, `libs/shared/AGENTS.md`, `libs/wedding/domain/AGENTS.md`
+- Internal workflows va memory: `.agent/`
+- Cross-app preflight/postflight taxonomy: `POSTFLIGHT_TAXONOMY.md`
+- Architecture decisions: `adr/`
+
+## Feature Navigation
+
+- Wedding workflows: `wedding-cep/FEATURE_MAP.md`
+- Symbol workflows: `symbol-cep/FEATURE_MAP.md`
+- Toolkit workflows: `toolkit-cep/FEATURE_MAP.md`
+- Shared UI surface: `libs/shared/README.md`
+- Shared wedding domain: `libs/wedding/domain/README.md`
+
+## Encoding policy
+
+- `npm run check:encoding` scan tracked files va fail khi gap BOM, invalid UTF-8, hoac mojibake marker pho bien.
+- `LF-only` hien duoc enforce cho root/shared/tooling surface; legacy app areas con baseline `CRLF` se duoc xu ly o phase rieng.
+- Pha dau khong block vendor/minified/generated files, `.agent/`, `.task_steps/`, hay `.nx/`.
+
+## Notes
+
+- `wedding-cep` van con mot so module legacy.
+- `symbol-cep` dang la panel co cau truc sach hon.
+- `symbol-cep` hien co runtime smoke coverage la chinh; CI vong nay dua vao lint + build.
+- `wedding-cep` uses `postflight/report`; `symbol-cep` uses `postflight/hooks`.

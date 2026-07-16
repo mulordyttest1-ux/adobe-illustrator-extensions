@@ -1,146 +1,66 @@
 ---
-name: Hexagonal_Architecture_Rules
-description: Quy tắc bắt buộc về Kiến trúc Hexagonal (Ports & Adapters) cho dự án Wedding Scripter. Bao gồm Design Principles, Trade-offs và Red Flags.
+name: hexagonal-rules
+description: Repo-specific architecture boundary rules for the Adobe Illustrator CEP monorepo. Use when moving code across domain, use-case, adapter, UI, host, or shared-package boundaries; reviewing import direction; or checking whether a refactor still matches the repo's layered design.
 ---
 
-# Skill: Quy tắc Kiến trúc Hexagonal (The Guardian)
+# Hexagonal Rules
 
-## 🚀 TL;DR (Quick Summary)
-- **MỤC ĐÍCH:** Tách biệt Core (Domain) khỏi Infrastructure để dễ test, dễ mở rộng.
-- **KHI NÀO DÙNG:** Khi thêm file mới, refactor, hoặc review code structure.
-- **RULE QUAN TRỌNG:**
-  - Domain **KHÔNG BAO GIỜ** import từ Infrastructure.
-  - Use Case nhận Repository qua **Dependency Injection** (không tự `new`).
-  - Logic nằm ở CEP/JS (V8), IO nằm ở ExtendScript/JSX (ES3).
-- **❌ SAI LẦM PHỔ BIẾN:** Domain gọi `app.activeDocument` trực tiếp, dùng ES6 trong file .jsx.
-- **LIÊN KẾT:** [Project_Context](../Project_Context/SKILL.md), [Coding_Principles](../Coding_Principles/SKILL.md)
+Use this skill as a thin routing and review aid for boundary decisions in this repo. Do not use it as a generic architecture tutorial. Facts live in repo docs; this skill only points to the right source of truth and the red flags to check.
 
----
+## Quick Start
 
-## 1. Architectural Principles (Nguyên lý Kiến trúc)
+1. Open [AGENTS.md](C:/Projects/adobe-illustrator-extensions/AGENTS.md).
+2. Open the nearest scoped `AGENTS.md` for the code you will touch.
+3. Open [AGENT_OPERATING_MODEL.md](C:/Projects/adobe-illustrator-extensions/AGENT_OPERATING_MODEL.md).
+4. Open the owning architecture or package routing doc:
+   - [wedding-cep/ARCHITECTURE.md](C:/Projects/adobe-illustrator-extensions/wedding-cep/ARCHITECTURE.md)
+   - [symbol-cep/ARCHITECTURE.md](C:/Projects/adobe-illustrator-extensions/symbol-cep/ARCHITECTURE.md)
+   - [libs/shared/AGENTS.md](C:/Projects/adobe-illustrator-extensions/libs/shared/AGENTS.md) and [libs/shared/README.md](C:/Projects/adobe-illustrator-extensions/libs/shared/README.md)
+   - [libs/wedding/domain/AGENTS.md](C:/Projects/adobe-illustrator-extensions/libs/wedding/domain/AGENTS.md) and [libs/wedding/domain/README.md](C:/Projects/adobe-illustrator-extensions/libs/wedding/domain/README.md)
+5. If the change crosses panel-side JS and host-side JSX, also open [ES3_ES6_Boundary](../ES3_ES6_Boundary/SKILL.md).
 
-### 1.1 Modularity & Global Namespace Hygiene (Trong môi trường ES3)
-- **Nguyên lý:** ExtendScript dùng chung một Global Scope cho tất cả script đang chạy. Việc ô nhiễm (pollution) global scope là tối kỵ.
-- **Áp dụng:**
-  - Mọi code ExtendScript phải được bọc trong **IIFE** (Immediately Invoked Function Expression) hoặc namespace object (ví dụ `var WeddingApp = {}`).
-  - Module hóa phải rõ ràng: Mỗi file chỉ chịu trách nhiệm một việc (Single Responsibility).
+## Repo Boundary Defaults
 
-### 1.2 Separation of Engine (CEP vs ExtendScript)
-- **Nguyên lý:** Adobe Extensions chạy trên 2 engine khác nhau: Chromium (V8, hiện đại) và Illustrator (SpiderMonkey cũ, chậm).
-- **Áp dụng:** "Brain in CEP, Hands in Illustrator".
-  - **CEP (JS):** Xử lý logic phức tạp, tính toán, API calls, regex nặng.
-  - **ExtendScript (JSX):** Chỉ thực hiện các thao tác DOM (get/set properties) đơn giản nhất có thể.
+- Keep `libs/wedding/domain` pure. Do not import CEP, UI, or Illustrator host code into it.
+- Keep app-local business flow inside the owning app. Do not drift behavior between `wedding-cep` and `symbol-cep` without an explicit shared artifact.
+- Keep panel-side JS as the place for orchestration, validation, and heavier logic.
+- Keep `.jsx` files ES3-only and limited to host IO and narrow document operations.
+- Treat `libs/shared` as elevated-risk shared surface. Route it through the shared package docs and the repo operating model before editing.
 
-### 1.3 Defensive Programming at Boundaries
-- **Nguyên lý:** Giao tiếp giữa CEP và ExtendScript (qua `CSInterface`) là điểm yếu nhất và dễ crash nhất.
-- **Áp dụng:**
-  - Validate dữ liệu chặt chẽ ở CEP *trước* khi gửi xuống JSX.
-  - Xử lý lỗi (Error Handling) ở mọi boundary call. JSX phải luôn trả về JSON string hợp lệ hoặc error code, không bao giờ `throw` exception ra ngoài mà không catch.
+## Route By Change Type
 
----
+- Wedding business rule or derived data:
+  - Start with [libs/wedding/domain/README.md](C:/Projects/adobe-illustrator-extensions/libs/wedding/domain/README.md)
+  - Then open [wedding-cep/FEATURE_MAP.md](C:/Projects/adobe-illustrator-extensions/wedding-cep/FEATURE_MAP.md) if runtime consumers are involved
+- Wedding UI/report or validator flow:
+  - Start with [wedding-cep/FEATURE_MAP.md](C:/Projects/adobe-illustrator-extensions/wedding-cep/FEATURE_MAP.md)
+  - Keep presentation, action/orchestration, and validation boundaries separate
+- Symbol execution or postflight hook work:
+  - Start with [symbol-cep/FEATURE_MAP.md](C:/Projects/adobe-illustrator-extensions/symbol-cep/FEATURE_MAP.md)
+  - Treat `postflight` there as hooks/orchestration, not as validation-report UI
+- Host bridge or `.jsx` work:
+  - Escalate immediately if the task changes contract shape, packet shape, or host boundary ownership
 
-## 2. Trade-Off Analysis (Phân tích Đánh đổi)
+## Review Checklist
 
-### 2.1 Direct DOM Access vs. Abstracted Repository
-- **Option A: Direct DOM Access (Script gọi thẳng `app.activeDocument`)**
-  - *Pros:* Nhanh, viết ít code ban đầu.
-  - *Cons:* Khó test, gắn chặt logic với API Illustrator, khó bảo trì khi API đổi.
-- **Option B: Repository Pattern (Hexagonal)**
-  - *Pros:* Dễ test (mock repository), tách biệt logic khỏi UI/DOM, code sạch.
-  - *Cons:* Viết nhiều file hơn (Interface, Implementation), hơi dư thừa cho script nhỏ < 100 dòng.
-- **🚨 Decision:** Với Wedding Scripter (Project lớn), **BẮT BUỘC dùng Option B**.
+- Is the code being changed in the owning bounded context?
+- Does dependency direction still point inward toward domain/business logic rather than outward toward UI/host details?
+- Is host-side `.jsx` still doing narrow IO instead of absorbing orchestration?
+- Did a shared or cross-app change get treated as elevated-risk work?
+- Does the repo already have a closer seam where this logic should live?
 
-### 2.2 CEP-First vs. ExtendScript-Heavy
-- **Option A: ExtendScript-Heavy (Logic nằm ở .jsx)**
-  - *Pros:* Gần DOM, không cần serialize JSON qua lại.
-  - *Cons:* ES3 cũ kỹ, thiếu feature (không `map`, `filter`, `json`), debug khó, đóng băng UI Illustrator khi chạy nặng.
-- **Option B: CEP-First (Logic nằm ở .js)**
-  - *Pros:* JS hiện đại (ES6+), async/await, không block UI chính, thư viện phong phú.
-  - *Cons:* Overhead khi serialize dữ liệu gửi qua lại.
-- **🚨 Decision:** **CEP-First**. Chỉ dùng ExtendScript để "Scan" (đọc) và "Commit" (ghi). Mọi xử lý ở giữa làm tại CEP.
+## Red Flags
 
----
+- Domain logic starts importing CEP, DOM, bridge, or panel helpers.
+- `.jsx` gains modern JS syntax or starts shaping business data.
+- A local refactor quietly creates a new cross-app dependency.
+- A change to `libs/shared` or `libs/wedding/domain` is treated like a normal app-local edit.
+- A task uses this skill instead of the owning app/package docs as the final source of truth.
 
-## 3. Tổng quan Kiến trúc Hexagonal
+## Exit Condition
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    DRIVING ADAPTERS                     │
-│              (UI, Scripts, Controllers)                 │
-│                         │                               │
-│                         ▼                               │
-│    ┌────────────────────────────────────────────┐       │
-│    │              INPUT PORTS                   │       │
-│    │         (Interfaces / Giao kèo)            │       │
-│    │                    │                       │       │
-│    │                    ▼                       │       │
-│    │  ┌────────────────────────────────────┐    │       │
-│    │  │           CORE (DOMAIN)            │    │       │
-│    │  │  - Entities (CardEntity.js)        │    │       │
-│    │  │  - Use Cases (UpdateCardUseCase)   │    │       │
-│    │  │  - Business Rules                  │    │       │
-│    │  └────────────────────────────────────┘    │       │
-│    │                    │                       │       │
-│    │                    ▼                       │       │
-│    │             OUTPUT PORTS                   │       │
-│    │        (IRepository interfaces)            │       │
-│    └────────────────────────────────────────────┘       │
-│                         │                               │
-│                         ▼                               │
-│                  DRIVEN ADAPTERS                        │
-│     (AIDOMRepository, SessionAdapter, BridgeTalk)       │
-50: └─────────────────────────────────────────────────────────┘
-```
+Stop using this skill once you know:
 
----
-
-## 4. Quy tắc Vàng (Golden Rules)
-
-### Quy tắc #1: Domain là Vua (Domain is King)
-> **Domain KHÔNG BAO GIỜ được phụ thuộc vào bất kỳ lớp nào khác.**
-- ✅ `Domain/CardEntity.js` chỉ chứa pure JavaScript logic.
-- ❌ `Domain/` KHÔNG được `import` hay `$.evalFile()` từ `Infrastructure/` hoặc `UI/`.
-
-### Quy tắc #2: Luồng Dependency Một Chiều
-`UI -> UseCases -> Domain <- Infrastructure`
-Use Case định nghĩa Interface (Port), Infrastructure implement Interface đó (Adapter).
-
-### Quy tắc #3: No Hidden Dependencies
-- Không dùng biến toàn cục (`Global vars`) để truyền dữ liệu.
-- Mọi dependency phải được inject qua Constructor (Dependency Injection).
-
----
-
-## 5. Red Flags (Cờ Đỏ - Dấu hiệu Code Tồi)
-
-### 🚩 Architecture Anti-patterns
-- **God Object:** Một file `Main.jsx` làm tất cả mọi thứ 3000 dòng.
-- **Leaky Abstraction:** `Domain` entity chứa thuộc tính `textFrameItem` của Illustrator (lẽ ra chỉ nên chứa `textString`).
-- **Circular Dependency:** A require B, B require A.
-
-### 🚩 Adobe/ExtendScript Specific Red Flags
-- **Sử dụng cú pháp ES6 trong .jsx:** `const`, `let`, `=>` (Sẽ crash ngay lập tức).
-- **Tight Coupling UI & Logic:** Button click handler chứa trực tiếp logic for-loop xử lý dữ liệu.
-- **Hardcoded Paths:** `C:\Users\Admin`. Phải dùng relative path hoặc `Folder.myDocuments`.
-- **Silent Failures:** Try-catch nuốt lỗi mà không log hay thông báo cho user (trong context CEP).
-
----
-
-## 6. Cấu trúc Thư mục Chuẩn
-(Giữ nguyên như cũ)
-```
-/src
-  ├── /Domain            [CORE]
-  ├── /Application       [CORE - Use Cases, Ports]
-  ├── /Infrastructure    [ADAPTERS]
-  │     ├── /Illustrator (AIDOMRepository.js)
-  │     ├── /UI          (MainController.js)
-  └── /Shared            [Utils]
-```
-
-## 7. Checklist Khi Viết Code Mới (Refined)
-
-- [ ] **Layer Check:** Code này thuộc lớp nào? (Domain, App, Infra?)
-- [ ] **Dependency Check:** Class này có import ngược chiều không?
-- [ ] **ES3 Check:** Nếu file là `.jsx`, có lỡ tay dùng `const`/`let` không?
-- [ ] **Validation Check:** Inputs từ UI đã được validate tại CEP chưa?
+- which bounded context owns the change
+- which repo doc is the correct source of truth
+- whether the task is app-local, shared, or host-boundary work

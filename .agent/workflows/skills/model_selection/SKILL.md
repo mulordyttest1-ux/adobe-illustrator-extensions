@@ -1,54 +1,39 @@
 ---
 name: Model Selection
-description: Load khi task phức tạp (D1≥3). Chọn model tối ưu theo matrix. Không tự suy luận.
-version: 1.0
+description: Choose the right reasoning depth or model family for complex work. Use only for high-complexity planning where cost, speed, risk, and context size materially change the strategy.
 ---
 
 # Skill: Model Selection
 
-> Trigger: §C3 trong Core Protocol (khi task phức tạp).
-> MUST use matrix. NO re-evaluation of model theory.
-> If ambiguous → choose HIGHER depth model.
+Use this skill only when the task is complex enough that model choice or reasoning depth changes the plan.
 
-## §M1 — CLASSIFY PLAN (Score D1–D6)
+## Score The Task
 
 | ID | Dimension | 1 (Low) | 5 (High) |
 |:---|:----------|:--------|:---------|
-| D1 | DEPTH | Typo fix | System architecture |
-| D2 | CROSS | 1 file | 10+ files coupled |
-| D3 | RISK | Cosmetic | Breaking/data loss |
-| D4 | CTX | <10K tokens | >200K tokens |
-| D5 | SPEED | Can wait | Real-time |
-| D6 | COST | No limit | Must minimize |
+| D1 | depth | typo fix | architecture or migration |
+| D2 | cross-cutting scope | 1 file | 10+ coupled files |
+| D3 | risk | cosmetic | breaking or data loss |
+| D4 | context size | small | very large |
+| D5 | speed pressure | can wait | urgent |
+| D6 | cost pressure | flexible | must minimize |
 
-## §M2 — CALCULATE SUM
-`SUM = D1 + D2 + D3` (SPEED/COST = tiebreakers)
+Use `SUM = D1 + D2 + D3`. Treat D4-D6 as tie-breakers.
 
-## §M3 — CHECK OVERRIDES
-- CTX≥4 → Gemini (1M+ context window)
-- TOOL_DISCIPLINE critical → Claude (strict adherence)
-- SPEED=5 + DEPTH≤2 → Flash (always)
-- RISK=5 → never Flash
+## Selection Heuristics
 
-## §M4 — LOOKUP MATRIX
+- high context pressure -> favor larger-context tooling
+- high risk -> favor deeper reasoning over speed
+- high speed and low depth -> favor the faster option
+- if uncertain, choose the safer or deeper option
 
-| SUM | SPEED≥4 | COST≥4 | Default |
-|:---:|:-------:|:------:|:--------|
-| 3–5 | Flash | Flash | **Flash** |
-| 6–8 | Sonnet | Pro Low | **Pro Low** |
-| 9–11 | Sonnet | Sonnet | **Pro High** |
-| 12–15 | Opus | Opus | **Opus** |
+## Output
 
-Fallback: Primary unavailable → next row DOWN.
-
-## §M5 — OUTPUT
-
-```
-🤖 Model Recommendation
-Recommended: [Model]
+```text
+Model Recommendation
+Recommended: [model or depth]
 Scores: D1=[x] D2=[x] D3=[x] D4=[x] D5=[x] D6=[x] SUM=[x]
-Why: [1-line reason]
-Tradeoff: [What you lose]
-Fallback: [Next-best]
-Override: [Rule triggered or NONE]
+Why: [1 line]
+Tradeoff: [what you lose]
+Fallback: [next-best]
 ```

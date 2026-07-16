@@ -1,51 +1,61 @@
 ---
 name: CEP Live Testing
-description: Load khi test, debug, fix bug trên Adobe Illustrator. Bao gồm CDP setup và Hybrid Agentic Testing.
-version: 1.0
+description: Reproduce, smoke test, and debug CEP panels in real runtime conditions. Use when offline reasoning is not enough and Illustrator or panel behavior must be validated directly.
 ---
 
 # Skill: CEP Live Testing
 
-> Extends Core Protocol §C5. Hướng dẫn test trực tiếp trên Adobe Illustrator.
+Use this skill when you need runtime evidence instead of code-only reasoning.
 
-## §T1 — PREREQUISITES (Một lần duy nhất)
-- Registry: `Set-ItemProperty -Path "HKCU:\Software\Adobe\CSXS.11" -Name "PlayerDebugMode" -Value 1`
-- Symlink: chạy `.agent/create_symlink.ps1`
-- CDP: `npm install chrome-remote-interface --no-save`
+## Prerequisites
 
-## §T2 — TEST LOOP (Sau mỗi sửa code)
-1. `npm run build:wedding` (BẮT BUỘC)
-2. Reload Panel (đóng/mở hoặc CDP reload script)
-3. `npm run test:e2e` hoặc `node test_smoke.cjs`
+- run the supported machine setup once:
+  - `npm run setup:dev`
+- or refresh only the six managed wrappers:
+  - `npm run install:cep-live-links`
+- verify machine requirements and wrapper targets:
+  - `npm run doctor:dev`
 
-## §T3 — DEBUGGING & SCRATCHPADS
-- Chrome DevTools: `http://localhost:8097` → Chọn "Wedding Scripter"
-- Console, Network tab hoạt động như web bình thường
-- **Isolated Testing (Scratchpads):** Khi cần viết script để test logic rời rạc (như test regex, thuật toán node), **BẮT BUỘC** viết file mới (hoặc dùng lại file cũ) bên trong thư mục `scripts/scratchpads/`. TUYỆT ĐỐI không thảy file test bừa bãi ra root của dự án.
-- **Debug Utilities:** Các script tương tác với môi trường Host/CEP nội bộ nằm ở `scripts/debug_utils/`.
-## §T4 — HYBRID AGENTIC TESTING
+## Test Loop
 
-### Bug Regression (Quy trình Trị Lỗi Tái Phát):
-1. **Phân tích** (Não): Không vội sửa. Phân tích kịch bản sinh lỗi
-2. **Dệt lệnh** (Tay): Viết CDP test vào `test_smoke.cjs` → Xác nhận **FAILED ĐỎ**
-3. **Fix bug:** Sửa code JS
-4. **Xác nhận:** Chạy lại → **PASSED XANH** → Xóa sổ Bug
+1. build the panel you are changing:
+   - `npm run build:wedding`
+   - `npm run build:symbol`
+   - `npm run build:toolkit`
+2. reload the panel in Illustrator
+3. run the matching smoke test:
+   - `npm run test:smoke:wedding`
+   - `npm run test:smoke:symbol`
+   - `npm run test:smoke:toolkit`
+4. neu can compatibility voi lenh cu, `test:e2e:*` hien chi la alias tro ve `test:smoke:*`
 
-### Feature Testing (Tự động mở rộng):
-1. Agent tự suy luận 3-5 edge cases phá hoại
-2. Embed CDP test tự động vào `test_smoke.cjs`
-3. Chạy `npm run test:e2e` trước khi bàn giao
+## Debugging Notes
 
-## §T5 — TROUBLESHOOTING
+- default debug ports:
+  - Wedding: `http://localhost:9197`
+  - Symbol: `http://localhost:9198`
+  - Toolkit: `http://localhost:9099`
+- use browser-like console and network debugging where available
+- keep scratch scripts in intentional locations, not loose in repo root
 
-| Lỗi | Fix |
-|:-----|:----|
-| Code không thay đổi | `npm run build:wedding` + Reload Panel |
-| Connection Refused | Mở Extension, check `.debug` port 8097 |
-| npm lỗi policy | `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` |
-| `require` not defined | CEP = browser, dùng `import/export` |
+## Regression Loop
 
-## §T6 — NHẮC NHỞ
-- **Luôn nhớ Build** trước khi test: `npm run build:wedding`
-- **Luôn nhớ Reload** Panel trước khi test
-- **Báo cáo kiểm thử:** PHẢI ghi rõ các case đã test + kết quả
+1. capture the symptom
+2. create or update a reproduce path
+3. fix the bug
+4. rerun and confirm
+
+## Common Failures
+
+| Symptom | Likely Fix |
+|:--------|:-----------|
+| code changes do not appear | rebuild the correct panel and reload it |
+| connection refused | open the extension and verify the debug port |
+| PowerShell policy blocks npm | `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` |
+| `require` is not defined | treat CEP panel code as browser-side code |
+
+## Reporting
+
+- say which panel you built
+- say which runtime path you tested
+- report outcome and residual uncertainty

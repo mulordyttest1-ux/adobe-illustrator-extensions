@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "**/cep/jsx/**",
+    "**/cep/js/bundle.js",
+    "**/cep/.generated/**",
+    "**/cep/js/libs/**",
+    "**/cep/lib/**",
+    "**/cep/debug_scripts/fixtures/**",
+    ".task_steps/**",
+    ".agent/**",
+    "local-artifacts/**"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.cjs", "shared/testing/*.cjs"],
+      "project": ["scripts/**/*.{js,cjs,mjs,ts}", "shared/**/*.{js,cjs,mjs,ts}"]
+    },
+    "symbol-cep/cep": {
+      "entry": ["js/app.js", "build.cjs", "debug_scripts/test_smoke_2026.cjs"],
+      "project": ["js/**/*.{js,mjs}", "debug_scripts/**/*.cjs", "build.cjs"]
+    },
+    "wedding-cep/cep": {
+      "entry": ["js/app.js", "build.cjs", "debug_scripts/test_smoke_2026.cjs"],
+      "project": ["js/**/*.js", "debug_scripts/**/*.cjs", "scripts/**/*.cjs", "build.cjs"]
+    },
+    "toolkit-cep/cep": {
+      "entry": ["js/app.js", "build.cjs", "debug_scripts/test_smoke.cjs"],
+      "project": ["js/**/*.js", "debug_scripts/**/*.cjs", "scripts/**/*.cjs", "build.cjs"]
+    }
+  }
+}

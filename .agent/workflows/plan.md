@@ -1,14 +1,47 @@
 ---
-description: "Pha 1: Trinh sát cộng đồng + xuất kế hoạch triển khai"
+description: "Public workflow: research, scope lock, va implementation planning truoc khi code"
 ---
 
-# /plan — NGHIÊN CỨU & LÊN KẾ HOẠCH
+# /plan
 
-Khi khởi chạy lệnh này, Agent BẮT BUỘC chạy theo trình tự sau (KHÔNG được bỏ bước):
+Workflow public de research va lap ke hoach. `/plan` khong duoc viet code.
 
-1. **[NỘI BỘ - Community First RAG]** Tự động nạp `skills/community_first/SKILL.md`. Chạy toàn bộ Step 0→3: DEFINE bài toán → SEARCH web tìm Best Practice → EXTRACT tinh hoa → ALIGN với codebase hiện tại.
-2. **[NỘI BỘ - Model Check]** Nếu task phức tạp (D1≥3), nạp `skills/model_selection/SKILL.md` để đề xuất model phù hợp.
-3. **[NỘI BỘ - Ideation]** Nếu yêu cầu mơ hồ hoặc task hoàn toàn mới, nạp `skills/ideation/SKILL.md` để làm rõ trước khi research.
-4. **[XUẤT BÁO CÁO C1]** Lưu kết quả research vào `.task_steps/c1_<tên_app>_document.md`. TUYỆT ĐỐI KHÔNG lưu gộp thành `C1_document.md`.
-5. **[XUẤT KẾ HOẠCH]** Dựa vào C1, xuất Implementation Plan (mini-plan trong chat nếu D1≤2, hoặc file nếu D1≥3).
-6. **[DỪNG]** Chờ Sếp duyệt kế hoạch. TUYỆT ĐỐI CẤM viết code ở bước này.
+## Trinh tu thuc hien
+
+1. Doc root `AGENTS.md` va nested `AGENTS.md` gan nhat voi module se sua.
+2. Nap `skills/request_normalization/SKILL.md` va xuat normalized request receipt:
+   - intent
+   - route
+   - goal
+   - success criteria
+   - scope guess
+   - constraints
+   - unknowns
+   - approval needed
+3. Nap `skills/community_first/SKILL.md` de research best practice va align voi codebase hien tai.
+4. Neu task mo ho hoac la feature/refactor lon, nap them `skills/ideation/SKILL.md`.
+5. Neu task phuc tap (D1 >= 3), nap them `skills/model_selection/SKILL.md` neu can danh gia model/effort.
+6. Tao C1 moi tu `.task_steps/templates/c1_template.md`, sau do ghi Pass A vao `.task_steps/c1_<app>_document.md` nhu `Direction Brief`.
+   - `Direction Brief` bat buoc cho task mo ho, feature, refactor, hoac shared impact.
+   - Toi thieu phai co:
+     - problem restatement
+     - 2-3 options that su
+     - best practices
+     - anti-patterns
+     - edge cases
+     - counterfactuals
+     - chosen direction
+     - ly do loai cac option con lai
+7. Dung lai va xin approval cho `Direction Brief` truoc khi viet implementation plan chi tiet.
+8. Sau khi direction da duoc duyet, hoan thien Pass B cua C1 theo heading template hoac viet mini-plan trong chat:
+   - implementation slices nho, doc lap, verify duoc
+   - validation toi thieu cho moi slice
+   - consumer sweep neu dung vao `libs/shared` hoac surface shared
+9. Xac dinh scope du kien:
+   - file/module se anh huong
+   - consumers can kiem tra
+   - cross-app impact neu dung vao `libs/shared`
+10. Xuat implementation plan:
+    - task nho: mini-plan trong chat
+    - task lon: `implementation_plan.md`
+11. Dung lai va cho user duyet. Khong code trong `/plan`.
