@@ -1,0 +1,20 @@
+{
+  "id": "prepare_cut_package",
+  "title": "Prepare Cut Package",
+  "buttonLabel": "Prep Cut",
+  "category": "Cut Workflow",
+  "order": 15,
+  "aliases": [
+    "prepcut",
+    "cutprep",
+    "preparecut",
+    "normalizecut",
+    "reviewcut",
+    "fixcutlayers"
+  ],
+  "description": "Normalize CUT and camera mark layers so you can review and adjust before running the final save/export step.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": false,
+  "successMessage": ""
+}

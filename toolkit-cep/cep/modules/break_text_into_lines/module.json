@@ -1,0 +1,19 @@
+{
+  "id": "break_text_into_lines",
+  "title": "Break Text into Lines",
+  "buttonLabel": "Break Text into Lines",
+  "category": "Text",
+  "order": 10,
+  "aliases": [
+    "break lines",
+    "split lines",
+    "text lines",
+    "line text",
+    "lines"
+  ],
+  "description": "Split selected text into separate live lines with point-text precision first and area-text output kept best-effort.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

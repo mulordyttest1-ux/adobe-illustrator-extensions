@@ -1,0 +1,23 @@
+{
+  "id": "save_cut_package",
+  "title": "Save Cut Package",
+  "buttonLabel": "Save AI/PDF",
+  "category": "Cut Workflow",
+  "order": 16,
+  "aliases": [
+    "savecut",
+    "cutsave",
+    "exportcut",
+    "pdfai",
+    "giaocong",
+    "savepdf",
+    "saveai",
+    "baibe",
+    "baiin"
+  ],
+  "description": "Sync the working AI source, then export a prefixed die AI and print PDF after you finish reviewing or adjusting the cut document.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": false,
+  "successMessage": ""
+}

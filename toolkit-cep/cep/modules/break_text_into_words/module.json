@@ -1,0 +1,19 @@
+{
+  "id": "break_text_into_words",
+  "title": "Break Text into Words",
+  "buttonLabel": "Break Text into Words",
+  "category": "Text",
+  "order": 20,
+  "aliases": [
+    "break words",
+    "split words",
+    "text words",
+    "word text",
+    "words"
+  ],
+  "description": "Split selected text into separate live words with point-text precision first and area-text output kept best-effort.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

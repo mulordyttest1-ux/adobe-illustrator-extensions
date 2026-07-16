@@ -1,0 +1,19 @@
+{
+  "id": "break_text_into_glyphs",
+  "title": "Break Text into Glyphs",
+  "buttonLabel": "Break Text into Glyphs",
+  "category": "Text",
+  "order": 30,
+  "aliases": [
+    "break glyphs",
+    "split glyphs",
+    "split characters",
+    "text glyphs",
+    "glyphs"
+  ],
+  "description": "Split selected text into separate live glyph items with point-text precision first and area-text output kept best-effort.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

@@ -1,0 +1,20 @@
+{
+  "id": "step_repeat_symbol",
+  "title": "Step Repeat Symbol",
+  "buttonLabel": "Step Repeat Symbol",
+  "category": "Cut Workflow",
+  "order": 12,
+  "aliases": [
+    "steprepeat symbol",
+    "step repeat symbol",
+    "symbol repeat",
+    "repeat symbol",
+    "symbol grid",
+    "symbol"
+  ],
+  "description": "Repeat the current selection as linked symbol instances on the active artboard with automatic count and optional 90-degree optimization.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

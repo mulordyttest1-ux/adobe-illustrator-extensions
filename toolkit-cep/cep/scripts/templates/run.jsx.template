@@ -1,0 +1,12 @@
+if (!$.global.ToolkitModules) {
+    $.global.ToolkitModules = {};
+}
+
+$.global.ToolkitModules[{{ID_JSON}}] = function () {
+    return {
+        success: false,
+        message: {{PLACEHOLDER_MESSAGE_JSON}},
+        errorCode: "TOOLKIT_MODULE_NOT_IMPLEMENTED",
+        data: null
+    };
+};

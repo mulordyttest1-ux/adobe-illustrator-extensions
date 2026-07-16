@@ -1,0 +1,20 @@
+{
+  "id": "swap_selection_position_only",
+  "title": "Swap Selection Position Only",
+  "buttonLabel": "Swap Position Only",
+  "category": "Daily Work",
+  "order": 10,
+  "aliases": [
+    "swap position",
+    "swap pos",
+    "exchange position",
+    "swap 2",
+    "swap2",
+    "doi cho"
+  ],
+  "description": "Swap the positions of exactly two selected items while keeping each item's own size and rotation.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

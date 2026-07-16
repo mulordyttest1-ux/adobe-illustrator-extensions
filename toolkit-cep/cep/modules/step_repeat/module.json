@@ -1,0 +1,20 @@
+{
+  "id": "step_repeat",
+  "title": "Step Repeat",
+  "buttonLabel": "Step Repeat",
+  "category": "Cut Workflow",
+  "order": 11,
+  "aliases": [
+    "steprepeat",
+    "step repeat",
+    "repeat",
+    "repeat grid",
+    "lap lai",
+    "step"
+  ],
+  "description": "Repeat the current selection as one centered cell grid on the active artboard with automatic count and optional 90-degree optimization.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}
