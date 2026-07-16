@@ -6,10 +6,10 @@ function readFile(path) {
     return fs.readFileSync(path, 'utf8');
 }
 
-const ACTION_TAB = 'C:/Projects/adobe-illustrator-extensions/symbol-cep/cep/js/features/imposition/action_tab.js';
-const CONFIG_TAB = 'C:/Projects/adobe-illustrator-extensions/symbol-cep/cep/js/features/imposition/config_tab.js';
-const WEDDING_SUITE_TAB = 'C:/Projects/adobe-illustrator-extensions/symbol-cep/cep/js/features/wedding-suite-standard/WeddingSuiteTab.js';
-const BRIDGE_ADAPTER = 'C:/Projects/adobe-illustrator-extensions/symbol-cep/cep/js/features/wedding-suite-standard/bridgeAdapter.js';
+const ACTION_TAB = new URL('../imposition/action_tab.js', import.meta.url);
+const CONFIG_TAB = new URL('../imposition/config_tab.js', import.meta.url);
+const WEDDING_SUITE_TAB = new URL('../wedding-suite-standard/WeddingSuiteTab.js', import.meta.url);
+const BRIDGE_ADAPTER = new URL('../wedding-suite-standard/bridgeAdapter.js', import.meta.url);
 
 test('feature coordinators do not import the concrete dataStore or reach into localStorage directly', () => {
     const actionTab = readFile(ACTION_TAB);
