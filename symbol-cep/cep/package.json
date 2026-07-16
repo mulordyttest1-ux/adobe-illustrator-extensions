@@ -3,13 +3,23 @@
     "version": "1.0.0",
     "description": "Imposition Panel CEP for Adobe Illustrator",
     "private": true,
+    "type": "module",
     "scripts": {
-        "test": "node --test js/**/*.test.js",
-        "lint": "eslint js/ --config ../../shared/eslint.config.mjs --ignore-pattern bundle.js"
+    "build": "node build.cjs",
+    "test": "node --test js/**/*.test.mjs debug_scripts/**/*.test.cjs",
+    "test:smoke": "npm run test:smoke:2026",
+    "test:smoke:2026": "node debug_scripts/test_smoke_2026.cjs",
+    "test:e2e": "npm run test:smoke",
+        "lint:raw": "eslint js/ --config eslint.config.mjs --ignore-pattern bundle.js --max-warnings 0",
+        "lint": "node ../../scripts/ensure_nx_project_graph.cjs && npm run lint:raw"
     },
     "nx": {
         "tags": [
             "scope:app"
         ]
+    },
+    "dependencies": {
+        "pdf-lib": "^1.17.1",
+        "tweakpane": "^4.0.5"
     }
 }

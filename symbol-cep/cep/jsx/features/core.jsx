@@ -2,7 +2,10 @@
     🌟 CORE BOOTSTRAPPER
     ================================================================================
     📜 MODULAR ARCHITECTURE ROADMAP & SOP
-    Reference: [.agent/plans/modular_architecture_risk_and_roadmap.md]
+    Current references:
+    - [symbol-cep/AGENTS.md]
+    - [symbol-cep/ARCHITECTURE.md]
+    - [AGENT_OPERATING_MODEL.md]
     Protocol: CORE_LOADER
     ================================================================================
     Responsibility: 

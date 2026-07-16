@@ -18,8 +18,9 @@
 
         process: function (doc, items, frame, sheetInfo) {
             // ... (Phần kiểm tra config, tạo layer, tính toán Grid giữ nguyên) ...
-            var opts = sheetInfo.rawValues || {};
-            if (!opts.opt_draw_marks) return { status: 'skipped' };
+            var processing = sheetInfo.processingOptions || {};
+            var opts = processing.marks || {};
+            if (!opts.enabled) return { status: 'skipped' };
 
             $.writeln("[Marks] Generating Direction-Consistent Marks...");
 
@@ -32,10 +33,10 @@
             var grid = ImpositionDomain.calculateNUpLayout(sheetInfo.rect, frame.finish, 1, { x: 0, y: 0 }, layoutConstraint);
             if (grid.length === 0) return { status: 'skipped' };
 
-            var lenMm = opts.mark_len || 5;
+            var lenMm = opts.length || 5;
             var lenPt = lenMm * 2.834645;
-            var weight = opts.mark_weight || 0.5;
-            var isHybrid = opts.mark_style_hybrid;
+            var weight = opts.weight || 0.5;
+            var isHybrid = opts.hybrid;
 
             // --- HELPER VẼ LINE ---
             function drawLine(startPt, endPt) {

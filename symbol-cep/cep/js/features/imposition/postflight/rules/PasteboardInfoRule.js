@@ -4,49 +4,80 @@
  * PURPOSE: Render a text legend on the pasteboard based on execution results.
  */
 
+import { parseBase64JsonUtf8 } from '../../bridge_codec.js';
+import {
+    buildInterpolationData,
+    buildPasteboardLegendPayload,
+    buildPasteboardLegendPreview,
+    interpolateTemplate
+} from '../../pasteboard_slug.js';
+
+export {
+    buildInterpolationData,
+    buildPasteboardLegendPreview,
+    interpolateTemplate
+};
+
+function encodePayload(value) {
+    return btoa(unescape(encodeURIComponent(value)));
+}
+
+function parseBridgeResponse(bridgeResponseBase64) {
+    try {
+        return parseBase64JsonUtf8(bridgeResponseBase64);
+    } catch {
+        return {
+            success: false,
+            error: 'Failed to parse Bridge response for PasteboardInfoRule'
+        };
+    }
+}
+
+async function invokeBridge(bridge, script) {
+    if (bridge && typeof bridge.evalScript === 'function') {
+        return bridge.evalScript(script);
+    }
+    if (bridge && typeof bridge.eval === 'function') {
+        return bridge.eval(script);
+    }
+    throw new Error('Bridge does not support evalScript/eval for postflight hooks.');
+}
+
 export class PasteboardInfoRule {
     /**
      * Run the rule
      * @param {Object} context - { bridge, resultData, preset }
      */
-    async run({ bridge, resultData, preset }) {
-        // Opt-in Strict Mode: Skip if no template is defined
-        if (!preset || !preset.info_template) {
-            console.log("[Postflight] PasteboardInfoRule skipped: info_template is missing in preset.");
-            return;
+    async run({ bridge, hostGateway, resultData, preset }) {
+        if (!preset) {
+            console.log('[Postflight] PasteboardInfoRule skipped: preset is missing.');
+            return {
+                status: 'skipped',
+                reason: 'missing_preset'
+            };
         }
 
-        // Interpolation Logic (Supplant)
-        const template = preset.info_template;
+        const payload = buildPasteboardLegendPayload(resultData, preset);
+        const base64Payload = encodePayload(JSON.stringify(payload));
+        const bridgeResponseBase64 = hostGateway && typeof hostGateway.drawPasteboardLegend === 'function'
+            ? await hostGateway.drawPasteboardLegend(base64Payload)
+            : await invokeBridge(bridge, `Bridge.drawPasteboardLegend("${base64Payload}")`);
+        const response = parseBridgeResponse(bridgeResponseBase64);
 
-        // Prepare Data for interpolation
-        const data = {
-            preset_name: preset.name || 'Unknown',
-            count: resultData.itemsProcessed || 0,
-            width: resultData.finishSize ? resultData.finishSize.width : '?',
-            height: resultData.finishSize ? resultData.finishSize.height : '?',
-            timestamp: new Date().toLocaleTimeString()
-        };
+        if (!response.success) {
+            console.warn("[Postflight] PasteboardInfoRule JSX Error:", response.error);
+            return {
+                status: 'failed',
+                error: response.error || 'Bridge reported a postflight failure.'
+            };
+        }
 
-        // Regex Supplant (Safe ES3-compatible pattern replacement)
-        const finalString = template.replace(/{([^{}]*)}/g, (match, key) => {
-            return typeof data[key] !== 'undefined' ? data[key] : match;
-        });
-
-        // Push to JSX Bridge (Base64 encoded)
-        const base64Payload = btoa(unescape(encodeURIComponent(finalString)));
-
-        // We use the bridge instance to call the JSX endpoint
-        const bridgeResponseBase64 = await bridge.evalScript(`Bridge.drawPasteboardLegend("${base64Payload}")`);
-
-        try {
-            const response = JSON.parse(atob(bridgeResponseBase64));
-            if (!response.success) {
-                console.warn("[Postflight] PasteboardInfoRule JSX Error:", response.error);
+        return {
+            status: 'success',
+            details: {
+                mode: payload.mode,
+                preview: payload.text
             }
-            // eslint-disable-next-line no-unused-vars
-        } catch (e) {
-            console.error("[Postflight] Failed to parse Bridge response for PasteboardInfoRule");
-        }
+        };
     }
 }

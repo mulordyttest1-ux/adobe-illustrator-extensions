@@ -3,6 +3,7 @@
 #include "features/core.jsx"
 
 #include "features/imposition_symbol.jsx"
+#include "features/wedding_suite_standard.jsx"
 
 // Entry: Any global init logic here
 $.writeln("Host Environment Loaded");

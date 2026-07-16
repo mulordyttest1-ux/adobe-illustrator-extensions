@@ -1,0 +1,17 @@
+{
+  "defaultStockId": "anh_kim_483x320",
+  "stocks": [
+    {
+      "id": "anh_kim_483x320",
+      "label": "Anh kim 483 x 320",
+      "widthMm": 483,
+      "heightMm": 320
+    },
+    {
+      "id": "f180_480x330",
+      "label": "F180 480 x 320",
+      "widthMm": 480,
+      "heightMm": 320
+    }
+  ]
+}

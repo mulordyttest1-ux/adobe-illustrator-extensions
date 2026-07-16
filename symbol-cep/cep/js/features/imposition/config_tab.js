@@ -2,167 +2,513 @@
  * MODULE: ConfigTab
  * LAYER: UI/Coordinator (L6)
  * PURPOSE: Config tab initialization, render coordination, and modal handling
- * DEPENDENCIES: ConfigRenderer, ConfigEvents, ConfigPersistence, DataStore, BuiltinPresets, ConfigEngine
+ * DEPENDENCIES: ConfigPaneRenderer, ConfigEvents, DataStore, ConfigEngine
  * SIDE EFFECTS: DOM manipulation
  * EXPORTS: ConfigTab class
  */
-
-import { dataStore } from './data_store.js';
-import { ConfigRenderer } from './config_renderer.js';
+import { ConfigPaneRenderer } from './config_pane_renderer.js';
 import { ConfigEvents } from './config_events.js';
-import { BuiltinPresets } from './builtin_presets.js';
-import { ConfigEngine } from './schema_editor.js';
+import { ConfigPersistence } from './config_persistence.js';
+import { impositionCopy } from './imposition_copy.js';
+import { getCanonicalSchema } from './processing_options.js';
+import {
+    buildNormalizedConfigState,
+    buildPresetOptionsMarkup,
+    buildStorageWarningMarkup,
+    captureConfigTabUiState,
+    resolveFormMetaValues,
+    restoreConfigTabUiState
+} from './preset-config/configTabStateService.js';
+import {
+    confirmConfigTabModal,
+    openConfigTabAddFieldModal,
+    requestRemoveFieldFromConfigTab,
+    requestRemoveRowFromConfigTab
+} from './preset-config/configSchemaEditService.js';
+import { UIFeedback } from '@shared/cep-ui';
+
+function clone(value) {
+    return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+}
+
+function escapeAttr(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function createDefaultNotifier() {
+    return {
+        showToast(message, tone) {
+            UIFeedback.showToast(message, tone);
+        }
+    };
+}
+
+function flushToastBacklog() {
+    const toastContainer = typeof document !== 'undefined'
+        ? document.getElementById('toast-container')
+        : null;
+
+    if (toastContainer) {
+        toastContainer.innerHTML = '';
+    }
+
+    if (Array.isArray(UIFeedback._toastQueue)) {
+        UIFeedback._toastQueue.length = 0;
+    }
+
+    if (typeof UIFeedback._isShowingToast === 'boolean') {
+        UIFeedback._isShowingToast = false;
+    }
+}
+
+function buildSaveOutputDirectoryPresetPatch(rawPreset, nextPath) {
+    const safePreset = clone(rawPreset) || {};
+    safePreset.rawValues = clone(safePreset.rawValues) || {};
+    safePreset.rawValues.save_output_dir = nextPath;
+    return safePreset;
+}
+
+function getSaveDirectoryPresetMeta(tab) {
+    return {
+        presetId: String((tab && tab.formMeta && tab.formMeta.presetId) || '').trim(),
+        fallbackLabel: String((tab && tab.formMeta && tab.formMeta.presetName) || '').trim()
+    };
+}
+
+function getRepositoryPresetForSaveDirectory(repository, presetId) {
+    if (!repository || !presetId) {
+        return null;
+    }
+
+    if (typeof repository.getRawPresetById === 'function') {
+        const rawPreset = repository.getRawPresetById(presetId);
+        if (rawPreset) {
+            return rawPreset;
+        }
+    }
+
+    if (typeof repository.getById === 'function') {
+        return repository.getById(presetId);
+    }
+
+    return null;
+}
+
+function resolveLoadedPresetForSaveDirectory(tab) {
+    const meta = getSaveDirectoryPresetMeta(tab);
+    const repository = tab && tab.presetRepository;
+
+    if (!meta.presetId || !repository || typeof repository.savePreset !== 'function') {
+        return { presetId: '', fallbackLabel: meta.fallbackLabel, rawPreset: null };
+    }
+
+    return {
+        presetId: meta.presetId,
+        fallbackLabel: meta.fallbackLabel,
+        rawPreset: getRepositoryPresetForSaveDirectory(repository, meta.presetId)
+    };
+}
+
+function persistPickedSaveOutputDirectory(tab, nextPath) {
+    const resolved = resolveLoadedPresetForSaveDirectory(tab);
+
+    if (!resolved.presetId || !resolved.rawPreset) {
+        return { status: 'draft' };
+    }
+
+    const patchedPreset = buildSaveOutputDirectoryPresetPatch(resolved.rawPreset, nextPath);
+    const saveResult = tab.presetRepository.savePreset(patchedPreset);
+    if (!saveResult || !saveResult.success) {
+        return {
+            status: 'failed',
+            error: saveResult && saveResult.message ? saveResult.message : impositionCopy.persistence.saveError
+        };
+    }
+
+    if (tab.persistence && typeof tab.persistence.saveLastActive === 'function') {
+        tab.persistence.saveLastActive(resolved.presetId);
+    }
+
+    return {
+        status: 'saved',
+        label: patchedPreset.label || resolved.fallbackLabel || resolved.presetId,
+        warning: saveResult.warning || ''
+    };
+}
 
 export class ConfigTab {
-    constructor() {
+    // eslint-disable-next-line complexity
+    constructor(configOrBridge = {}) {
+        const deps = configOrBridge && typeof configOrBridge === 'object' && (
+            Object.prototype.hasOwnProperty.call(configOrBridge, 'bridge') ||
+            Object.prototype.hasOwnProperty.call(configOrBridge, 'persistence') ||
+            Object.prototype.hasOwnProperty.call(configOrBridge, 'pickDirectory') ||
+            Object.prototype.hasOwnProperty.call(configOrBridge, 'notifier') ||
+            Object.prototype.hasOwnProperty.call(configOrBridge, 'presetRepository') ||
+            Object.prototype.hasOwnProperty.call(configOrBridge, 'schemaMutationService')
+        )
+            ? configOrBridge
+            : { bridge: configOrBridge };
+        const {
+            bridge = null,
+            notifier = null,
+            pickDirectory = null,
+            persistence = ConfigPersistence,
+            presetRepository = null,
+            schemaMutationService = null
+        } = deps;
         this.container = null;
         this.isEditMode = false;
+        this.bridge = bridge || null;
+        this.notifier = notifier || createDefaultNotifier();
+        this.pickDirectory = typeof pickDirectory === 'function' ? pickDirectory : null;
+        this.persistence = persistence;
+        this.presetRepository = presetRepository;
+        this.schemaMutationService = schemaMutationService;
+        this.canonicalSchema = null;
+        this.activeSchema = null;
+        this.formState = null;
+        this.formMeta = {
+            presetId: '',
+            presetName: ''
+        };
+        this.selectedPresetId = '';
+        this.skipCaptureOnNextRender = false;
+        this.paneRenderer = new ConfigPaneRenderer(this);
     }
 
     init(containerId) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
-        this.render();
 
+        this.resetActiveSchema();
+        this.formState = this._buildNormalizedState({});
+        this.render();
         ConfigEvents.bindEvents(this);
     }
 
-    /**
-     * Main Render: Shell + delegate to ConfigRenderer
-     */
     render() {
-        const schema = (BuiltinPresets && BuiltinPresets[0]) ? BuiltinPresets[0] : null;
+        if (this.skipCaptureOnNextRender) {
+            this.skipCaptureOnNextRender = false;
+        } else {
+            this._captureUiState();
+        }
+
+        const schema = this.getActiveSchema();
+        this.formState = this._buildNormalizedState(this.formState || {});
+        const storageWarning = this._renderStorageWarning();
 
         this.container.innerHTML = `
-            <form id="config-form">
+            <form id="config-form" class="config-form-shell">
+                ${storageWarning}
                 ${this._renderTopBar()}
-                <input type="hidden" name="preset_id" id="preset_id" value="" />
-                <div id="dynamic-form-body">
-                    ${schema ? ConfigRenderer.renderSchema(schema, this.isEditMode) : '<p>Error: Schema not loaded.</p>'}
+                <input type="hidden" name="preset_id" id="preset_id" value="${escapeAttr(this.formMeta.presetId)}" />
+                <div id="dynamic-form-body" class="config-form-body">
+                    <div id="config-pane-root"></div>
                 </div>
                 ${this._renderFooter()}
                 ${this._renderModal()}
             </form>
-            ${this._renderStyles()}
         `;
+
+        const paneRoot = document.getElementById('config-pane-root');
+        this.paneRenderer.mount(paneRoot, schema, this.formState, {
+            isEditMode: this.isEditMode
+        });
+        this._restoreUiState();
     }
 
-    /** @private */
+    _renderStorageWarning() {
+        return buildStorageWarningMarkup({
+            getStorageHealth: () => (
+                this.presetRepository && typeof this.presetRepository.getStorageHealth === 'function'
+                    ? this.presetRepository.getStorageHealth()
+                    : { reason: 'ok', message: '' }
+            )
+        });
+    }
+
+    _buildCanonicalSchema() {
+        return getCanonicalSchema();
+    }
+
+    _buildNormalizedState(rawValues) {
+        return buildNormalizedConfigState({
+            rawValues: rawValues || {},
+            formMeta: this.formMeta,
+            activeSchema: this.getActiveSchema()
+        });
+    }
+
+    _captureUiState() {
+        const snapshot = captureConfigTabUiState({
+            paneRenderer: this.paneRenderer,
+            formMeta: this.formMeta,
+            selectedPresetId: this.selectedPresetId
+        });
+
+        if (snapshot.formState) {
+            this.formState = snapshot.formState;
+        }
+        this.formMeta = snapshot.formMeta;
+        this.selectedPresetId = snapshot.selectedPresetId;
+    }
+
+    _restoreUiState() {
+        restoreConfigTabUiState({
+            formMeta: this.formMeta,
+            selectedPresetId: this.selectedPresetId
+        });
+    }
+
+    getCanonicalSchema() {
+        if (!this.canonicalSchema || !this.canonicalSchema.sections) {
+            this.canonicalSchema = this._buildCanonicalSchema();
+        }
+
+        return JSON.parse(JSON.stringify(this.canonicalSchema));
+    }
+
+    getActiveSchema() {
+        if (!this.activeSchema || !this.activeSchema.sections) {
+            this.resetActiveSchema();
+        }
+
+        return this.activeSchema;
+    }
+
+    setActiveSchema(schema) {
+        this.canonicalSchema = this._buildCanonicalSchema();
+        this.activeSchema = schema && schema.sections
+            ? JSON.parse(JSON.stringify(schema))
+            : this.getCanonicalSchema();
+        this.formState = this._buildNormalizedState(this.formState || {});
+        this.skipCaptureOnNextRender = true;
+
+        return this.activeSchema;
+    }
+
+    resetActiveSchema() {
+        this.canonicalSchema = this._buildCanonicalSchema();
+        this.activeSchema = this.getCanonicalSchema();
+        this.formState = null;
+        this.skipCaptureOnNextRender = true;
+        return this.activeSchema;
+    }
+
+    setFormState(rawValues) {
+        this.formState = this._buildNormalizedState(rawValues || {});
+        this.skipCaptureOnNextRender = true;
+    }
+
+    setFieldValue(fieldId, value) {
+        const nextState = clone(this.readRawValues()) || {};
+        nextState[fieldId] = value;
+        this.setFormState(nextState);
+
+        if (this.paneRenderer && typeof this.paneRenderer.applyValues === 'function') {
+            this.paneRenderer.applyValues(this.formState);
+        }
+    }
+
+    setPresetMeta(id, label) {
+        this.formMeta = {
+            presetId: id || '',
+            presetName: label || ''
+        };
+        this.selectedPresetId = id || '';
+        this.skipCaptureOnNextRender = true;
+    }
+
+    readRawValues() {
+        if (this.paneRenderer) {
+            const paneValues = this.paneRenderer.readValues();
+            if (paneValues && Object.keys(paneValues).length) {
+                return paneValues;
+            }
+        }
+
+        return clone(this.formState) || {};
+    }
+
+    collectFormValues(form) {
+        const formRef = form || document.getElementById('config-form');
+        const values = this._buildNormalizedState(this.readRawValues());
+        const meta = resolveFormMetaValues(formRef, this.formMeta);
+
+        values.preset_id = meta.presetId;
+        values.preset_name = meta.presetName;
+        this.formMeta.presetId = meta.presetId;
+        this.formMeta.presetName = meta.presetName;
+        return values;
+    }
+
     _renderTopBar() {
+        const editHint = this.isEditMode
+            ? `<div class="config-edit-banner">${impositionCopy.config.editHint}</div>`
+            : `<div class="config-compact-hint">${impositionCopy.config.compactHint}</div>`;
+
         return `
-            <div style="margin-bottom: 15px; background: #222; padding: 4px 8px; border-radius: 4px; border: 1px solid #333; display: flex; align-items: center; gap: 8px;">
-                <label style="color: #aaa; font-size: 11px; white-space: nowrap; margin: 0;">📂 Preset:</label>
-                <select id="load-preset-select" style="flex: 1; padding: 2px 4px; background: #111; color: #eee; border: 1px solid #444; font-size: 11px; height: 22px;">
-                    <option value="">-- Chọn --</option>
-                    ${this._getPresetOptions()}
-                </select>
-                <button type="button" id="btn-toggle-edit" class="outline ${this.isEditMode ? 'contrast' : 'secondary'}" 
-                    style="font-size: 10px; padding: 0 6px; height: 22px; line-height: 20px; white-space:nowrap;">
-                    ${this.isEditMode ? 'Stop' : 'Edit'}
-                </button>
-            </div>
+            <section class="panel-card panel-card-compact config-top-card">
+                <div class="config-top-head">
+                    <div>
+                        <div class="panel-eyebrow">${impositionCopy.config.eyebrow}</div>
+                        <div class="panel-section-title">${impositionCopy.config.title}</div>
+                    </div>
+                    <button type="button" id="btn-toggle-edit" class="${this.isEditMode ? 'contrast' : 'secondary outline'} config-edit-btn">
+                        ${this.isEditMode ? impositionCopy.config.toggleEdit.on : impositionCopy.config.toggleEdit.off}
+                    </button>
+                </div>
+                <div class="config-toolbar-row">
+                    <div class="config-toolbar-field">
+                        <label class="panel-field-label" for="load-preset-select">${impositionCopy.config.presetLabel}</label>
+                        <select id="load-preset-select" class="panel-select">
+                            <option value="">${impositionCopy.config.presetPlaceholder}</option>
+                            ${this._getPresetOptions()}
+                        </select>
+                    </div>
+                </div>
+                ${editHint}
+            </section>
         `;
     }
 
-    /** @private */
     _renderFooter() {
         return `
-            <div style="background: #222; padding: 10px; border-radius: 4px; margin-top: 20px;">
-                <label style="margin-bottom: 5px;">Tên Cấu hình</label>
-                <input type="text" name="preset_name" id="preset_name" placeholder="Ví dụ: Catalogue A4" style="width: 100%; margin-bottom: 10px;" required />
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" class="secondary outline" id="btn-reset-form" style="flex: 1; font-size: 12px;">🆕 Tạo mới</button>
-                    <button type="submit" class="contrast" id="btn-save" style="flex: 2;">✅ Lưu Cấu Hình</button>
+            <section class="panel-card panel-card-compact config-footer-card">
+                <div class="config-footer-grid">
+                    <div class="config-footer-field">
+                        <div class="panel-eyebrow">${impositionCopy.config.footerEyebrow}</div>
+                        <label class="panel-field-label" for="preset_name">${impositionCopy.config.footerLabel}</label>
+                        <input type="text" name="preset_name" id="preset_name" placeholder="${impositionCopy.config.footerPlaceholder}" class="panel-text-input" required />
+                    </div>
+                    <div class="config-footer-actions">
+                        <button type="button" class="secondary outline" id="btn-dry-run" title="${impositionCopy.config.dryRunTitle}">${impositionCopy.config.dryRun}</button>
+                        <button type="submit" class="contrast" id="btn-save">${impositionCopy.config.save}</button>
+                    </div>
                 </div>
-            </div>
+                <div class="panel-helper-text config-footer-hint">${impositionCopy.config.footerHint}</div>
+            </section>
         `;
     }
 
-    /** @private */
     _renderModal() {
         return `
-            <div id="modal-add-field" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: #222; padding: 20px; border-radius: 8px; border: 1px solid #444; width: 300px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                    <h4 style="margin-top: 0;">Thêm Hàng Mới (Row)</h4>
-                    <label style="font-size: 11px; display: block; margin-bottom: 5px;">Tên Hàng (Label):</label>
-                    <input type="text" id="new-field-label" placeholder="Ví dụ: Bù Xéo" style="width: 100%; margin-bottom: 15px;">
-                    <label style="font-size: 11px; display: block; margin-bottom: 5px;">Loại Logic (Logic Type):</label>
-                    <select id="new-field-classification" style="width: 100%; margin-bottom: 20px; padding: 5px;">
-                        <option value="BASELINE">🟢 Cơ bản (Baseline - An toàn/Xén)</option>
-                        <option value="STRUCTURAL">🟡 Cấu trúc (Structural - Gáy/Rãnh)</option>
-                        <option value="ADDITIVE" selected>🔵 Cộng thêm (Additive - Bù/Keo)</option>
+            <div id="modal-add-field" class="panel-modal-overlay" style="display:none;">
+                <div class="panel-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-add-field-title">
+                    <h3 id="modal-add-field-title" class="panel-modal-title">${impositionCopy.config.modal.title}</h3>
+                    <div class="panel-helper-text">${impositionCopy.config.modal.helper}</div>
+                    <label class="panel-field-label" for="new-field-label">${impositionCopy.config.modal.fieldLabel}</label>
+                    <input type="text" id="new-field-label" class="panel-text-input" placeholder="${impositionCopy.config.modal.fieldPlaceholder}">
+                    <label class="panel-field-label" for="new-field-classification">${impositionCopy.config.modal.classificationLabel}</label>
+                    <select id="new-field-classification" class="panel-select">
+                        <option value="BASELINE">${impositionCopy.config.modal.classification.baseline}</option>
+                        <option value="STRUCTURAL">${impositionCopy.config.modal.classification.structural}</option>
+                        <option value="ADDITIVE" selected>${impositionCopy.config.modal.classification.additive}</option>
                     </select>
-                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                        <button type="button" class="secondary outline" id="btn-cancel-modal">Hủy</button>
-                        <button type="button" class="contrast" id="btn-confirm-modal">Thêm</button>
+                    <div class="panel-modal-actions">
+                        <button type="button" class="secondary outline" id="btn-cancel-modal">${impositionCopy.config.modal.cancel}</button>
+                        <button type="button" class="contrast" id="btn-confirm-modal">${impositionCopy.config.modal.confirm}</button>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    /** @private */
-    _renderStyles() {
-        return `
-            <style>
-                .btn-edge { flex: 1; padding: 6px 4px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; font-size: 11px; transition: all 0.2s; border-radius: 3px; }
-                .btn-edge:hover { border-color: #666; }
-                .btn-edge.active { background: #0088ff; border-color: #0099ff; color: #fff; font-weight: bold; }
-            </style>
-            <script>
-                document.addEventListener('click', function(e) {
-                    if (e.target.classList.contains('btn-edge')) {
-                        e.target.classList.toggle('active');
-                        const wrapper = e.target.closest('.edge-selector-wrapper');
-                        const input = wrapper.querySelector('input[type=hidden]');
-                        const btns = wrapper.querySelectorAll('.btn-edge.active');
-                        const edges = Array.from(btns).map(b => b.getAttribute('data-edge'));
-                        input.value = edges.join(',');
-                    }
-                });
-            </script>
-        `;
+    _getPresetOptions() {
+        return buildPresetOptionsMarkup({
+            listPresets: () => (
+                this.presetRepository && typeof this.presetRepository.getPresets === 'function'
+                    ? this.presetRepository.getPresets()
+                    : []
+            )
+        });
     }
 
-    /** @private */
-    _getPresetOptions() {
-        const presets = dataStore.getPresets();
-        return presets.map(p => `<option value="${p.id}">${p.label}</option>`).join('');
+    resetDraft() {
+        this.isEditMode = false;
+        this.persistence.saveLastActive('');
+        this.selectedPresetId = '';
+        this.formMeta = { presetId: '', presetName: '' };
+        this.resetActiveSchema();
+        this.formState = this._buildNormalizedState({});
+        this.skipCaptureOnNextRender = true;
+        this.render();
+
+        const documentRef = typeof document !== 'undefined' ? document : null;
+        const presetName = documentRef ? documentRef.getElementById('preset_name') : null;
+        if (presetName) {
+            presetName.focus();
+        }
+    }
+
+    async requestRemoveField(fieldId, label) {
+        return requestRemoveFieldFromConfigTab(this, fieldId, label, {
+            schemaMutationService: this.schemaMutationService
+        });
+    }
+
+    async requestRemoveRow(rowId, label) {
+        return requestRemoveRowFromConfigTab(this, rowId, label);
     }
 
     handleModalConfirm() {
-        const modal = document.getElementById('modal-add-field');
-        if (!modal) return;
-
-        const label = document.getElementById('new-field-label').value;
-        const classification = document.getElementById('new-field-classification').value;
-        const sectionId = modal.dataset.section;
-
-        if (!label) { alert("Vui lòng nhập tên!"); return; }
-
-        const fieldDef = ConfigEngine.createFieldDefinition({
-            label: label,
-            type: 'number',
-            classification: classification,
-            edge: 'dynamic'
+        return confirmConfigTabModal(this, {
+            schemaMutationService: this.schemaMutationService
         });
-
-        const schema = BuiltinPresets[0];
-        if (ConfigEngine.addField(schema, sectionId, fieldDef)) {
-            modal.style.display = 'none';
-            this.render();
-        } else {
-            alert("Lỗi: Không tìm thấy Section hợp lệ.");
-        }
     }
 
     openAddFieldModal(sectionId) {
-        const modal = document.getElementById('modal-add-field');
-        if (modal) {
-            modal.dataset.section = sectionId;
-            document.getElementById('new-field-label').value = "";
-            document.getElementById('new-field-classification').value = "ADDITIVE";
-            modal.style.display = 'flex';
+        return openConfigTabAddFieldModal(sectionId);
+    }
+
+    async pickSaveOutputDirectory() {
+        if (!this.pickDirectory) {
+            this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerUnavailable, 'warning');
+            return false;
         }
+
+        const currentValues = this.readRawValues();
+        const nextPath = await Promise.resolve(this.pickDirectory(currentValues.save_output_dir || ''));
+        if (!nextPath) {
+            return false;
+        }
+
+        if (nextPath === '__PICKER_UNAVAILABLE__') {
+            this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerUnavailable, 'warning');
+            return false;
+        }
+
+        if (nextPath === '__PICKER_ERROR__') {
+            this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerError, 'error');
+            return false;
+        }
+
+        this.setFieldValue('save_output_dir', nextPath);
+        flushToastBacklog();
+        const appliedPreset = this._applyPickedSaveOutputDirectory(nextPath);
+        if (appliedPreset.status === 'saved') {
+            this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerAppliedToPreset(appliedPreset.label), 'success');
+            if (appliedPreset.warning) {
+                this.notifier.showToast(appliedPreset.warning, 'warning');
+            }
+            return true;
+        }
+
+        if (appliedPreset.status === 'failed') {
+            this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerApplyFailed(appliedPreset.error), 'warning');
+            return true;
+        }
+
+        this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerSelected, 'success');
+        return true;
+    }
+
+    _applyPickedSaveOutputDirectory(nextPath) {
+        return persistPickedSaveOutputDirectory(this, nextPath);
     }
 }

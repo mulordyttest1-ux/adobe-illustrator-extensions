@@ -2,8 +2,9 @@
     📐 MODULE: LAYOUT (Sheet-Level)
     ================================================================================
     📜 COMPLIANCE STANDARDS (Required Reading)
-    1. Domain Separation: [.agent/domain_separation_standard.md]
-    2. Architecture:      [.agent/plans/modular_architecture_risk_and_roadmap.md]
+    1. Module rules:    [symbol-cep/AGENTS.md]
+    2. Architecture:    [symbol-cep/ARCHITECTURE.md]
+    3. Risk routing:    [AGENT_OPERATING_MODEL.md]
     
     PROTOCOL: SATELLITE_MODULE
     - Input: sheetCtx (Rectangle + Gripper)
@@ -66,8 +67,9 @@
 
             // 3. Lấy cấu hình Head-to-Head (Đã sửa ở bước trước)
 
-            var rawOpt = sheetInfo.rawValues && sheetInfo.rawValues.opt_layout_head_to_head;
-            var isHeadToHead = (rawOpt === true || rawOpt === 'on' || rawOpt === 'true');
+            var processing = sheetInfo.processingOptions || {};
+            var layoutOptions = processing.layout || {};
+            var isHeadToHead = !!layoutOptions.headToHead;
 
             var layout = ImpositionDomain.calculateNUpLayout(
                 sheetInfo.rect,
@@ -220,12 +222,14 @@
                 return { status: 'error', message: 'No items to place.' };
             }
 
-            var raw = sheetInfo.rawValues || {};
-            var alignPos = raw.align_position || 'tl';
+            var processing = sheetInfo.processingOptions || {};
+            var layoutOptions = processing.layout || {};
+            var rotateOptions = processing.rotate || {};
+            var alignPos = layoutOptions.align || 'tl';
 
             // Check if rotation is enabled
-            var hasRotation = (raw.opt_custom_rotate === true || raw.opt_custom_rotate === 'on' || raw.opt_custom_rotate === 'true');
-            var rotationAngle = parseFloat(raw.custom_rotate_angle) || 0;
+            var hasRotation = !!rotateOptions.enabled;
+            var rotationAngle = parseFloat(rotateOptions.angle) || 0;
 
             $.writeln("[Layout] Single placement mode. Align: " + alignPos);
             $.writeln("[Layout] Rotation: " + (hasRotation ? rotationAngle + "°" : "none"));
