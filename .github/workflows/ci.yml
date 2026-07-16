@@ -48,5 +48,8 @@ jobs:
       - name: Test machine migration tooling
         run: npm run test:machine-setup
 
-      - name: Exercise setup plan without machine changes
-        run: npm run setup:dev -- --dry-run
+      - name: Validate pinned devkit bootstrap contract
+        run: npm run devkit:ensure -- --dry-run --json
+
+      - name: Exercise standalone product setup plan
+        run: npm run setup:repo -- --dry-run

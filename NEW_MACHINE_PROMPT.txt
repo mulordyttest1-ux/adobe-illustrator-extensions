@@ -1,0 +1,6 @@
+Hay thiet lap moi truong phat trien Adobe Illustrator CEP tren may Windows nay tu https://github.com/mulordyttest1-ux/adobe-illustrator-extensions. Neu thieu cong cu, dung WinGet de cai. Clone product vao C:\Projects\adobe-illustrator-extensions, doc AGENTS.md va NEW_MACHINE_PROMPT.txt, chay scripts\bootstrap-machine.ps1, tai dung devkit release da khoa va hoan tat setup/doctor. Chi dung de toi xac nhan dang nhap GitHub/Codex, quyen Administrator, Adobe license hoac font co ban quyen. Khong sua source san pham trong qua trinh setup. Cuoi cung bao PASS/WARN/FAIL va viec thu cong con lai.
+
+Quy tac:
+- Browser GitHub va Codex connector khong thay the `gh auth status`.
+- Khong ghi token, auth.json, .env, session, SQLite, password archive, Adobe credential hoac font binary vao Git.
+- Khong ghi de repository/devkit dirty va khong xoa wrapper legacy hoac Illustrator preferences.

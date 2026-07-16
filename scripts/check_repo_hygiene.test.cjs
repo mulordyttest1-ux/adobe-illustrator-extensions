@@ -64,3 +64,29 @@ test('hygiene checker accepts the explicitly allowlisted Symbol template', (t) =
     });
     assert.deepEqual(result.errors, []);
 });
+
+test('hygiene checker rejects retired control-plane and credential paths', (t) => {
+    const root = createFixture();
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    for (const relativePath of ['.agent/workflows/plan.md', '.task_steps/archive/old.md', '.env.local', 'state/auth.json', 'state/cache.sqlite']) {
+        writeFile(root, relativePath);
+        addForced(root, relativePath);
+    }
+
+    const result = inspectRepo(root, { requiredPaths: [] });
+    assert.ok(result.errors.some((entry) => entry.includes('.agent/workflows/plan.md')));
+    assert.ok(result.errors.some((entry) => entry.includes('state/auth.json')));
+});
+
+test('hygiene checker rejects unapproved binaries and generated directories', (t) => {
+    const root = createFixture();
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    for (const relativePath of ['assets/unreviewed.pdf', 'dist/panel.js', 'logs/setup.log']) {
+        writeFile(root, relativePath);
+        addForced(root, relativePath);
+    }
+
+    const result = inspectRepo(root, { requiredPaths: [] });
+    assert.ok(result.errors.some((entry) => entry.includes('assets/unreviewed.pdf')));
+    assert.ok(result.errors.some((entry) => entry.includes('dist/panel.js')));
+});

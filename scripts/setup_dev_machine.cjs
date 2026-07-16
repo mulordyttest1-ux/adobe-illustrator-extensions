@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const {
     REPO_ROOT,
@@ -40,24 +38,7 @@ function buildSetupSteps(options = {}) {
         description: 'Create the six managed CEP wrappers.'
     });
 
-    if (options.codexConfig) {
-        const codexConfig = path.resolve(options.codexConfig);
-        steps.push({
-            command: 'powershell.exe',
-            args: ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(codexConfig, 'install.ps1'), '-AdobeRepoPath', repoRoot],
-            cwd: codexConfig,
-            description: 'Install safe Codex config, skills, rules, and plugin manifest.'
-        });
-    }
-
-    const doctorArgs = ['scripts/dev_machine_doctor.cjs'];
-    if (options.codexConfig) {
-        doctorArgs.push('--codex-config', path.resolve(options.codexConfig));
-        const fontInventory = path.join(path.resolve(options.codexConfig), 'inventories', 'fonts.json');
-        if (fs.existsSync(fontInventory)) {
-            doctorArgs.push('--font-inventory', fontInventory);
-        }
-    }
+    const doctorArgs = ['scripts/repo_doctor.cjs'];
     steps.push({ command: process.execPath, args: doctorArgs, cwd: repoRoot, description: 'Run final machine doctor.' });
 
     return steps;
@@ -91,9 +72,6 @@ function validatePrerequisites(options = {}, injected = {}) {
     if (!fs.existsSync(path.join(repoRoot, 'symbol-cep', 'wedding suite print template.ai'))) {
         problems.push('The tracked wedding suite Illustrator template is missing.');
     }
-    if (options.codexConfig && !fs.existsSync(path.join(path.resolve(options.codexConfig), 'install.ps1'))) {
-        problems.push(`Codex config installer is missing under ${path.resolve(options.codexConfig)}.`);
-    }
     return problems;
 }
 
@@ -114,7 +92,7 @@ function runSetup(options = {}, injected = {}) {
     }
 
     steps.forEach((step) => {
-        console.log(`[setup:dev] ${step.description}`);
+        console.log(`[setup:repo] ${step.description}`);
         runFn(step.command, step.args, { cwd: step.cwd, stdio: 'inherit' });
     });
     return steps;
@@ -124,18 +102,16 @@ function main() {
     try {
         const args = parseCliArgs(process.argv.slice(2), {
             boolean: ['dry-run', 'skip-verify', 'skip-cep-debug'],
-            value: ['repo-root', 'codex-config']
+            value: ['repo-root']
         });
         runSetup({
             repoRoot: args['repo-root'],
-            codexConfig: args['codex-config'],
             dryRun: args['dry-run'],
             skipVerify: args['skip-verify'],
-            skipCepDebug: args['skip-cep-debug'],
-            codexHome: process.env.CODEX_HOME || path.join(os.homedir(), '.codex')
+            skipCepDebug: args['skip-cep-debug']
         });
     } catch (error) {
-        console.error(`[setup:dev] ${error.message}`);
+        console.error(`[setup:repo] ${error.message}`);
         process.exitCode = 2;
     }
 }

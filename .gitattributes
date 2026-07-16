@@ -1,3 +1,6 @@
+.editorconfig text eol=lf
+.gitattributes text eol=lf
+.npmrc text eol=lf
 *.js text eol=lf
 *.jsx text eol=lf
 *.cjs text eol=lf

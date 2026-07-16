@@ -53,7 +53,7 @@ body:
     id: risk_tier
     attributes:
       label: Risk tier
-      description: Use the repo risk tiers from AGENT_OPERATING_MODEL.
+      description: Use the risk tier in the active product specification and pinned devkit workflow.
       options:
         - T0
         - T1

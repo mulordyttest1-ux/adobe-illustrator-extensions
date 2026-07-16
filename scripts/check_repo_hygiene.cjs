@@ -22,6 +22,16 @@ const SOURCE_EXTENSIONS = new Set([
     '.js', '.jsx', '.cjs', '.mjs', '.ts', '.css', '.html', '.json', '.xml', '.md'
 ]);
 
+const BINARY_ALLOWLIST = new Set([
+    'symbol-cep/wedding suite print template.ai',
+    'symbol-cep/cep/debug_scripts/fixtures/wedding_suite/runtime_probe_ascii.pdf'
+]);
+
+const BINARY_EXTENSIONS = new Set([
+    '.7z', '.ai', '.dll', '.exe', '.gif', '.indd', '.jpeg', '.jpg', '.otf', '.pdf',
+    '.png', '.psd', '.rar', '.ttf', '.webp', '.woff', '.woff2', '.zip'
+]);
+
 function normalizePath(filePath) {
     return String(filePath || '').replace(/\\/g, '/').replace(/^\.\//, '');
 }
@@ -44,9 +54,20 @@ function isIgnored(repoRoot, relativePath) {
 
 function isForbiddenTrackedPath(filePath) {
     const normalized = normalizePath(filePath);
+    const baseName = path.posix.basename(normalized).toLowerCase();
+    const parts = normalized.toLowerCase().split('/');
+    const isUnapprovedBinary = BINARY_EXTENSIONS.has(path.posix.extname(baseName)) && !BINARY_ALLOWLIST.has(normalized);
     return normalized.startsWith('.nx/') ||
+        normalized.startsWith('.agent/') ||
+        normalized.startsWith('.task_steps/archive/') ||
         normalized.startsWith('%APPDATA%/') ||
         normalized.startsWith('local-artifacts/') ||
+        parts.some((part) => ['node_modules', 'dist', 'build', 'coverage', 'cache', 'caches', 'backup', 'backups', 'logs', 'sessions'].includes(part)) ||
+        isUnapprovedBinary ||
+        baseName === 'auth.json' ||
+        baseName.startsWith('.env') ||
+        /\.(?:7z|log|rar|tmp|zip)$/u.test(baseName) ||
+        /\.(?:sqlite|sqlite3)(?:-(?:shm|wal))?$/u.test(baseName) ||
         /(?:^|\/)bundle\.js(?:\.map)?$/u.test(normalized) ||
         /(?:^|\/)\.generated\//u.test(normalized) ||
         normalized === 'symbol-cep/cep/wedding suite print template.ai' ||
@@ -161,6 +182,7 @@ function main() {
 }
 
 module.exports = {
+    BINARY_ALLOWLIST,
     DEFAULT_REQUIRED_PATHS,
     findMisplacedArtifacts,
     inspectRepo,

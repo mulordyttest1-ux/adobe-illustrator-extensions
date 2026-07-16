@@ -37,5 +37,5 @@
 
 ## Docs / ADR Updated?
 
-- `AGENT_OPERATING_MODEL.md` / `FEATURE_MAP.md` / `PROJECT_STATUS.md` / ADR / none
+- `specs/` / Spec Kit constitution / `FEATURE_MAP.md` / `PROJECT_STATUS.md` / ADR / none
 - If none, explain why not needed.
