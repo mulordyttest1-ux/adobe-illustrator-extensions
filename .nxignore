@@ -1,4 +1,5 @@
-.agent/
+.agents/
+.specify/
 .task_steps/archive/
 local-artifacts/
 %APPDATA%/

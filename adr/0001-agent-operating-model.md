@@ -1,6 +1,6 @@
 # ADR 0001: Agent Operating Model
 
-- Status: Accepted
+- Status: Superseded by ADR 0002
 - Date: 2026-03-26
 
 ## Context

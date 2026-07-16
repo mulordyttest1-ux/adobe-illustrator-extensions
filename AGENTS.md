@@ -1,81 +1,65 @@
 # AGENTS.md
 
-Nguon huong dan chinh cho coding agents trong monorepo nay.
+Public source of truth for the Adobe Illustrator CEP monorepo.
 
-## Muc tieu repo
+## Product surfaces
 
-- Monorepo cho cac Adobe Illustrator CEP extensions.
-- App chinh:
-  - `symbol-cep/` - Imposition Panel, kien truc moi hon.
-  - `wedding-cep/` - Wedding Scripter, con mot so phan legacy.
-- Shared code:
-  - `libs/shared/cep-ui` - UI helpers dung chung.
-  - `libs/wedding/domain` - domain logic thuan, khong phu thuoc CEP/UI.
-- Shared tooling:
-  - `shared/` - ESLint va tooling cho monorepo.
+- `wedding-cep/`: Wedding Scripter.
+- `symbol-cep/`: Imposition Panel and Wedding Suite Print.
+- `toolkit-cep/`: one-click Illustrator utility launcher.
+- `libs/wedding/domain/`: UI-independent wedding domain rules.
+- `libs/shared/cep-ui/`: shared CEP UI helpers.
+- `shared/`: repository lint/test tooling.
 
-## Mo hinh instruction
+Read this file first, then the nearest nested `AGENTS.md` for the module being changed.
 
-- Doc file nay truoc.
-- Sau do doc `AGENTS.md` gan nhat voi module ban dang sua.
-- Workflow public chi co 3 lenh:
-  - `/plan` - research, scope lock, implementation plan. Khong code.
-  - `/build` - implement sau khi plan da duoc duyet, hoac thay doi trivially safe.
-  - `/fix` - reproduce, isolate, fix, validate bug.
-- Truoc khi route vao 3 lenh tren, agent phai tu chay request normalization cho input user dang van noi.
-- Chi tiet protocol dung chung nam trong `.agent/workflows/core_protocol.md`.
-- `.agent/memory/` la lop reference con song cho style, architecture, va domain context; khong phai session bootstrap chinh.
-- He nay hoc tu Superpowers ve process quality, nhung van giu repo-native architecture; khong copy plugin, command, hay packaging structure cua no.
-- Repo khong giu archive instruction trong `.agent`; neu can tra cuu lich su thi dung git history.
+## When to load the private devkit
 
-## Luat bat bien
+- Running, reading, building, testing, or public CI does not require the private devkit.
+- Planning, implementing, fixing, diagnosing, reviewing, migrating, or setting up a machine does require it.
+- Before developer work, run `npm run devkit:ensure -- --json` and read the returned devkit `AGENTS.md` plus only the relevant skills.
+- If private access is unavailable, read-only inspection may continue, but do not modify product source without the pinned developer workflow.
+- The product pins an immutable devkit release and commit in `devkit.lock.json`; never follow devkit `main` implicitly.
 
-- Tat ca file `.jsx`/ExtendScript phai giu tuong thich ES3.
-- `libs/wedding/domain` khong duoc import nguoc tu CEP/UI layers.
-- Ton trong ranh gioi `symbol-cep` va `wedding-cep`.
-- Moi thay doi trong `libs/shared` phai coi la cross-app impact va di qua `/plan` truoc.
-- Thay doi D1>=2, shared, hoac cross-app phai di qua Review Gate va Verification Gate truoc khi declare xong.
-- Uu tien dung command o root `package.json`.
-- Khong them reference moi toi legacy slash commands hoac bootstrap files da deprecate.
-- Issue encoding phai duoc xac nhan bang byte/file inspection that su; khong ket luan tu `Get-Content`, terminal render, hay copy text bi vo ma.
-- Khong mass-recode product files neu `npm run check:encoding` va smoke tests khong cho thay loi that tren dia.
+## Spec-driven workflow
 
-## Lenh chung
+- Product specifications and plans live under `specs/` and remain versioned with source.
+- Use the installed Spec Kit skills in `.agents/skills`:
+  - `$speckit-specify`
+  - `$speckit-plan`
+  - `$speckit-tasks`
+  - `$speckit-implement`
+- `.task_steps/` remains only for active gate receipts during the migration compatibility window.
+- Historical receipts and the retired `.agent` control plane live in the private devkit archive and Git history.
 
-- `npm run lint:symbol`
-- `npm run lint:wedding`
+## Invariants
+
+- Every `.jsx`/ExtendScript file must remain ES3 compatible.
+- `libs/wedding/domain` must not import from CEP or UI layers.
+- Respect Wedding, Symbol, Toolkit, domain, and shared-library ownership boundaries.
+- Changes in `libs/shared` are cross-app and require explicit planning plus broad validation.
+- D1-2+, shared, or cross-app changes require Review Gate and Verification Gate evidence.
+- Do not infer encoding corruption from terminal rendering; verify bytes and run `npm run check:encoding`.
+- Never commit credentials, `.env*`, sessions, caches, SQLite files, Adobe binaries, licensed fonts, or machine-local Codex state.
+- Do not use `git add -A` on a mixed worktree.
+
+## Root commands
+
+- `npm run devkit:ensure -- --json`
+- `npm run setup:repo`
+- `npm run doctor:repo -- --json`
+- `npm run install:cep-live-links`
 - `npm run lint:all`
-- `npm run build:symbol`
-- `npm run build:wedding`
 - `npm run build:all`
-- `npm run test:wedding`
-- `npm run test:domain:wedding`
-- `npm run test:smoke:symbol`
-- `npm run test:smoke:wedding`
+- `npm run test:ci`
 - `npm run test:smoke:all`
-- `npm run test:all`
-- `npm run test:e2e:symbol` - alias compatibility cho `npm run test:smoke:symbol`
-- `npm run test:e2e:wedding` - alias compatibility cho `npm run test:smoke:wedding`
-- `npm run check:gates -- --file .task_steps/<c2-file>.md`
 - `npm run verify`
+- `npm run check:gates -- --file .task_steps/<c2-file>.md`
 
-## Workflow templates
+## Instruction precedence
 
-- C1 moi nen bat dau tu `.task_steps/templates/c1_template.md`
-- C2 moi nen bat dau tu `.task_steps/templates/c2_template.md`
-
-## Scoped instructions
-
-- `symbol-cep/AGENTS.md`
-- `wedding-cep/AGENTS.md`
-- `libs/wedding/domain/AGENTS.md`
-- `libs/shared/AGENTS.md`
-
-## Thu tu uu tien khi co xung dot
-
-1. `AGENTS.md` gan nhat voi code dang sua.
+1. Nearest nested `AGENTS.md`.
 2. Root `AGENTS.md`.
-3. Workflow hien hanh trong `.agent/workflows/`.
-4. Git history va ghi chu cu, neu ban chu dong tra cuu.
-
-Neu hai instruction mau thuan nhau, sua tai lieu thay vi giu ca hai cung "active".
+3. Active product specification and constitution.
+4. Pinned devkit workflow skill.
+5. Git history for historical context only.

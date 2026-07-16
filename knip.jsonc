@@ -8,7 +8,8 @@
     "**/cep/lib/**",
     "**/cep/debug_scripts/fixtures/**",
     ".task_steps/**",
-    ".agent/**",
+    ".agents/**",
+    ".specify/**",
     "local-artifacts/**"
   ],
   "workspaces": {

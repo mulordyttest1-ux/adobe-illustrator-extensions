@@ -3,10 +3,15 @@
 
 # Governance and repo control plane
 /AGENTS.md @mulordyttest1-ux
-/AGENT_OPERATING_MODEL.md @mulordyttest1-ux
+/NEW_MACHINE_PROMPT.txt @mulordyttest1-ux
+/devkit.lock.json @mulordyttest1-ux
 /POSTFLIGHT_TAXONOMY.md @mulordyttest1-ux
 /README.md @mulordyttest1-ux
-/.agent/ @mulordyttest1-ux
+/.agents/ @mulordyttest1-ux
+/.specify/ @mulordyttest1-ux
+/specs/ @mulordyttest1-ux
+/scripts/bootstrap-machine.ps1 @mulordyttest1-ux
+/scripts/ensure-devkit.ps1 @mulordyttest1-ux
 /.github/ @mulordyttest1-ux
 /adr/ @mulordyttest1-ux
 /.task_steps/templates/ @mulordyttest1-ux
