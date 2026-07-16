@@ -1,84 +1,80 @@
 /**
  * MODULE: SmartComplexStrategy
  * LAYER: Logic/Strategies
- * PURPOSE: Analyze text frames with existing metadata — precision marker-based replacement
- * DEPENDENCIES: None
+ * PURPOSE: Analyze text frames with existing metadata for marker-based replacement.
+ * DEPENDENCIES: StatefulMarkerCodec
  * SIDE EFFECTS: None (pure)
  * EXPORTS: SmartComplexStrategy.analyze()
  */
+
+import { StatefulMarkerCodec } from '../pipeline/StatefulMarkerCodec.js';
+import {
+    createAbsoluteStylesForMarkerMatch,
+    createFullResetRange,
+    createReplacementStyles,
+    hasStyleOperations,
+    normalizeStyledValueForKey
+} from './textStylePlanner.js';
+
+function normalizePacketValue(key, value, marker) {
+    return StatefulMarkerCodec.sanitizeValue(normalizeStyledValueForKey(key, value), marker)
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n');
+}
 
 export class SmartComplexStrategy {
     static analyze(content, packet, meta, constants = {}) {
         if (!meta) return null;
 
-        const keys = meta.keys || (meta.mappings ? meta.mappings.map(m => m.key) : []);
+        const keys = StatefulMarkerCodec.getMetadataKeys(meta);
         if (!keys || keys.length === 0) return null;
         if (!content) return null;
 
-        const GHOST = constants.CHARS?.GHOST || '\u200B';
+        const GHOST = constants.CHARS?.GHOST || StatefulMarkerCodec.MARKER;
+        const matches = StatefulMarkerCodec.extractMatches(content, GHOST);
 
-        // [FIX CRITICAL] Không dùng cleanContent nữa để tránh lệch Index.
-        // Thay vào đó dùng Regex thông minh bắt 1 hoặc nhiều marker (\u200B+)
-        // Group 1 ([\s\S]*?) là nội dung bên trong
-        const markerRegex = /\u200B+([\s\S]*?)\u200B+/g;
-
-        const matches = this._extractMatches(content, markerRegex);
-
-        // --- RECOVERY MODE (Khi mất marker) ---
         if (matches.length === 0) {
             return this._handleRecovery(content, packet, keys, GHOST);
         }
 
-        // --- VALIDATION ---
         if (matches.length !== keys.length) {
-            return this._handleValidation(content, packet, keys);
+            return this._handleValidation(content, packet, keys, GHOST);
         }
 
-        // --- CALCULATION (ATOMIC) ---
         return this._calculateAtomic(packet, keys, matches, GHOST);
     }
 
-    static _extractMatches(content, regex) {
-        const matches = [];
-        let match;
-        while ((match = regex.exec(content)) !== null) {
-            matches.push({
-                start: match.index, // Index này chính xác 100% trên content gốc
-                end: match.index + match[0].length,
-                inner: match[1] // Nội dung bên trong (đã bóc vỏ marker)
-            });
-        }
-        return matches;
-    }
-
     static _handleRecovery(content, packet, keys, GHOST) {
-        // Nếu chỉ có 1 Key -> Force DIRECT để cứu
         if (keys.length === 1) {
             const key = keys[0];
-            let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : content;
-            if (newVal === '') newVal = GHOST;
+            const sourceValue = Object.prototype.hasOwnProperty.call(packet, key) ? packet[key] : content;
+            const newVal = normalizePacketValue(key, sourceValue, GHOST);
+            const styleRanges = createReplacementStyles(key, newVal, 0);
 
             return {
                 mode: 'DIRECT',
                 content: newVal,
-                meta: { type: 'stateful', keys: keys, mappings: [] }
+                resetRanges: createFullResetRange(0, newVal.length),
+                styleRanges,
+                meta: StatefulMarkerCodec.createMetadata(keys)
             };
         }
         return { mode: 'SKIP', reason: 'NO_MARKERS_FOUND' };
     }
 
-    static _handleValidation(content, packet, keys) {
-        // Nếu số lượng không khớp -> Force DIRECT nếu là Single Key (để tự sửa lỗi)
+    static _handleValidation(content, packet, keys, GHOST) {
         if (keys.length === 1) {
             const key = keys[0];
-            let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : content;
-            // Chuẩn hóa xuống dòng
-            newVal = newVal.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const sourceValue = Object.prototype.hasOwnProperty.call(packet, key) ? packet[key] : content;
+            const newVal = normalizePacketValue(key, sourceValue, GHOST);
+            const styleRanges = createReplacementStyles(key, newVal, 0);
 
             return {
                 mode: 'DIRECT',
                 content: newVal,
-                meta: { type: 'stateful', keys: keys, mappings: [] }
+                resetRanges: createFullResetRange(0, newVal.length),
+                styleRanges,
+                meta: StatefulMarkerCodec.createMetadata(keys)
             };
         }
         return { mode: 'SKIP', error: 'STRUCTURE_MISMATCH' };
@@ -86,43 +82,69 @@ export class SmartComplexStrategy {
 
     static _calculateAtomic(packet, keys, matches, GHOST) {
         const replacements = [];
+        const resetRanges = [];
+        const styleRanges = [];
         let hasChanges = false;
+        let hasStyles = false;
 
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
             const currentVal = matches[i].inner;
+            const sourceValue = Object.prototype.hasOwnProperty.call(packet, key) ? packet[key] : currentVal;
+            const newVal = normalizePacketValue(key, sourceValue, GHOST);
 
-            let newVal = Object.prototype.hasOwnProperty.call(packet, key) ? String(packet[key]) : currentVal;
-
-            // Chuẩn hóa xuống dòng input mới
-            newVal = newVal.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-            if (newVal === '') newVal = GHOST;
-
-            // So sánh: Nếu khác nhau thì tạo lệnh thay thế
-            // Lưu ý: currentVal lấy từ regex đã tự loại bỏ \u200B nên so sánh rất chuẩn
             if (newVal !== currentVal) {
-                replacements.push({
-                    start: matches[i].start, // Thay thế từ đầu marker mở
-                    end: matches[i].end,     // Đến hết marker đóng
-                    val: `\u200B${newVal}\u200B` // Bọc lại bằng 1 lớp marker chuẩn duy nhất
-                });
+                const styles = createReplacementStyles(key, newVal, GHOST.length);
+                const replacement = {
+                    start: matches[i].start,
+                    end: matches[i].end,
+                    val: StatefulMarkerCodec.wrap(newVal, GHOST)
+                };
+
+                if (styles.length > 0) {
+                    replacement.styles = styles;
+                    hasStyles = true;
+                }
+
+                replacements.push(replacement);
                 hasChanges = true;
+            } else {
+                const styles = createAbsoluteStylesForMarkerMatch(key, currentVal, matches[i], GHOST);
+                if (hasStyleOperations(styles)) {
+                    resetRanges.push(...styles.resetRanges);
+                    styleRanges.push(...styles.styleRanges);
+                    hasStyles = true;
+                }
             }
         }
 
         if (!hasChanges) {
-            return { mode: 'SKIP', meta: { type: 'stateful', keys: keys, mappings: [] } };
+            if (hasStyles) {
+                return {
+                    mode: 'STYLE',
+                    resetRanges,
+                    styleRanges,
+                    meta: StatefulMarkerCodec.createMetadata(keys)
+                };
+            }
+            return { mode: 'SKIP', meta: StatefulMarkerCodec.createMetadata(keys) };
         }
 
-        // Sort ngược để thay thế an toàn từ dưới lên
         replacements.sort((a, b) => b.start - a.start);
 
-        return {
+        const plan = {
             mode: 'ATOMIC',
             replacements,
-            meta: { type: 'stateful', keys: keys, mappings: [] }
+            meta: StatefulMarkerCodec.createMetadata(keys)
         };
+
+        if (resetRanges.length > 0) {
+            plan.resetRanges = resetRanges;
+        }
+        if (styleRanges.length > 0) {
+            plan.styleRanges = styleRanges;
+        }
+
+        return plan;
     }
 }
-

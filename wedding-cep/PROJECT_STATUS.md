@@ -1,20 +1,41 @@
-# Wedding CEP — Project Status
+# Wedding CEP - Project Status
 
-> **Scope:** CEP Extension cho thiết kế thiệp cưới trên Adobe Illustrator.
-> **Governance:** Sử dụng rules từ root `/.agent/` (Monorepo Shared).
+> Scope: CEP extension for wedding invitation workflows in Adobe Illustrator.
+> Governance: follow monorepo rules plus app-local lint and architecture checks.
+> Architecture source of truth: `wedding-cep/ARCHITECTURE.md`
 
-## Architecture
-- **Layer:** Hexagonal Architecture (L0→L7)
-- **Build:** `esbuild` → `bundle.js`
-- **Lint:** ESLint 10 (shared config)
+## Current Health
 
-## Current State
-- NameValidator: Fixed ethnic name phonetic bypass (2026-02-11)
-- All lint errors resolved (25 warnings remaining — accepted complexity)
-- E2E testing via CDP on port 8097
+- Build: `npm run build:wedding`
+- Lint: `npm run lint:wedding`
+- Tests:
+  - `npm run test:wedding`
+  - `npm run test:domain:wedding`
+  - `npm run test:smoke:wedding`
+- Entry runtime: `wedding-cep/cep/js/app.js`
+- Bundle runtime: `wedding-cep/cep/js/bundle.js`
 
-## Key Files
-- Entry: `cep/js/app.js`
-- Bundle: `cep/js/bundle.js`
-- Types: `cep/js/types.d.ts`
-- Schema: `cep/js/schemaLoader.js`
+## Architecture Summary
+
+- `wedding-cep/cep/js/app.js` is the only supported runtime composition root.
+- Runtime app no longer relies on `registerGlobals`, `runtimeModules`, or retired buckets like `controllers/` and `components/modules/`.
+- App-owned globals are limited to `window.__WEDDING_APP_READY__` and `window.__WEDDING_TEST_API__`.
+- Detailed folder rules, boundary rules, retired surfaces, and next phases live in `wedding-cep/ARCHITECTURE.md`.
+- Feature-level navigation lives in `wedding-cep/FEATURE_MAP.md`.
+- `Document Sync` and `Template Authoring` are now facade-ready bounded contexts.
+- `Template Authoring` now routes through one context root at `template-authoring/templateAuthoringService.js`; `SchemaInjector` remains trigger-based core policy.
+- Operator runtime no longer includes a postflight report surface; update/inject flows stay toast-driven.
+- `HostFacade` is now the only app-facing platform seam; raw `bridge.js` and `cepHost.js` are internal-only adapters behind it.
+- Enforcement continues through:
+  - `@nx/enforce-module-boundaries`
+  - `wedding-cep/cep/scripts/check_architecture.cjs`
+
+## Main Files
+
+- Entry: `wedding-cep/cep/js/app.js`
+- Bundle: `wedding-cep/cep/js/bundle.js`
+- HTML shell: `wedding-cep/cep/index.html`
+- Host seam: `wedding-cep/cep/js/infrastructure/hostFacade.js`
+- Raw bridge transport: `wedding-cep/cep/js/infrastructure/bridge.js`
+- Schema loader: `wedding-cep/cep/js/infrastructure/schemaLoader.js`
+- Domain package: `libs/wedding/domain/src/index.ts`

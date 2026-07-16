@@ -2,9 +2,9 @@
  * MODULE: WeddingAssembler
  * LAYER: Logic/Pipeline
  * PURPOSE: Transform raw form data into rich Illustrator-ready packet (7-phase pipeline)
- * DEPENDENCIES: Normalizer, NameAnalysis, CalendarEngine, WeddingRules, TimeAutomation, VenueAutomation (via setDependencies)
+ * DEPENDENCIES: Normalizer, NameAnalysis, CalendarEngine, WeddingRules, TimeAutomation, VenueAutomation
  * SIDE EFFECTS: None (pure, dependencies injected)
- * EXPORTS: WeddingAssembler.setDependencies(), .assemble()
+ * EXPORTS: WeddingAssembler.setDependencies(), .assemble(), .assembleWith()
  */
 
 export const WeddingAssembler = {
@@ -22,6 +22,10 @@ export const WeddingAssembler = {
     },
 
     async assemble(rawData, schema) {
+        return this.assembleWith(rawData, schema, this._deps);
+    },
+
+    async assembleWith(rawData, schema, deps = {}) {
         // 1. Copy raw data
         const packet = { ...rawData };
 
@@ -33,7 +37,7 @@ export const WeddingAssembler = {
         this._unifyDates(packet, schema);
 
         // --- PIPELINE CHUẨN ---
-        return await this._runPipeline(packet, schema);
+        return await this._runPipeline(packet, schema, deps);
     },
 
     _normalizeKeys(packet) {
@@ -45,50 +49,50 @@ export const WeddingAssembler = {
         }
     },
 
-    async _runPipeline(packet, schema) {
-        let currentPacket = this._runCorePipeline(packet, schema);
-        currentPacket = await this._runDatePipeline(currentPacket, schema);
-        return this._runAutomationPipeline(currentPacket, schema);
+    async _runPipeline(packet, schema, deps) {
+        let currentPacket = this._runCorePipeline(packet, schema, deps);
+        currentPacket = await this._runDatePipeline(currentPacket, schema, deps);
+        return this._runAutomationPipeline(currentPacket, schema, deps);
     },
 
-    _runCorePipeline(packet, schema) {
+    _runCorePipeline(packet, schema, deps) {
         let currentPacket = packet;
-        if (this._deps.normalizer) {
-            currentPacket = this._deps.normalizer.normalize(currentPacket, schema);
+        if (deps.normalizer) {
+            currentPacket = deps.normalizer.normalize(currentPacket, schema);
         }
-        if (this._deps.nameAnalysis) {
-            currentPacket = this._deps.nameAnalysis.enrichSplitNames(currentPacket);
+        if (deps.nameAnalysis) {
+            currentPacket = deps.nameAnalysis.enrichSplitNames(currentPacket);
         }
-        if (this._deps.weddingRules) {
-            currentPacket = this._deps.weddingRules.enrichParentPrefixes(currentPacket);
+        if (deps.weddingRules) {
+            currentPacket = deps.weddingRules.enrichParentPrefixes(currentPacket);
         }
         return currentPacket;
     },
 
-    async _runDatePipeline(packet, schema) {
+    async _runDatePipeline(packet, schema, deps) {
         let currentPacket = packet;
-        if (this._deps.calendarEngine) {
-            if (!this._deps.calendarEngine._isLoaded) {
-                this._deps.calendarEngine.loadDatabase();
+        if (deps.calendarEngine) {
+            if (!deps.calendarEngine._isLoaded) {
+                deps.calendarEngine.loadDatabase();
             }
-            currentPacket = await this._expandDates(currentPacket, schema);
+            currentPacket = await this._expandDates(currentPacket, schema, deps);
         }
         return currentPacket;
     },
 
-    _runAutomationPipeline(packet, schema) {
+    _runAutomationPipeline(packet, schema, deps) {
         let currentPacket = packet;
-        if (this._deps.timeAutomation) {
-            currentPacket = this._deps.timeAutomation.enrichTimeLocks(currentPacket, schema);
+        if (deps.timeAutomation) {
+            currentPacket = deps.timeAutomation.enrichTimeLocks(currentPacket, schema);
         }
-        if (this._deps.venueAutomation) {
-            currentPacket = this._deps.venueAutomation.detectVenueState(currentPacket);
-            currentPacket = this._deps.venueAutomation.applyAutoVenue(currentPacket, {
+        if (deps.venueAutomation) {
+            currentPacket = deps.venueAutomation.detectVenueState(currentPacket);
+            currentPacket = deps.venueAutomation.applyAutoVenue(currentPacket, {
                 triggerConfig: schema?.TRIGGER_CONFIG || {}
             });
         }
-        if (this._deps.weddingRules?.enrichMappingStrategy) {
-            currentPacket = this._deps.weddingRules.enrichMappingStrategy(currentPacket, schema?.TRIGGER_CONFIG || {});
+        if (deps.weddingRules?.enrichMappingStrategy) {
+            currentPacket = deps.weddingRules.enrichMappingStrategy(currentPacket, schema?.TRIGGER_CONFIG || {});
         }
         return currentPacket;
     },
@@ -113,8 +117,8 @@ export const WeddingAssembler = {
         });
     },
 
-    async _expandDates(packet, schema) {
-        if (!this._deps.calendarEngine) return packet;
+    async _expandDates(packet, schema, deps) {
+        if (!deps.calendarEngine) return packet;
         const dateKeys = this._getDateKeys(schema);
 
         for (const key of dateKeys) {
@@ -128,7 +132,7 @@ export const WeddingAssembler = {
             const date = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
 
             // Gọi CalendarEngine tính toán
-            const expanded = this._deps.calendarEngine.expandDate(date);
+            const expanded = deps.calendarEngine.expandDate(date);
 
             // Ghi đè/Bổ sung lại vào packet
             packet[`${key}.ngay`] = expanded.ngay;
@@ -150,7 +154,7 @@ export const WeddingAssembler = {
         for (const group of schema.STRUCTURE) {
             if (!group.items) continue;
             for (const item of group.items) {
-                if (item.type === 'date') {
+                if (item.type === 'date' || item.type === 'solar_date') {
                     const prefix = group.prefix ? `${group.prefix}.` : '';
                     keys.push(prefix + item.key);
                 }

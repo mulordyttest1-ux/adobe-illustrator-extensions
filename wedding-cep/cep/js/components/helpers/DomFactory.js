@@ -1,11 +1,28 @@
 /**
  * MODULE: DomFactory
  * LAYER: Components/Helpers
- * PURPOSE: Pure stateless DOM element factory — creates panels, rows, inputs, selects, checkboxes
+ * PURPOSE: Pure stateless DOM element factory - creates panels, rows, inputs, selects, checkboxes
  * DEPENDENCIES: None
  * SIDE EFFECTS: None (creates detached elements)
  * EXPORTS: DomFactory.createPanel(), .createRow(), .createLabel(), .createRadioGroup(), etc.
  */
+import {
+    createButtonElement,
+    createColumnElement,
+    createDebounced,
+    createElement,
+    createInputFieldGroup,
+    createLabeledCheckboxParts,
+    createPanelShell,
+    createRadioGroupParts,
+    createSelectElement,
+    createSeparatorElement,
+    createSpanElement,
+    createTextareaElement,
+    createTextareaFieldGroup,
+    createTextareaWithAutoFieldGroup
+} from './domFactorySupport.js';
+
 export class DomFactory {
     /**
      * Create a panel with header and body
@@ -13,19 +30,7 @@ export class DomFactory {
      * @returns {HTMLElement}
      */
     static createPanel(title) {
-        const panel = document.createElement('div');
-        panel.className = 'compact-panel';
-
-        const header = document.createElement('div');
-        header.className = 'compact-panel-header';
-        header.textContent = title;
-        panel.appendChild(header);
-
-        const body = document.createElement('div');
-        body.className = 'compact-panel-body';
-        panel.appendChild(body);
-
-        return panel;
+        return createPanelShell(title).panel;
     }
 
     /**
@@ -33,9 +38,7 @@ export class DomFactory {
      * @returns {HTMLElement}
      */
     static createRow() {
-        const row = document.createElement('div');
-        row.className = 'compact-row';
-        return row;
+        return createElement('div', { className: 'compact-row' });
     }
 
     /**
@@ -44,10 +47,10 @@ export class DomFactory {
      * @returns {HTMLElement}
      */
     static createLabel(text) {
-        const lbl = document.createElement('span');
-        lbl.className = 'compact-label';
-        lbl.textContent = text;
-        return lbl;
+        return createElement('span', {
+            className: 'compact-label',
+            textContent: text
+        });
     }
 
     /**
@@ -55,32 +58,11 @@ export class DomFactory {
      * @param {string} name - Radio group name
      * @param {string[]} options - Radio options
      * @param {string} suffix - Value suffix
+     * @param {Object} config - Radio rendering options
      * @returns {{ element: HTMLElement, inputs: HTMLInputElement[] }}
      */
-    static createRadioGroup(name, options, suffix = '') {
-        const group = document.createElement('div');
-        group.className = 'compact-radio-group';
-        const inputs = [];
-
-        options.forEach((opt, i) => {
-            const lbl = document.createElement('label');
-            lbl.className = 'compact-radio-item';
-
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = name;
-            radio.value = suffix ? `${opt}${suffix}` : opt;
-            if (i === 0) radio.checked = true;
-
-            const txt = document.createElement('span');
-            txt.textContent = opt;
-
-            lbl.appendChild(radio);
-            lbl.appendChild(txt);
-            group.appendChild(lbl);
-            inputs.push(radio);
-        });
-
+    static createRadioGroup(name, options, suffix = '', config = {}) {
+        const { group, inputs } = createRadioGroupParts(name, options, suffix, config);
         return { element: group, inputs };
     }
 
@@ -90,11 +72,7 @@ export class DomFactory {
      * @returns {HTMLTextAreaElement}
      */
     static createTextarea(rows = 1) {
-        const ta = document.createElement('textarea');
-        ta.className = 'compact-textarea';
-        ta.rows = rows;
-        ta.style.height = rows === 1 ? 'var(--compact-name-h)' : 'var(--compact-addr-h)';
-        return ta;
+        return createTextareaElement(rows);
     }
 
     /**
@@ -104,26 +82,17 @@ export class DomFactory {
      * @returns {{ element: HTMLElement, textarea: HTMLTextAreaElement, idx?: HTMLInputElement }}
      */
     static createTextareaWithIdx(rows = 1, hasIdx = false) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'compact-field-group';
+        return createTextareaFieldGroup(rows, hasIdx);
+    }
 
-        const ta = this.createTextarea(rows);
-        wrapper.appendChild(ta);
-
-        const result = { element: wrapper, textarea: ta };
-
-        if (hasIdx) {
-            const idx = document.createElement('input');
-            idx.type = 'number';
-            idx.className = 'compact-idx';
-            idx.min = 0;
-            idx.max = 9;
-            idx.value = 0;
-            wrapper.appendChild(idx);
-            result.idx = idx;
-        }
-
-        return result;
+    /**
+     * Create textarea with optional auto checkbox
+     * @param {number} rows - Number of rows
+     * @param {boolean} hasAuto - Include auto checkbox
+     * @returns {{ element: HTMLElement, textarea: HTMLTextAreaElement, checkbox?: HTMLInputElement }}
+     */
+    static createTextareaWithAuto(rows = 2, hasAuto = false) {
+        return createTextareaWithAutoFieldGroup(rows, hasAuto);
     }
 
     /**
@@ -132,27 +101,7 @@ export class DomFactory {
      * @returns {{ element: HTMLElement, input: HTMLInputElement, checkbox?: HTMLInputElement }}
      */
     static createInputWithAuto(hasAuto = false) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'compact-field-group';
-
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.className = 'compact-input';
-        wrapper.appendChild(inp);
-
-        const result = { element: wrapper, input: inp };
-
-        if (hasAuto) {
-            const chk = document.createElement('input');
-            chk.type = 'checkbox';
-            chk.className = 'compact-checkbox';
-            chk.checked = true; // Bật mặc định Auto-Check theo yêu cầu Sếp
-            chk.title = 'Auto';
-            wrapper.appendChild(chk);
-            result.checkbox = chk;
-        }
-
-        return result;
+        return createInputFieldGroup(hasAuto);
     }
 
     /**
@@ -162,18 +111,7 @@ export class DomFactory {
      * @returns {HTMLSelectElement}
      */
     static createSelect(options, width = '80px') {
-        const select = document.createElement('select');
-        select.className = 'compact-select';
-        select.style.width = width;
-
-        options.forEach(opt => {
-            const o = document.createElement('option');
-            o.value = opt;
-            o.textContent = opt;
-            select.appendChild(o);
-        });
-
-        return select;
+        return createSelectElement(options, width);
     }
 
     /**
@@ -184,13 +122,7 @@ export class DomFactory {
      * @returns {HTMLButtonElement}
      */
     static createButton(id, label, title = '') {
-        const btn = document.createElement('button');
-        btn.id = id;
-        btn.className = 'ds-btn ds-btn-secondary';
-        btn.style.cssText = 'font-size: 9px; padding: 4px; height: auto;';
-        btn.textContent = label;
-        if (title) btn.title = title;
-        return btn;
+        return createButtonElement(id, label, title);
     }
 
     /**
@@ -199,10 +131,7 @@ export class DomFactory {
      * @returns {HTMLSpanElement}
      */
     static createSeparator(text = '|') {
-        const sep = document.createElement('span');
-        sep.textContent = text;
-        sep.style.cssText = 'margin: 0 6px; color: #999;';
-        return sep;
+        return createSeparatorElement(text);
     }
 
     /**
@@ -212,10 +141,7 @@ export class DomFactory {
      * @returns {HTMLSpanElement}
      */
     static createSpan(text, styles = '') {
-        const span = document.createElement('span');
-        span.textContent = text;
-        if (styles) span.style.cssText = styles;
-        return span;
+        return createSpanElement(text, styles);
     }
 
     /**
@@ -224,15 +150,7 @@ export class DomFactory {
      * @returns {HTMLElement}
      */
     static createColumn(title = '') {
-        const col = document.createElement('div');
-        col.className = 'compact-pos-column';
-        col.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 2px;';
-
-        if (title) {
-            col.innerHTML = `<div style="font-size:9px;font-weight:600;color:#666;text-align:center;margin-bottom:2px;">${title}</div>`;
-        }
-
-        return col;
+        return createColumnElement(title);
     }
 
     /**
@@ -242,29 +160,14 @@ export class DomFactory {
      * @returns {{ element: HTMLElement, checkbox: HTMLInputElement }}
      */
     static createLabeledCheckbox(labelText, checked = true) {
-        const wrapper = document.createElement('label');
-        wrapper.style.cssText = 'margin-left: auto; display: flex; align-items: center; gap: 3px; font-size: 9px; cursor: pointer;';
-
-        const chk = document.createElement('input');
-        chk.type = 'checkbox';
-        chk.checked = checked;
-        chk.style.margin = '0';
-
-        wrapper.appendChild(chk);
-        wrapper.appendChild(document.createTextNode(labelText));
-
-        return { element: wrapper, checkbox: chk };
+        const { wrapper, checkbox } = createLabeledCheckboxParts(labelText, checked);
+        return { element: wrapper, checkbox };
     }
+
     /**
-     * Kỹ thuật Debounce: Chỉ chạy hàm func sau khi ngừng thao tác wait (ms)
+     * Debounce a function call until the user stops triggering it for `wait` ms.
      */
     static debounce(func, wait) {
-        let timeout;
-        return function (...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), wait);
-        };
+        return createDebounced(func, wait);
     }
 }
-

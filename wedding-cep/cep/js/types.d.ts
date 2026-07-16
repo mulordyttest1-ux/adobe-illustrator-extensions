@@ -1,69 +1,43 @@
 /**
- * Wedding Scripter — Type Definitions (Agent Governance Layer)
+ * Wedding Scripter - Runtime contract notes.
  *
- * PURPOSE: Single Source of Truth for all public APIs.
- * Agent MUST consult this file before calling any function.
- * DO NOT add types here without corresponding implementation.
+ * This file documents the stable ambient browser contract that still exists
+ * after the import-based runtime cleanup. App modules are no longer expected
+ * to be consumed as bare globals from window.
  *
- * Last Updated: 2026-03-13
+ * Last Updated: 2026-03-23
  */
 
-// ============================================================
-// ⚡ UI FEEDBACK — READ THIS FIRST (Agent Priority Section)
-// ============================================================
-// ALL user-facing feedback MUST go through UIFeedback.
-// ✅ UIFeedback.showToast(msg, type)   — ephemeral toast
-// ✅ UIFeedback.showError(container, msg) — persistent error in container
-// ✅ UIFeedback.showLoading(container, msg) / .hideLoading()
-// ❌ NEVER use alert() / confirm() / prompt()
-// ❌ NEVER create notification divs manually
-// Source: cep/js/controllers/helpers/UIFeedback.js
-// ============================================================
+type ToastType = "success" | "error" | "warning" | "info";
 
-type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-declare const UIFeedback: {
-    /** Show a queued toast notification. WCAG-compliant (role, aria-live, dismiss). */
-    showToast(message: string, type?: ToastType): void;
-    /** Show loading spinner inside a container element. */
-    showLoading(container: HTMLElement, message: string): void;
-    /** Hide the global fullscreen loading overlay. */
-    hideLoading(): void;
-    /** Render an error state (with retry button) inside a container element. */
-    showError(container: HTMLElement, message: string): void;
-};
-
-// ============================================================
-// COMMON TYPES
-// ============================================================
-
-/** Standard action result returned by Bridge calls */
 interface ActionResult {
     success: boolean;
     error?: string;
+    errorCode?: string;
     data?: any;
     updated?: number;
+    selected?: number;
+    restored?: boolean;
+    cleared?: boolean;
+    count?: number;
     message?: string;
+    source?: string;
+    sessionId?: string | null;
 }
 
-/** Context object passed to all Action.execute() methods */
-interface ActionContext {
-    bridge: Bridge;
-    builder: CompactFormBuilder;
-    button: HTMLButtonElement;
+interface StrategyPlan {
+    mode: "REPLACE" | "SKIP" | "FRESH" | "ATOMIC";
+    strategy?: "SmartComplex" | "Fresh";
+    reason?: string;
+    replacements?: Array<{ key?: string; oldVal?: string; newVal?: string; val?: string }>;
+    content?: string;
+    meta?: object;
 }
 
-/** Raw scan item from JSX */
 interface RawScanItem {
     id: string;
     raw_content: string;
     meta_keys: string[];
-}
-
-/** DataValidator analysis result */
-interface AnalysisResult {
-    healthyMap: Record<string, string>;
-    brokenList: BrokenItem[];
 }
 
 interface BrokenItem {
@@ -74,17 +48,11 @@ interface BrokenItem {
     error: string;
 }
 
-/** Strategy plan returned by StrategyOrchestrator */
-interface StrategyPlan {
-    mode: 'REPLACE' | 'SKIP' | 'FRESH';
-    strategy?: 'SmartComplex' | 'Fresh';
-    reason?: string;
-    replacements?: Array<{ key: string; oldVal: string; newVal: string }>;
-    content?: string;
-    meta?: object;
+interface AnalysisResult {
+    healthyMap: Record<string, string>;
+    brokenList: BrokenItem[];
 }
 
-/** Name split result */
 interface NameParts {
     ten: string;
     lot: string;
@@ -93,7 +61,6 @@ interface NameParts {
     full: string;
 }
 
-/** Calendar expanded date */
 interface ExpandedDate {
     ngay: string;
     thang: string;
@@ -105,19 +72,127 @@ interface ExpandedDate {
     thu: string;
 }
 
-/** InputEngine process result */
 interface InputProcessResult {
     value: string;
     original: string;
     fieldType: string;
     applied: string[];
-    warnings: Array<{ message: string; severity: 'error' | 'warning' }>;
+    warnings: Array<{ message: string; severity: "error" | "warning" }>;
     valid: boolean;
 }
 
-// ============================================================
-// L0: INFRASTRUCTURE — Bridge
-// ============================================================
+type CepReadStrategy = "node-fs" | "cep-fs" | "extendscript";
+
+interface CepHostLike {
+    isConnected(): boolean;
+    getExtensionRootPath(): string;
+    evalScript(script: string): Promise<string>;
+    readExtensionText(
+        relativePath: string,
+        options?: { strategy?: CepReadStrategy }
+    ): Promise<{ absolutePath: string; content: string | null }>;
+}
+
+interface HostFacadeLike {
+    isConnected: boolean;
+    testConnection(): Promise<boolean>;
+    readExtensionText(
+        relativePath: string,
+        options?: { strategy?: CepReadStrategy }
+    ): Promise<{ absolutePath: string; content: string | null }>;
+    scanDocument(mode?: "auto" | "manual"): Promise<ActionResult>;
+    collectFrames(): Promise<ActionResult>;
+    applyPlan(plans: Array<{ id: string; plan: StrategyPlan }>): Promise<ActionResult>;
+    readSelectionObjects(options?: object): Promise<ActionResult>;
+    selectFramesById(request: string[] | { ids?: string[]; source?: string; sessionId?: string | null }): Promise<ActionResult>;
+    applyTextChanges(changes: object[]): Promise<ActionResult>;
+}
+
+interface BridgeLike {
+    isConnected: boolean;
+    call(fnName: string, data?: object): Promise<ActionResult>;
+    testConnection(): Promise<boolean>;
+    scanDocument(mode?: "auto" | "manual"): Promise<ActionResult>;
+    updateCard(data: object): Promise<ActionResult>;
+    collectFrames(): Promise<ActionResult>;
+    applyPlan(plans: Array<{ id: string; plan: StrategyPlan }>): Promise<ActionResult>;
+    readSelectionObjects(options?: object): Promise<ActionResult>;
+    selectFramesById(request: string[] | { ids?: string[]; source?: string; sessionId?: string | null }): Promise<ActionResult>;
+    applyTextChanges(changes: object[]): Promise<ActionResult>;
+}
+
+interface HostDebugLike {
+    evalScript(script: string): Promise<string>;
+    getExtensionRootPath(): string;
+}
+
+interface CompactFormBuilderLike {
+    refs: Record<string, any>;
+    build(): CompactFormBuilderLike;
+    getData(): Record<string, any>;
+    setData(data: Record<string, any>): void;
+    triggerDateGridCompute(): void;
+}
+
+interface UIFeedbackLike {
+    showToast(message: string, type?: ToastType): void;
+    showLoading(container: HTMLElement, message: string): void;
+    hideLoading(): void;
+    showError(container: HTMLElement, message: string): void;
+}
+
+interface NameValidatorLike {
+    validate(
+        name: string,
+        type?: string,
+        options?: { fieldKey?: string; formData?: Record<string, unknown> }
+    ): { valid: boolean; warnings: Array<{ type: string; message?: string }> };
+    isEthnicName(name: string): boolean;
+}
+
+interface InputEngineLike {
+    process(value: string, fieldKey: string, options?: object): InputProcessResult;
+    validateDateLogic(data: object): { valid: boolean; warnings: any[] };
+}
+
+interface SchemaInjectorLike {
+    computeChanges(frames: Array<{ id: string; text: string; uuid?: string }>, targetType?: string): {
+        changes: Array<{ id: string; plan: StrategyPlan }>;
+        orphans: Array<{ id: string; text?: string }>;
+        missedRequired: string[];
+    };
+}
+
+interface ManualInjectActionLike {
+    injectSingle(args: object): Promise<ActionResult> | ActionResult;
+    injectCompound(args: object): Promise<ActionResult> | ActionResult;
+    injectBulk(args: object): Promise<ActionResult> | ActionResult;
+    injectDateClone(args: object): Promise<ActionResult> | ActionResult;
+}
+
+interface WeddingReadyState {
+    status: "booting" | "ready" | "error";
+    phase: string;
+    compactReady: boolean;
+    schemaReady: boolean;
+    error: string | null;
+    updatedAt: number;
+}
+
+interface WeddingTestApiModules {
+    inputEngine: InputEngineLike;
+    nameValidator: NameValidatorLike;
+    schemaInjector: SchemaInjectorLike;
+    manualInjectAction: ManualInjectActionLike;
+}
+
+interface WeddingTestApi {
+    getBridge(): HostFacadeLike | null;
+    getHostFacade(): HostFacadeLike | null;
+    getHostDebug(): HostDebugLike | null;
+    getCompactBuilder(): CompactFormBuilderLike | null;
+    modules: WeddingTestApiModules;
+}
 
 declare class CSInterface {
     getSystemPath(path: any): string;
@@ -125,230 +200,16 @@ declare class CSInterface {
     static EXTENSION: string;
 }
 
-declare class Bridge {
-    cs: CSInterface;
-    isConnected: boolean;
-
-    /** Low-level call to JSX. Returns decoded JSON. */
-    call(fnName: string, data?: object): Promise<ActionResult>;
-
-    /** Test CEP↔JSX connection */
-    testConnection(): Promise<boolean>;
-
-    /** Scan document for text frames with metadata */
-    scanDocument(mode?: 'auto' | 'manual'): Promise<ActionResult>;
-
-    /** Update card with raw data (legacy) */
-    updateCard(data: object): Promise<ActionResult>;
-
-    /** Collect all text frames with their content and metadata */
-    collectFrames(): Promise<ActionResult>;
-
-    /** Apply pre-computed update plans to Illustrator */
-    applyPlan(plans: Array<{ id: string; plan: StrategyPlan }>): Promise<ActionResult>;
-
-    /** Smart update: collect → strategize → apply */
-    updateWithStrategy(packet: object): Promise<ActionResult>;
+declare global {
+    interface Window {
+        __WEDDING_APP_READY__?: WeddingReadyState;
+        __WEDDING_TEST_API__?: WeddingTestApi;
+        // Vendor globals still exist in CEP, but app runtime code should only
+        // access them through the dedicated CEP host adapter boundary.
+        __adobe_cep__?: unknown;
+        cep?: unknown;
+        require?: (id: string) => any;
+    }
 }
 
-// ============================================================
-// L1: DOMAIN — Pure Logic (No Side Effects)
-// ============================================================
-
-declare const WeddingRules: {
-    SIDE_BRIDE: 'Nhà Gái';
-    SIDE_GROOM: 'Nhà Trai';
-
-    /** Generate Ông/Bà prefix based on presence */
-    generateParentPrefix(hasOng: boolean, hasBa: boolean): string;
-
-    /** Enrich packet with Ông/Bà for pos1 and pos2 */
-    enrichParentPrefixes(packet: object): object;
-
-    /** Check if ceremony name indicates bride side */
-    isBrideSide(leName: string, triggerConfig?: Record<string, number>): boolean;
-
-    /** Get side state: 0 = Trai, 1 = Gái */
-    getSideState(leName: string, triggerConfig?: Record<string, number>): number;
-
-    /** Map ui.vithu_nam/nu to pos1/pos2.vithu based on side */
-    enrichMappingStrategy(packet: object, triggerConfig?: Record<string, number>): object;
-};
-
-declare const NameAnalysis: {
-    /** Split full Vietnamese name into parts */
-    splitFullName(fullName: string, index?: number): NameParts;
-
-    /** Enrich packet with derived name fields (ten, lot, ho_dau, dau) */
-    enrichSplitNames(packet: object): object;
-};
-
-declare const CalendarEngine: {
-    _cache: any[] | null;
-    _isLoaded: boolean;
-
-    /** Load CSV lunar calendar database */
-    loadDatabase(): boolean;
-
-    /** Get lunar date from solar day/month/year */
-    getLunarDate(day: number, month: number, year: number): object | null;
-
-    /** Get solar date from lunar day/month/year text */
-    getSolarDate(lunarDay: number, lunarMonth: number, lunarYearTxt: string): object | null;
-
-    /** Expand Date object to full solar + lunar info */
-    expandDate(date: Date): ExpandedDate;
-};
-
-// ============================================================
-// L2: CORE UTILITIES
-// ============================================================
-
-declare const StringUtils: {
-    /** Clean whitespace and trim */
-    clean(str: string): string;
-
-    /** Proper Case (capitalize each word) */
-    toProperCase(str: string): string;
-
-    /** Remove Vietnamese diacritics */
-    removeAccents(str: string): string;
-
-    /** Check if string is empty after trim */
-    isEmpty(str: string): boolean;
-};
-
-declare const DateUtils: {
-    /** Parse "YYYY-MM-DD" to Date object */
-    parseDate(str: string): Date | null;
-
-    /** Format Date to pattern (DD/MM/YYYY) */
-    formatDate(date: Date, pattern?: string): string;
-
-    /** Get Vietnamese day name */
-    getDayOfWeek(date: Date): string;
-
-    /** Calculate difference in days between two dates */
-    getDiffDays(d1: Date, d2: Date): number;
-
-    /** Add/subtract days from a date */
-    addDays(date: Date, days: number): Date | null;
-};
-
-declare const SchemaUtils: {
-    /** Flatten schema to Map */
-    flatten(schema: object): Map<string, string>;
-
-    /** Get Semantic Type from key */
-    getType(key: string, schema?: object): string | null;
-};
-
-// ============================================================
-// L3: UX
-// ============================================================
-
-declare const InputEngine: {
-    /** Process input value: normalize → validate → return result */
-    process(value: string, fieldKey: string, options?: object): InputProcessResult;
-
-    /** Validate date logic cross-field */
-    validateDateLogic(data: object): { valid: boolean; warnings: any[] };
-};
-
-// ============================================================
-// L4: PIPELINE
-// ============================================================
-
-declare class DataValidator {
-    markerRegex: RegExp;
-
-    /** Analyze raw scan items → { healthyMap, brokenList } */
-    analyze(rawItems: RawScanItem[]): AnalysisResult;
-
-    /** Heal broken items using consensus from healthy map */
-    heal(brokenList: BrokenItem[], healthyMap: Record<string, string>): any[];
-}
-
-declare const KeyNormalizer: {
-    /** Normalize keys (strip {}) and enrich with calendar data */
-    normalize(data: object): object;
-};
-
-// ============================================================
-// L5: STRATEGIES
-// ============================================================
-
-declare class SmartComplexStrategy {
-    /** Analyze text frame with metadata (precision replacement) */
-    static analyze(content: string, packet: object, meta: object, constants?: object): StrategyPlan | null;
-}
-
-declare class FreshStrategy {
-    /** Analyze fresh text frame (placeholder detection) */
-    static analyze(content: string, packet: object, meta: object | null, constants?: object): StrategyPlan | null;
-}
-
-declare class StrategyOrchestrator {
-    constants: object;
-
-    constructor(constants?: object);
-
-    /** Analyze single frame → execution plan */
-    analyze(content: string, metadata: object | null, packet: object): StrategyPlan;
-
-    /** Batch analyze multiple frames */
-    analyzeBatch(frames: Array<{ id: string; content: string; metadata: object }>, packet: object): Array<{ id: string; plan: StrategyPlan }>;
-
-    /** Encode metadata for storage */
-    encodeMetadata(meta: object): string;
-
-    /** Decode metadata from string */
-    decodeMetadata(noteStr: string): object | null;
-}
-
-// ============================================================
-// L6: COMPONENTS & CONTROLLERS
-// ============================================================
-
-declare class CompactFormBuilder {
-    container: HTMLElement;
-    schema: object;
-    data: Record<string, any>;
-    refs: Record<string, any>;
-    onChange: ((key: string, value: any, data: object) => void) | null;
-
-    constructor(options?: {
-        container?: HTMLElement;
-        schema?: object;
-        data?: object;
-        onChange?: (key: string, value: any, data: object) => void;
-    });
-
-    /** Build the entire form UI */
-    build(): CompactFormBuilder;
-
-    /** Get all current form values as key-value object */
-    getData(): Record<string, any>;
-
-    /** Set form values from key-value object */
-    setData(data: Record<string, any>): void;
-}
-
-// ============================================================
-// L7: ACTIONS
-// ============================================================
-
-declare const ScanAction: {
-    /** Execute scan: Bridge → DataValidator → KeyNormalizer → UI */
-    execute(ctx: ActionContext): Promise<ActionResult>;
-};
-
-declare const UpdateAction: {
-    /** Execute update: Form → Assembler → Bridge → Illustrator */
-    execute(ctx: ActionContext): Promise<ActionResult>;
-};
-
-declare const SwapAction: {
-    /** Execute swap: POS1 ↔ POS2 (keep vithu) */
-    execute(ctx: ActionContext): { success: boolean };
-};
+export {};

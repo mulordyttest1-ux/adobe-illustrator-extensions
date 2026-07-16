@@ -1,3 +1,12 @@
+import {
+    createLowercaseSet,
+    createSpecialCharCache,
+    extractKinshipPrefix,
+    hasEthnicPrefix,
+    hasEthnicSurname,
+    isStandalonePrefixWord
+} from './ethnicNameSupport.js';
+
 /**
  * MODULE: EthnicNameNormalizer
  * LAYER: Logic/UX/Normalizers
@@ -31,28 +40,13 @@ export const EthnicNameNormalizer = {
         if (!data) return;
         this._data = data;
 
-        // Pre-build special char regex + map
-        if (data.special_chars) {
-            const chars = Object.keys(data.special_chars);
-            this._specialCharMap = data.special_chars;
-            // Escape for regex, join as alternation
-            const escaped = chars.map(c => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-            this._specialCharRegex = new RegExp(escaped.join('|'), 'g');
-        }
-
-        // Pre-build surname lookup sets
-        if (data.surnames_last) {
-            this._surnamesLastSet = new Set(data.surnames_last.map(s => s.toLowerCase()));
-        }
-        if (data.surnames_first) {
-            this._surnamesFirstSet = new Set(data.surnames_first.map(s => s.toLowerCase()));
-        }
-        if (data.gender_prefixes) {
-            this._genderPrefixSet = new Set(data.gender_prefixes.map(s => s.trim().toLowerCase()));
-        }
-        if (data.kinship_prefixes) {
-            this._kinshipPrefixSet = new Set(data.kinship_prefixes.map(s => s.toLowerCase()));
-        }
+        const specialCharCache = createSpecialCharCache(data.special_chars);
+        this._specialCharRegex = specialCharCache.regex;
+        this._specialCharMap = specialCharCache.map;
+        this._surnamesLastSet = createLowercaseSet(data.surnames_last);
+        this._surnamesFirstSet = createLowercaseSet(data.surnames_first);
+        this._genderPrefixSet = createLowercaseSet(data.gender_prefixes, { trim: true });
+        this._kinshipPrefixSet = createLowercaseSet(data.kinship_prefixes);
     },
 
     /** @returns {boolean} Whether dictionary is loaded */
@@ -127,17 +121,14 @@ export const EthnicNameNormalizer = {
     isEthnic(name) {
         if (!name || !this._data) return false;
 
-        // Check 1: Parentheses with kinship terms usually mean ethnic (e.g. "(Ama Pui)")
-        if (name.includes('(')) {
-            const kinshipMatch = name.match(/\(([^)]+)\)/);
-            if (kinshipMatch) {
-                const inner = kinshipMatch[1].split(/\s+/)[0].toLowerCase();
-                if (this._kinshipPrefixSet?.has(inner)) return true;
-            }
+        const kinshipPrefix = extractKinshipPrefix(name);
+        if (kinshipPrefix && this._kinshipPrefixSet?.has(kinshipPrefix)) {
+            return true;
         }
 
         const normalized = this.normalize(name);
-        return this._hasEthnicPrefix(normalized) || this._hasEthnicSurname(normalized);
+        return hasEthnicPrefix(normalized, this._data, this._genderPrefixSet, this._kinshipPrefixSet)
+            || hasEthnicSurname(normalized, this._surnamesFirstSet, this._surnamesLastSet);
     },
 
     /**
@@ -163,102 +154,10 @@ export const EthnicNameNormalizer = {
         // Rule 2: 3+ word name with H/Y standalone prefix → tên is NOT last word → idx=2
         // "H Hang Ja" → H prefix + Hang tên + Ja clan → idx=2
         // Does NOT apply to 2-word "H Loan" where last word IS tên (idx=0 correct)
-        if (words.length >= 3 && this.isEthnic(name) && this._isStandalonePrefixWord(words[0])) {
+        if (words.length >= 3 && this.isEthnic(name) && isStandalonePrefixWord(words[0], this._data, this._genderPrefixSet)) {
             return 2;
         }
 
         return 0;
-    },
-
-    /**
-     * Check if a single word is a standalone gender prefix (H, Y, K... without apostrophe).
-     * Used by suggestIdx Rule 2 to detect [prefix][tên][clan] structure.
-     * @param {string} word - First word of a name
-     * @returns {boolean}
-     */
-    _isStandalonePrefixWord(word) {
-        const lower = word.toLowerCase();
-        // Single-letter prefix: H, Y, K (match first char of H'/Y'/K' etc.)
-        const isSingleLetter = word.length === 1 &&
-            this._data.prefixes &&
-            this._data.prefixes.some(p => p.charAt(0).toLowerCase() === lower);
-        // Or a full gender prefix entry: "y", "h", "a", "ma"
-        const isGenderPrefix = this._genderPrefixSet && this._genderPrefixSet.has(lower);
-        return isSingleLetter || isGenderPrefix;
-    },
-
-    // === PRIVATE HELPERS ===
-
-    _hasEthnicPrefix(normalized) {
-        if (!this._data) return false;
-        const words = normalized.split(/\s+/);
-        const lower = normalized.toLowerCase();
-        const firstWord = words[0].toLowerCase();
-
-        // Standard prefixes: H', Y', K'...
-        if (this._data.prefixes && this._data.prefixes.some(p => lower.startsWith(p.toLowerCase()))) {
-            return true;
-        }
-
-        // Gender/Kinship prefixes: Ama, Amĭ, Y, A...
-        if (this._genderPrefixSet?.has(firstWord)) return true;
-        if (this._kinshipPrefixSet?.has(firstWord)) return true;
-
-        return false;
-    },
-
-    _hasEthnicSurname(normalized) {
-        const words = normalized.split(/\s+/);
-        if (words.length < 2) return false;
-
-        const lastWord = words[words.length - 1].toLowerCase();
-        const firstWord = words[0].toLowerCase();
-
-        if (this._surnamesLastSet?.has(lastWord)) return true;
-        if (this._surnamesFirstSet?.has(firstWord)) return true;
-
-        // Multi-word surnames: "Rơ Châm", "Buôn Krông"
-        if (words.length >= 2) {
-            const firstTwo = (words[0] + ' ' + words[1]).toLowerCase();
-            if (this._surnamesFirstSet?.has(firstTwo)) return true;
-
-            const lastTwo = (words[words.length - 2] + ' ' + words[words.length - 1]).toLowerCase();
-            if (this._surnamesLastSet?.has(lastTwo)) return true;
-        }
-
-        return false;
-    },
-
-    /**
-     * Find the position of the actual name (skipping prefix)
-     * "H Ngôn Niê" → H is prefix, Ngôn is name → return 2
-     * "Y Jut Êban" → Y is prefix, Jut is name  → return 2
-     * "H'Hen Niê"  → H'Hen is name (compound)   → return 1
-     */
-    _findNamePosition(words) {
-        if (!words || words.length < 2) return 0;
-
-        const first = words[0];
-        const firstLower = first.toLowerCase();
-
-        // Check 1: Is first word a known gender prefix? (Y, A, Ma...)
-        if (this._data?.gender_prefixes) {
-            const isGenderPrefix = this._data.gender_prefixes.some(
-                p => p.trim().toLowerCase() === firstLower
-            );
-            if (isGenderPrefix) return 2;
-        }
-
-        // Check 2: Is first word a single letter matching prefix patterns? (H, Y, K)
-        // Catches "H Ngôn" where H is standalone (no apostrophe)
-        if (first.length === 1 && this._data?.prefixes) {
-            const isSinglePrefix = this._data.prefixes.some(
-                p => p.charAt(0).toLowerCase() === firstLower
-            );
-            if (isSinglePrefix) return 2;
-        }
-
-        // Otherwise name is the first word (or compound like H'Hen)
-        return 1;
     }
 };

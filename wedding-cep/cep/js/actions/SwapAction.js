@@ -1,10 +1,11 @@
-import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
+import { UIFeedback } from '@shared/cep-ui';
+import { runSwapInvitationSides } from '../logic/use-cases/swapInvitationSides.js';
 
 /**
  * MODULE: SwapAction
  * LAYER: Entry/Actions
- * PURPOSE: Handle Swap button — exchange POS1 ↔ POS2 data (keep vithu) and update auto-venue
- * DEPENDENCIES: CompactFormBuilder
+ * PURPOSE: Handle Swap button - exchange POS1 <-> POS2 data
+ * DEPENDENCIES: CompactFormBuilder, swapInvitationSides use-case
  * SIDE EFFECTS: DOM (form values, toast)
  * EXPORTS: SwapAction.execute()
  */
@@ -16,62 +17,17 @@ export const SwapAction = {
      * @param {Object} ctx.builder - CompactFormBuilder instance
      * @returns {{success: boolean}}
      */
-    execute(ctx) {
+    execute(ctx, deps = {}) {
         const { builder } = ctx;
+        const swapInvitationSides = deps.runSwapInvitationSides || runSwapInvitationSides;
+        const showToast = deps.showToast || UIFeedback.showToast;
 
-        // 1. Get current form data
-        const data = builder.getData();
-        const swapped = {};
-
-        // 2. Swap POS1 ↔ POS2 (EXCEPT vithu — keep because WYSIWYG)
-        Object.keys(data).forEach(key => {
-            if (key === 'pos1.vithu' || key === 'pos2.vithu') {
-                swapped[key] = data[key];
-            } else if (key.startsWith('pos1.')) {
-                swapped[key.replace('pos1.', 'pos2.')] = data[key];
-            } else if (key.startsWith('pos2.')) {
-                swapped[key.replace('pos2.', 'pos1.')] = data[key];
-            } else {
-                swapped[key] = data[key];
-            }
+        const { data } = swapInvitationSides({
+            data: builder.getData()
         });
 
-        // 3. Push swapped data to form
-        builder.setData(swapped);
-
-        // 4. Update auto-venue fields if checked
-        this._updateAutoVenues(builder, swapped);
-
-        UIFeedback.showToast('Đã hoán đổi POS!', 'success');
+        builder.setData(data);
+        showToast('\u0110\u00E3 ho\u00E1n \u0111\u1ED5i POS!', 'success');
         return { success: true };
-    },
-
-    /**
-     * Update ceremony/venue name+address when auto checkboxes are checked.
-     * @param {Object} builder - CompactFormBuilder instance
-     * @param {Object} swapped - Swapped data object
-     * @private
-     */
-    _updateAutoVenues(builder, swapped) {
-        const tuGia = this._getTuGia(builder);
-        this._applyAutoVenue(builder, 'ceremony', tuGia, swapped['pos1.diachi']);
-        this._applyAutoVenue(builder, 'venue', tuGia, swapped['pos1.diachi']);
-    },
-
-    _getTuGia(builder) {
-        const hostRef = builder.refs['ceremony.host_type'];
-        const checkedHost = hostRef?.elements?.find(r => r.checked);
-        const hostValue = checkedHost?.value || 'Trai';
-        return hostValue === 'Trai' ? 'Tư Gia Nhà Trai' : 'Tư Gia Nhà Gái';
-    },
-
-    _applyAutoVenue(builder, prefix, tuGia, address) {
-        const autoCheckbox = builder.refs[`${prefix}.ten_auto`];
-        if (autoCheckbox?.checked) {
-            const el = builder.refs[`${prefix}.ten`];
-            if (el) el.value = tuGia;
-            const addrEl = builder.refs[`${prefix}.diachi`];
-            if (addrEl) addrEl.value = address || '';
-        }
     }
 };

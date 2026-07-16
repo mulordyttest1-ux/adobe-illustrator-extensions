@@ -6,7 +6,7 @@ export class GlobalDateValidator {
      * @param {string} targetType Loại thời gian ('tiec', 'le', 'nhap')
      * @returns {Object|null} Trả về {ngay, thang, nam} hoặc null nếu không đủ tin cậy.
      */
-    // eslint-disable-next-line complexity, max-depth, max-statements
+    // eslint-disable-next-line complexity
     static extractTruth(changesList, frames, targetType = 'tiec') {
         const setNgay = new Set();
         const setThang = new Set();

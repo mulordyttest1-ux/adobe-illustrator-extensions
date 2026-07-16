@@ -9,36 +9,45 @@
 
 import { VietnamesePhonetics } from './VietnamesePhonetics.js';
 import { EthnicNameNormalizer } from '../normalizers/EthnicNameNormalizer.js';
-import { UnicodeNormalizer } from '../core/UnicodeNormalizer.js';
+import { CatholicSaintNames } from '@wedding/domain';
+import {
+    createFamilySurnameWarning,
+    fallbackEthnicDetection,
+    hasBlockingNameWarnings,
+    normalizeSurnameToken,
+    runNameRules,
+    shouldBypassPhoneticWord
+} from './nameValidationSupport.js';
+import { VietnameseSurnameLibrary } from './surnameLibrary.js';
 
 export const NameValidator = {
-    COMMON_SURNAMES: new Set([
-        "Nguyễn", "Trần", "Lê", "Phạm", "Huỳnh", "Hoàng", "Phan", "Vũ", "Võ", "Đặng",
-        "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lương", "Đàm", "Cao", "Đặng", "Lý"
-    ]),
+    COMMON_SURNAMES: VietnameseSurnameLibrary.commonSurnameKeys,
 
     // Hỗ trợ dính liền nét (Community Standard): sau H/Y có thể là Khoảng Trắng, Gạch Ngang, Nháy Đơn, Cuối Câu, hoặc Chữ Cái Viết Liền
     ETHNIC_PATTERN: /(^|[\s'-])(H'|Y'|K'|M'|S'|R'|N'|L'|Nie|Eban|Kbuor|Ksor|Siu|Ro|Kpa|Ama|Ami|H|Y)([\s'-]|$|(?=[A-Za-z]))/i,
 
-    validate(value, type = 'person_name') {
+    validate(value, type = 'person_name', options = {}) {
         if (!value || typeof value !== 'string') return { valid: true, warnings: [] };
 
-        const warnings = [];
         const trimmed = value.trim();
-        const isEthnic = this.isEthnicName(trimmed);
+        const saintName = CatholicSaintNames.normalizeFullName(trimmed);
+        const validationName = saintName.saint ? saintName.ordinaryName : trimmed;
+        const isEthnic = this.isEthnicName(validationName);
         const isVenue = type === 'venue_name';
-
-        const context = { trimmed, isEthnic, isVenue, validator: this };
-
-        // Execute rules
-        Object.keys(this.NAME_RULES).forEach(ruleKey => {
-            const res = this.NAME_RULES[ruleKey](context);
-            if (Array.isArray(res)) warnings.push(...res);
-            else if (res) warnings.push(res);
-        });
+        const context = {
+            trimmed: validationName,
+            original: trimmed,
+            saintName,
+            isEthnic,
+            isVenue,
+            validator: this,
+            fieldKey: options.fieldKey,
+            formData: options.formData || {}
+        };
+        const warnings = runNameRules(this.NAME_RULES, context);
 
         return {
-            valid: warnings.filter(w => w.severity === 'error').length === 0,
+            valid: !hasBlockingNameWarnings(warnings),
             warnings
         };
     },
@@ -74,22 +83,28 @@ export const NameValidator = {
             return null;
         },
 
-        checkSurname({ trimmed, isVenue, isEthnic, validator }) {
+        checkSurname({ trimmed, isVenue, isEthnic }) {
             if (isVenue || isEthnic || !trimmed.includes(' ')) return null;
 
-            // Split bằng cả Khoảng Trắng, Gạch Ngang và Nháy Đơn để bóc tách Họ lõi
-            const surname = trimmed.split(/[\s'-]+/)[0];
-            const normSurname = surname.charAt(0).toUpperCase() + surname.slice(1).toLowerCase();
+            const { surname, known } = normalizeSurnameToken(trimmed);
 
-            if (!validator.COMMON_SURNAMES.has(normSurname)) {
+            if (!known) {
                 return { type: 'uncommon_surname', message: `Họ lạ: "${surname}"?`, severity: 'info' };
             }
             return null;
         },
 
-        checkPhonetics({ trimmed, isEthnic }) {
-            if (typeof VietnamesePhonetics === 'undefined') return null;
+        checkFamilySurname(context) {
+            if (context.isVenue || context.isEthnic) return null;
+            return createFamilySurnameWarning({
+                fieldKey: context.fieldKey,
+                formData: context.formData,
+                currentValue: context.original,
+                validator: context.validator
+            });
+        },
 
+        checkPhonetics({ trimmed, isEthnic }) {
             const results = [];
             const words = trimmed.split(/\s+/);
 
@@ -98,13 +113,7 @@ export const NameValidator = {
             const wordBypassRegex = /['ʼ-]|(?<=^|\s)(Ro|Kpa|H'|Y'|K'|M'|S'|N'|L'|H|Y)(?=$|[\s'-])/i;
 
             for (const w of words) {
-                // Clean purely numeric or abbreviation parts
-                if (w.includes('.') || w.length < 2 || /\d/.test(w)) continue;
-
-                // Word-level Phonetic Bypass: 
-                // Skip if globally marked as ethnic OR if this specific word looks ethnic (Sau khi đã lột dấu)
-                const cleanW = typeof UnicodeNormalizer !== 'undefined' ? UnicodeNormalizer.removeDiacritics(w) : w;
-                if (isEthnic || wordBypassRegex.test(cleanW)) continue;
+                if (shouldBypassPhoneticWord(w, isEthnic, wordBypassRegex)) continue;
 
                 const error = VietnamesePhonetics.checkWord(w);
                 if (error) {
@@ -124,11 +133,8 @@ export const NameValidator = {
      * @returns {boolean}
      */
     isEthnicName(name) {
-        if (typeof EthnicNameNormalizer === 'undefined' || !EthnicNameNormalizer.isReady) {
-            const cleanName = typeof UnicodeNormalizer !== 'undefined'
-                ? UnicodeNormalizer.removeDiacritics(name || '')
-                : (name || '');
-            return this.ETHNIC_PATTERN.test(cleanName);
+        if (!EthnicNameNormalizer.isReady) {
+            return fallbackEthnicDetection(name, this.ETHNIC_PATTERN);
         }
         return EthnicNameNormalizer.isEthnic(name);
     },
@@ -141,7 +147,7 @@ export const NameValidator = {
      * @returns {number} idx value compatible with splitFullName()
      */
     suggestIdx(name) {
-        if (typeof EthnicNameNormalizer === 'undefined' || !EthnicNameNormalizer.isReady) {
+        if (!EthnicNameNormalizer.isReady) {
             return 0;
         }
         return EthnicNameNormalizer.suggestIdx(name);

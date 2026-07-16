@@ -1,14 +1,12 @@
-import { DataValidator } from '../logic/pipeline/DataValidator.js';
-import { KeyNormalizer } from '../controllers/helpers/KeyNormalizer.js';
-import { WeddingRules, VenueAutomation } from '@wedding/domain';
-import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
-import { LayoutUtils } from '../logic/ux/LayoutUtils.js';
+import { UIFeedback } from '@shared/cep-ui';
+import { runScanDocument } from '../logic/use-cases/scanDocument.js';
+import { wakeFilledCompactTextareas } from './support/wakeFilledCompactTextareas.js';
 
 /**
  * MODULE: ScanAction
  * LAYER: Entry/Actions
- * PURPOSE: Handle Scan button — collect text frames via Bridge, validate, normalize, push to UI
- * DEPENDENCIES: Bridge, DataValidator, KeyNormalizer, CompactFormBuilder, WeddingRules
+ * PURPOSE: Handle Scan button - collect text frames via HostFacade, hand off processing, push data to UI
+ * DEPENDENCIES: HostFacade, CompactFormBuilder, scanDocument use-case
  * SIDE EFFECTS: DOM (button state, toast)
  * EXPORTS: ScanAction.execute()
  */
@@ -17,107 +15,79 @@ export const ScanAction = {
     /**
      * Execute scan action.
      * @param {Object} ctx - Action context
-     * @param {Object} ctx.bridge - Bridge instance
+     * @param {Object} ctx.hostFacade - Host facade instance
      * @param {Object} ctx.builder - CompactFormBuilder instance
      * @param {HTMLButtonElement} ctx.button - Scan button element
      * @returns {Promise<{success: boolean, count?: number, error?: string}>}
      */
-    async execute(ctx) {
-        const { bridge, builder, button } = ctx;
+    async execute(ctx, deps = {}) {
+        const hostFacade = ctx.hostFacade || ctx.bridge;
+        const { builder, button } = ctx;
+        const scanDocument = deps.runScanDocument || runScanDocument;
+        const showToast = deps.showToast || UIFeedback.showToast;
+        const scheduleTask = deps.scheduleTask || ((task) => setTimeout(task, 0));
+        const wakeFilledTextareas = deps.wakeFilledCompactTextareas || wakeFilledCompactTextareas;
 
         try {
             this._setButtonState(button, true);
 
             console.log('[ScanAction] Starting scan...');
-            const result = await bridge.scanDocument();
+            const result = await hostFacade.scanDocument();
+            const scanFailure = this._getScanFailure(result);
 
-            if (!result || !result.success || !result.data) {
+            if (scanFailure) {
                 console.error('[ScanAction] Bridge scan failed:', result);
-                UIFeedback.showToast('Scan thất bại: ' + (result?.error || 'Không có dữ liệu'), 'error');
-                return { success: false, error: result?.error || 'No data' };
+                showToast(scanFailure.message, 'error');
+                return scanFailure.result;
             }
 
             console.log('[ScanAction] Raw data count:', result.data.length);
 
-            // [BUG #03 FIX] Secondary Sort: Left-to-Right
-            const sortedFrames = LayoutUtils.sortFrames(result.data);
+            const { data, count } = scanDocument({
+                frames: result.data,
+                schema: builder?.schema
+            });
 
-            const normalized = this._processData(sortedFrames, builder);
+            console.log('[ScanAction] Final data to UI:', data);
 
-            console.log('[ScanAction] Final Data to UI:', normalized);
+            builder.setData(data);
+            builder.triggerDateGridCompute();
 
-            builder.setData(normalized);
+            this._queueUiWakeUp(builder, scheduleTask, wakeFilledTextareas);
 
-            if (typeof DateGridWidget !== 'undefined') {
-                DateGridWidget.triggerCompute();
-            }
-
-            // Smart IDX: trigger blur on name fields to auto-detect ethnic names
-            setTimeout(() => {
-                const container = builder.container || document;
-                container.querySelectorAll('textarea.compact-input').forEach(ta => {
-                    if (ta.value) ta.dispatchEvent(new Event('blur'));
-                });
-            }, 0);
-
-            const count = Object.keys(normalized).length;
-            UIFeedback.showToast('Đã scan ' + count + ' trường dữ liệu!', 'success');
+            showToast('\u0110\u00E3 scan ' + count + ' tr\u01B0\u1EDDng d\u1EEF li\u1EC7u!', 'success');
             return { success: true, count };
-
         } catch (err) {
-            UIFeedback.showToast('Scan lỗi: ' + err.message, 'error');
+            showToast('Scan l\u1ED7i: ' + err.message, 'error');
             return { success: false, error: err.message };
-
         } finally {
             this._setButtonState(button, false);
         }
     },
 
     _setButtonState(button, isScanning) {
+        if (!button) return;
         button.disabled = isScanning;
-        button.textContent = isScanning ? '⏳' : '📥 Scan';
+        button.textContent = isScanning ? '\u23F3' : '\uD83D\uDCE5 Scan';
     },
 
-    _processData(rawData, builder) {
-        const validator = new DataValidator();
-        const analysis = validator.analyze(rawData);
-        console.log('[ScanAction] Healthy Map:', analysis.healthyMap);
-
-        let normalized = KeyNormalizer.normalize(analysis.healthyMap);
-        console.log('[ScanAction] Normalized:', normalized);
-
-        normalized = WeddingRules.enrichParentPrefixes(normalized);
-
-        // Set ten_auto checkbox state dựa trên tên scan được (Tư Gia = true, khác = false)
-        normalized = VenueAutomation.detectVenueState(normalized);
-
-        const triggerConfig = builder?.schema?.TRIGGER_CONFIG || {
-            "Vu Quy": 1, "Thành Hôn": 0, "Tân Hôn": 0, "Báo Hỷ": 0
-        };
-        const hostType = normalized['ceremony.host_type'];
-        const tenLe = normalized['info.ten_le'] || '';
-
-        const isPos1Bride = this._inferBrideSide(hostType, tenLe, triggerConfig);
-        console.log('[ScanAction] Side inference:', { hostType, tenLe, isPos1Bride });
-
-        return this._mapHostSides(normalized, isPos1Bride);
-    },
-
-    _inferBrideSide(hostType, tenLe, triggerConfig) {
-        if (hostType === 'Nhà Gái') return true;
-        if (hostType === 'Nhà Trai') return false;
-        return WeddingRules.isBrideSide(tenLe, triggerConfig);
-    },
-
-    _mapHostSides(normalized, isPos1Bride) {
-        if (isPos1Bride) {
-            if (normalized['pos1.vithu']) normalized['ui.vithu_nu'] = normalized['pos1.vithu'];
-            if (normalized['pos2.vithu']) normalized['ui.vithu_nam'] = normalized['pos2.vithu'];
-        } else {
-            if (normalized['pos1.vithu']) normalized['ui.vithu_nam'] = normalized['pos1.vithu'];
-            if (normalized['pos2.vithu']) normalized['ui.vithu_nu'] = normalized['pos2.vithu'];
+    _getScanFailure(result) {
+        if (result && result.success && result.data) {
+            return null;
         }
-        return normalized;
+
+        const error = result?.error || 'No data';
+        return {
+            message: 'Scan th\u1EA5t b\u1EA1i: ' + (result?.error || 'Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u'),
+            result: { success: false, error }
+        };
+    },
+
+    _queueUiWakeUp(builder, scheduleTask, wakeFilledTextareas) {
+        scheduleTask(() => {
+            wakeFilledTextareas({
+                container: builder.container || (typeof document !== 'undefined' ? document : null)
+            });
+        });
     }
 };
-

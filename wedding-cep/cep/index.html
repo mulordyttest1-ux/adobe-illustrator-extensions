@@ -5,16 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wedding Scripter - DinhSon Edition</title>
-    <!-- Security: CSP to prevent remote script injection -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval';">
 
-    <!-- DinhSon Light Theme -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/compact.css">
     <link rel="stylesheet" href="css/date-grid.css">
 
     <style>
-        /* Panel-specific styles */
         html,
         body {
             height: 100%;
@@ -56,7 +53,6 @@
             flex-direction: column;
         }
 
-        /* Loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -96,54 +92,46 @@
 
 <body>
     <div id="app">
-        <!-- Header -->
         <header class="app-header">
-            <span class="app-title">🎊 Wedding Scripter</span>
+            <span class="app-title">Wedding Scripter</span>
             <span class="app-version">v1.0.0</span>
-            <button id="btn-reload-panel" title="Làm mới Panel"
-                style="padding: 2px 6px; font-size: 10px; cursor: pointer; float: right; margin-top: 2px;">🔄
-                Reload</button>
+            <button id="btn-reload-panel" title="Làm mới panel"
+                style="padding: 2px 6px; font-size: 10px; cursor: pointer; float: right; margin-top: 2px;">
+                Reload
+            </button>
         </header>
 
-        <!-- Main Content with Tabs -->
         <main class="main-content">
             <div class="ds-tabs-container">
-                <!-- Tab Navigation -->
                 <nav class="ds-tabs" role="tablist">
                     <button class="ds-tab active" data-tab="compact" role="tab" aria-selected="true">
                         Compact
                     </button>
                     <button class="ds-tab" data-tab="schema" role="tab" aria-selected="false">
-                        🪄 Schema
+                        Schema
                     </button>
                     <button class="ds-tab" data-tab="settings" role="tab" aria-selected="false">
                         Cài đặt
                     </button>
                 </nav>
 
-                <!-- Tab Content -->
                 <div class="ds-tabs-content">
-                    <!-- Tab 1: Compact Mode -->
                     <section id="tab-compact" class="ds-tab-panel active" role="tabpanel">
                         <div id="compact-content">
-                            <!-- Will be loaded by CompactFormBuilder -->
                             <div class="ds-flex-center ds-text-muted ds-p-lg">
                                 <span>Đang tải Compact Mode...</span>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Tab 2: Manual Schema Injector -->
                     <section id="tab-schema" class="ds-tab-panel" role="tabpanel">
                         <div id="schema-content">
-                            <!-- Will be loaded by SchemaTabComponents -->
                             <div class="ds-flex-center ds-text-muted ds-p-lg">
                                 <span>Đang tải Schema Tools...</span>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Tab 3: Settings -->
                     <section id="tab-settings" class="ds-tab-panel" role="tabpanel">
                         <div class="ds-panel">
                             <div class="ds-panel-header">Thông tin</div>
@@ -156,7 +144,7 @@
                                 <p class="ds-text-sm">
                                     <span class="ds-text-muted">Version:</span> 1.0.0<br>
                                     <span class="ds-text-muted">Author:</span> DinhSon<br>
-                                    <span class="ds-text-muted">Theme:</span> Light Mode 🌞
+                                    <span class="ds-text-muted">Theme:</span> Light Mode
                                 </p>
                             </div>
                         </div>
@@ -167,30 +155,25 @@
                                 <!-- Reload button moved to Compact tab -->
                             </div>
                         </div>
-
-                        <!-- LOG CONFIGURATION REMOVED -->
                     </section>
                 </div>
             </div>
         </main>
 
-        <!-- Toast Container -->
         <div class="toast-container" id="toast-container"></div>
     </div>
 
-    <!-- Loading Overlay (shown initially) -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Đang khởi động...</div>
     </div>
 
-    <!-- Adobe CEP Libraries (vendor — not bundled) -->
+    <!-- Adobe CEP libraries (vendor - not bundled) -->
     <script src="js/libs/fuse.basic.min.js"></script>
     <script src="js/CSInterface.js"></script>
 
-    <!-- Application Bundle (esbuild: js/app.js → js/bundle.js) -->
+    <!-- Application bundle (esbuild: js/app.js -> js/bundle.js) -->
     <script src="js/bundle.js"></script>
-
 </body>
 
 </html>
