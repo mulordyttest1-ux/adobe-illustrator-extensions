@@ -1,0 +1,73 @@
+name: Agent Task
+description: Create a structured task for agent-driven implementation or planning.
+title: "[Agent Task] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User-facing problem
+      description: Describe the problem in product or workflow terms.
+      placeholder: The operator cannot...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the conditions that must be true when the task is done.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bounded_context
+    attributes:
+      label: Bounded context
+      description: Choose the primary bounded context for the task.
+      options:
+        - wedding-cep / Runtime / Boot
+        - wedding-cep / Workspace / Form Entry
+        - wedding-cep / Date Intelligence
+        - wedding-cep / Input Assistance
+        - wedding-cep / Template Authoring
+        - wedding-cep / Document Sync
+        - wedding-cep / Postflight
+        - wedding-cep / Platform / Illustrator Host
+        - symbol-cep / Runtime / Boot
+        - symbol-cep / Preset / Config
+        - symbol-cep / Preflight
+        - symbol-cep / Engine / Execution
+        - symbol-cep / Postflight / Hooks
+        - symbol-cep / Platform / Illustrator Host
+        - symbol-cep / Data / Persistence
+        - shared / Wedding Domain
+        - shared / Cross-app
+        - governance / Agent Control Plane
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk_tier
+    attributes:
+      label: Risk tier
+      description: Use the risk tier in the active product specification and pinned devkit workflow.
+      options:
+        - T0
+        - T1
+        - T2
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Expected validation
+      description: Name the checks the agent must run before close-out.
+      placeholder: |
+        npm run verify
+        npm run test:smoke:wedding
+    validations:
+      required: true

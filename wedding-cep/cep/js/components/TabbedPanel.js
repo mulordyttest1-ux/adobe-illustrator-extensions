@@ -1,11 +1,19 @@
 /**
  * MODULE: TabbedPanel
  * LAYER: Components
- * PURPOSE: Tab navigation with lazy loading and controller delegation
- * DEPENDENCIES: None
- * SIDE EFFECTS: DOM (tab switching, lazy content loading)
+ * PURPOSE: Tab navigation with lazy loading, controller delegation, and transient overlay cleanup
+ * DEPENDENCIES: tabbedPanelSupport
+ * SIDE EFFECTS: DOM (tab switching, lazy content loading, tab-scoped overlay teardown)
  * EXPORTS: new TabbedPanel({tabsSelector, panelsSelector, controllers, onTabChange})
  */
+import {
+    bindTabClickHandlers,
+    cleanupTabbedOverlays,
+    getFirstTabId,
+    resolveTabLoadContext,
+    resolveTabbedDom,
+    syncTabbedState
+} from './tabbedPanelSupport.js';
 
 export class TabbedPanel {
     /**
@@ -21,6 +29,9 @@ export class TabbedPanel {
         this.panelsSelector = options.panelsSelector || '.ds-tab-panel';
         this.controllers = options.controllers || {};
         this.onTabChange = options.onTabChange || null;
+        this._document = options.document || document;
+        this._warn = options.warn || console.warn;
+        this._cleanupOverlays = options.cleanupOverlays || ((documentRef) => cleanupTabbedOverlays(documentRef));
 
         this.tabs = [];
         this.panels = [];
@@ -35,30 +46,30 @@ export class TabbedPanel {
      * @private
      */
     _init() {
-        this.tabs = document.querySelectorAll(this.tabsSelector);
-        this.panels = document.querySelectorAll(this.panelsSelector);
+        const dom = resolveTabbedDom({
+            tabsSelector: this.tabsSelector,
+            panelsSelector: this.panelsSelector,
+            documentRef: this._document
+        });
+        this.tabs = dom.tabs;
+        this.panels = dom.panels;
 
         if (this.tabs.length === 0) {
-            console.warn('[TabbedPanel] No tabs found');
+            this._warn('[TabbedPanel] No tabs found');
             return;
         }
 
-        // Bind click events to tabs
-        this.tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
+        bindTabClickHandlers({
+            tabs: this.tabs,
+            onSelect: (tabId) => {
                 this.switchTo(tabId);
-            });
+            }
         });
 
-        // Activate the first tab
-        const firstTab = this.tabs[0];
-        if (firstTab) {
-            const firstTabId = firstTab.dataset.tab;
+        const firstTabId = getFirstTabId(this.tabs);
+        if (firstTabId) {
             this.switchTo(firstTabId);
         }
-
-
     }
 
     /**
@@ -70,33 +81,21 @@ export class TabbedPanel {
             return;
         }
 
-        // Update tab buttons
-        this.tabs.forEach(tab => {
-            const isActive = tab.dataset.tab === tabId;
-            tab.classList.toggle('active', isActive);
-            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        this._cleanupOverlays(this._document);
+        syncTabbedState({
+            tabs: this.tabs,
+            panels: this.panels,
+            tabId
         });
-
-        // Update panels
-        this.panels.forEach(panel => {
-            const panelId = panel.id.replace('tab-', '');
-            const isActive = panelId === tabId;
-            panel.classList.toggle('active', isActive);
-        });
-
         this.activeTabId = tabId;
 
-        // Lazy load content if not loaded yet
         if (!this.loadedTabs.has(tabId)) {
             this._loadTabContent(tabId);
         }
 
-        // Call callback if provided
         if (this.onTabChange) {
             this.onTabChange(tabId);
         }
-
-
     }
 
     /**
@@ -105,19 +104,16 @@ export class TabbedPanel {
      * @private
      */
     async _loadTabContent(tabId) {
-        const controller = this.controllers[tabId];
-
-        if (!controller) {
-            console.warn(`[TabbedPanel] No controller for tab: ${tabId}`);
+        const loadContext = resolveTabLoadContext({
+            tabId,
+            controllers: this.controllers,
+            documentRef: this._document,
+            warn: this._warn
+        });
+        if (!loadContext) {
             return;
         }
-
-        const contentContainer = document.getElementById(`${tabId}-content`);
-
-        if (!contentContainer) {
-            console.warn(`[TabbedPanel] No content container for tab: ${tabId}`);
-            return;
-        }
+        const { controller, contentContainer } = loadContext;
 
         try {
             // Show loading state

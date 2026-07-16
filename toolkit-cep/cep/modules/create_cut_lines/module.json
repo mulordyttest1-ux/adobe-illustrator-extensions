@@ -1,0 +1,21 @@
+{
+  "id": "create_cut_lines",
+  "title": "Create Cut Lines",
+  "buttonLabel": "Cut Lines",
+  "category": "Cut Workflow",
+  "order": 15,
+  "aliases": [
+    "cut",
+    "cutline",
+    "cutlines",
+    "contour",
+    "cutcontour",
+    "sline",
+    "dieline"
+  ],
+  "description": "Create cut lines from selected contour geometry or build S-line cut paths from the current selection bounds.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

@@ -14,7 +14,7 @@ export class PreflightOrchestrator {
 
     /**
      * Register a preflight rule plugin
-     * @param {Object} rule - Must have a run(deps) method returning boolean
+     * @param {Object} rule - Must have a run(deps, context) method returning boolean
      */
     registerRule(rule) {
         if (typeof rule.run !== 'function') {
@@ -24,19 +24,22 @@ export class PreflightOrchestrator {
     }
 
     /**
-     * Run all registered preflight rules sequentially
+     * Run all registered preflight rules sequentially.
      * @param {Object} dependencies - e.g., { bridge }
-     * @returns {Promise<boolean>} true if safe to proceed, false to halt
+     * @returns {Promise<{safe: boolean, context: Object}>}
+     *   safe:    true if all rules passed
+     *   context: mutable object rules can write flags into (e.g. autoGrouped)
      */
     async runAll(dependencies) {
+        const context = {};
         for (let i = 0; i < this.rules.length; i++) {
             const rule = this.rules[i];
-            const isSafe = await rule.run(dependencies);
+            const isSafe = await rule.run(dependencies, context);
             if (!isSafe) {
                 console.warn(`[Preflight] Halted by Rule at index ${i}`);
-                return false; // Halt execution
+                return { safe: false, context };
             }
         }
-        return true; // All rules passed
+        return { safe: true, context };
     }
 }

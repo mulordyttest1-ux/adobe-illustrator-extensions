@@ -2,8 +2,9 @@
     📏 MODULE: YIELD GUIDES (Yield-Level)
     ================================================================================
     📜 COMPLIANCE STANDARDS
-    1. SRP: Single Responsibility - Only draw guides inside yield container
-    2. Domain Separation: [.agent/domain_separation_standard.md]
+    1. Module rules: [symbol-cep/AGENTS.md]
+    2. Architecture: [symbol-cep/ARCHITECTURE.md]
+    3. Principle: Single Responsibility - Only draw guides inside yield container
     
     PROTOCOL: GUIDE_DRAWER
     - Draws guides inside the yield container (not on artboard)
@@ -24,6 +25,19 @@
         id: "yield_guides",
         version: "1.0.0",
 
+        hasVisibleBorders: function (frame) {
+            var rules = frame && frame.rules ? frame.rules : [];
+            var i;
+
+            for (i = 0; i < rules.length; i++) {
+                if (rules[i] && rules[i].drawBorder && rules[i].val > 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+
         /**
          * Draw yield guides inside container
          * @param {GroupItem} container - Yield container group
@@ -41,17 +55,20 @@
             var m = frame.yieldPadding || { top: 0, left: 0, right: 0, bottom: 0 };
             var mTop = (m.top || 0) * 2.834645;
             var mLeft = (m.left || 0) * 2.834645;
+            var hasVisibleBorders = this.hasVisibleBorders(frame);
 
-            // A. Draw Safe Zone Guide (Aggregate Result)
-            var gTop = (fH / 2) - mTop;
-            var gLeft = (-fW / 2) + mLeft;
+            if (!hasVisibleBorders) {
+                // A. Draw Safe Zone Guide (Aggregate Result)
+                var gTop = (fH / 2) - mTop;
+                var gLeft = (-fW / 2) + mLeft;
 
-            var guideSafe = container.pathItems.rectangle(gTop, gLeft, frame.print.w, frame.print.h);
-            guideSafe.name = GUIDE_SAFE_ZONE;
-            guideSafe.filled = false;
-            guideSafe.stroked = true;
-            guideSafe.guides = true;
-            guideSafe.move(container, ElementPlacement.PLACEATEND);
+                var guideSafe = container.pathItems.rectangle(gTop, gLeft, frame.print.w, frame.print.h);
+                guideSafe.name = GUIDE_SAFE_ZONE;
+                guideSafe.filled = false;
+                guideSafe.stroked = true;
+                guideSafe.guides = true;
+                guideSafe.move(container, ElementPlacement.PLACEATEND);
+            }
 
             // B. Draw Individual Rule Guides + Optional Borders
             this.drawRuleGuides(container, frame);
@@ -72,26 +89,34 @@
 
             for (var i = 0; i < frame.rules.length; i++) {
                 var r = frame.rules[i];
-                if (r.val > 0) {
-                    var valPt = r.val * 2.834645;
-                    var pathCoords = null;
+                var shouldDrawBorder = !!r.drawBorder && r.val > 0;
+                var shouldDrawGuide = r.val > 0 && !shouldDrawBorder;
+                var pathCoords = null;
+                var valPt;
 
-                    // Calculate path based on edge
-                    if (r.edge === 'top') {
-                        var y = (fH / 2) - valPt;
-                        pathCoords = [[-fW / 2, y], [fW / 2, y]];
-                    } else if (r.edge === 'bottom') {
-                        var y = (-fH / 2) + valPt;
-                        pathCoords = [[-fW / 2, y], [fW / 2, y]];
-                    } else if (r.edge === 'left') {
-                        var x = (-fW / 2) + valPt;
-                        pathCoords = [[x, fH / 2], [x, -fH / 2]];
-                    } else if (r.edge === 'right') {
-                        var x = (fW / 2) - valPt;
-                        pathCoords = [[x, fH / 2], [x, -fH / 2]];
-                    }
+                if (!shouldDrawGuide && !shouldDrawBorder) {
+                    continue;
+                }
 
-                    if (pathCoords) {
+                valPt = (r.val || 0) * 2.834645;
+
+                // Calculate path based on edge
+                if (r.edge === 'top') {
+                    var y = (fH / 2) - valPt;
+                    pathCoords = [[-fW / 2, y], [fW / 2, y]];
+                } else if (r.edge === 'bottom') {
+                    var y = (-fH / 2) + valPt;
+                    pathCoords = [[-fW / 2, y], [fW / 2, y]];
+                } else if (r.edge === 'left') {
+                    var x = (-fW / 2) + valPt;
+                    pathCoords = [[x, fH / 2], [x, -fH / 2]];
+                } else if (r.edge === 'right') {
+                    var x = (fW / 2) - valPt;
+                    pathCoords = [[x, fH / 2], [x, -fH / 2]];
+                }
+
+                if (pathCoords) {
+                    if (shouldDrawGuide) {
                         // Draw Guide
                         var line = container.pathItems.add();
                         line.setEntirePath(pathCoords);
@@ -100,11 +125,11 @@
                         line.stroked = true;
                         line.guides = true;
                         line.move(container, ElementPlacement.PLACEATEND);
+                    }
 
-                        // Draw Visible Border if requested
-                        if (r.drawBorder) {
-                            this.drawBorder(container, pathCoords, r);
-                        }
+                    // Draw Visible Border if requested
+                    if (shouldDrawBorder) {
+                        this.drawBorder(container, pathCoords, r);
                     }
                 }
             }

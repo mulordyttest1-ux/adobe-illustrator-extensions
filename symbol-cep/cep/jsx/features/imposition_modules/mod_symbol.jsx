@@ -2,8 +2,9 @@
     💠 MODULE: SYMBOL (Yield-Level)
     ================================================================================
     📜 COMPLIANCE STANDARDS (Required Reading)
-    1. Domain Separation: [.agent/domain_separation_standard.md]
-    2. Architecture:      [.agent/plans/modular_architecture_risk_and_roadmap.md]
+    1. Module rules:    [symbol-cep/AGENTS.md]
+    2. Architecture:    [symbol-cep/ARCHITECTURE.md]
+    3. Risk routing:    [AGENT_OPERATING_MODEL.md]
     
     PROTOCOL: SATELLITE_MODULE (Scenario A: Logic Fix)
     - Edit this file directly.
@@ -104,17 +105,21 @@
             }
 
             // DELEGATE TO YIELD GUIDES MODULE (SRP Refactor)
+            var hasVisibleBorders = false;
             if ($._imposition.modules && $._imposition.modules.yield_guides) {
+                hasVisibleBorders = $._imposition.modules.yield_guides.hasVisibleBorders(frame);
                 $._imposition.modules.yield_guides.draw(container, frame);
             }
 
             // C. Finish Guide (Guide_Finish) - The Die Line
-            var guideFinish = container.pathItems.rectangle(fH / 2, -fW / 2, fW, fH);
-            guideFinish.name = GUIDE_FINISH;
-            guideFinish.filled = false;
-            guideFinish.stroked = true;
-            guideFinish.guides = true;
-            guideFinish.move(container, ElementPlacement.PLACEATEND);
+            if (!hasVisibleBorders) {
+                var guideFinish = container.pathItems.rectangle(fH / 2, -fW / 2, fW, fH);
+                guideFinish.name = GUIDE_FINISH;
+                guideFinish.filled = false;
+                guideFinish.stroked = true;
+                guideFinish.guides = true;
+                guideFinish.move(container, ElementPlacement.PLACEATEND);
+            }
 
             // D. Bleed Guide - REMOVED (User Step 1899)
             // E. Border Drawing - NOW INLINE with Rules (Section B)

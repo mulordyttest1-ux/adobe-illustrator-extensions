@@ -1,215 +1,207 @@
-import globals from "globals";
-import js from "@eslint/js";
+import { createCepLintConfig } from "../../shared/eslint.config.mjs";
 
-/**
- * ESLint Configuration (Flat Config) — Agent Governance Rules
- * 
- * PURPOSE: Enforce architecture boundaries and naming conventions.
- * Agent CANNOT bypass these rules via eslint-disable comments.
- */
-
-export default [
-    // 1. Global Ignores
+const WEDDING_BASE_SYNTAX_RULES = [
     {
-        ignores: [
-            "**/bundle.js",
-            "js/libs/**",
-            "dist/**",
-            "node_modules/**"
-        ]
+        selector: "MemberExpression[object.name='window'][property.name='showToast']",
+        message: "window.showToast was removed. Use UIFeedback.showToast() instead."
     },
-
-    // 2. Base Configuration (Recommended)
-    js.configs.recommended,
-
-    // 3. Main Rules & Globals
     {
-        files: ["js/**/*.js", "js/**/*.mjs"],
-        languageOptions: {
-            ecmaVersion: 2020,
-            sourceType: "module",
-            globals: {
-                ...globals.browser,
-                ...globals.node,
+        selector: "MemberExpression[object.name='ctx'][property.name='showToast']",
+        message: "ctx.showToast was removed. Use UIFeedback.showToast() instead."
+    }
+];
 
-                // Adobe CEP
-                CSInterface: "readonly",
+const WEDDING_GLOBAL_WRITE_RULES = [
+    {
+        selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='window']",
+        message: "App globals must not be published on window. Only the bootstrap contracts are allowed."
+    },
+    {
+        selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='globalThis']",
+        message: "App globals must not be published on globalThis. Only the bootstrap contracts are allowed."
+    },
+    {
+        selector: "CallExpression[callee.object.name='Object'][callee.property.name='assign'][arguments.0.name='window']",
+        message: "Object.assign(window, ...) is forbidden in wedding runtime code."
+    },
+    {
+        selector: "CallExpression[callee.object.name='Object'][callee.property.name='assign'][arguments.0.name='globalThis']",
+        message: "Object.assign(globalThis, ...) is forbidden in wedding runtime code."
+    }
+];
 
-                // Domain
-                WeddingRules: "readonly",
-                NameAnalysis: "readonly",
-                CalendarEngine: "readonly",
-                TimeAutomation: "readonly",
-                VenueAutomation: "readonly",
-                SmartContent: "readonly",
-                ConflictResolver: "readonly",
-                DataResolver: "readonly",
-                IsolationChecker: "readonly",
+const WEDDING_LEGACY_AMBIENT_GLOBALS = [
+    { name: "CSInterface", message: "Use the CEP host adapter instead of CSInterface directly." },
+    { name: "Fuse", message: "Use FuseAddressIndex instead of the ambient Fuse global." },
+    { name: "SchemaLoader", message: "Import SchemaLoader explicitly instead of reading the ambient global." },
+    { name: "WeddingAssembler", message: "Import WeddingAssembler explicitly instead of reading the ambient global." },
+    { name: "Normalizer", message: "Import Normalizer explicitly instead of reading the ambient global." },
+    { name: "NameAnalysis", message: "Import NameAnalysis explicitly instead of reading the ambient global." },
+    { name: "CalendarEngine", message: "Import CalendarEngine explicitly instead of reading the ambient global." },
+    { name: "WeddingRules", message: "Import WeddingRules explicitly instead of reading the ambient global." },
+    { name: "TimeAutomation", message: "Import TimeAutomation explicitly instead of reading the ambient global." },
+    { name: "VenueAutomation", message: "Import VenueAutomation explicitly instead of reading the ambient global." },
+    { name: "DateGridWidget", message: "Import DateGridWidget explicitly instead of reading the ambient global." },
+    { name: "InputEngine", message: "Import InputEngine explicitly instead of reading the ambient global." },
+    { name: "NameValidator", message: "Import NameValidator explicitly instead of reading the ambient global." },
+    { name: "AddressAutocomplete", message: "Import AddressAutocomplete explicitly instead of reading the ambient global." },
+    { name: "SchemaUtils", message: "Import SchemaUtils explicitly instead of reading the ambient global." },
+    { name: "UnicodeNormalizer", message: "Import UnicodeNormalizer explicitly instead of reading the ambient global." },
+    { name: "EthnicNameNormalizer", message: "Import EthnicNameNormalizer explicitly instead of reading the ambient global." },
+    { name: "FreshStrategy", message: "Import FreshStrategy explicitly instead of reading the ambient global." },
+    { name: "SmartComplexStrategy", message: "Import SmartComplexStrategy explicitly instead of reading the ambient global." },
+    { name: "StrategyOrchestrator", message: "Import StrategyOrchestrator explicitly instead of reading the ambient global." }
+];
 
-                // Core
-                StringUtils: "readonly",
-                DateUtils: "readonly",
+const WEDDING_CEP_VENDOR_ACCESS_RULES = [
+    {
+        selector: "MemberExpression[object.name='window'][property.name='__adobe_cep__']",
+        message: "Use the CEP host adapter instead of window.__adobe_cep__ directly."
+    },
+    {
+        selector: "MemberExpression[object.name='window'][property.name='cep']",
+        message: "Use the CEP host adapter instead of window.cep directly."
+    },
+    {
+        selector: "MemberExpression[object.name='window'][property.name='require']",
+        message: "Use the CEP host adapter instead of window.require directly."
+    },
+    {
+        selector: "MemberExpression[object.name='globalThis'][property.name='require']",
+        message: "Use the CEP host adapter instead of globalThis.require directly."
+    },
+    {
+        selector: "MemberExpression[object.name='window'][property.name='Fuse']",
+        message: "Use FuseAddressIndex instead of window.Fuse directly."
+    },
+    {
+        selector: "MemberExpression[object.name='globalThis'][property.name='Fuse']",
+        message: "Use FuseAddressIndex instead of globalThis.Fuse directly."
+    }
+];
 
-                // Pipeline
-                Normalizer: "readonly",
-                Validator: "readonly",
-                DataValidator: "readonly",
-                WeddingAssembler: "readonly",
+const WEDDING_STARTUP_GLOBAL_RULES = [
+    {
+        selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='window'][left.property.name!='__WEDDING_APP_READY__']",
+        message: "startup.js may only publish __WEDDING_APP_READY__ on window."
+    },
+    {
+        selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='globalThis'][left.property.name!='__WEDDING_APP_READY__']",
+        message: "startup.js may only publish __WEDDING_APP_READY__ on globalThis."
+    },
+    {
+        selector: "CallExpression[callee.object.name='Object'][callee.property.name='assign'][arguments.0.name='window']",
+        message: "Object.assign(window, ...) is forbidden in startup.js."
+    },
+    {
+        selector: "CallExpression[callee.object.name='Object'][callee.property.name='assign'][arguments.0.name='globalThis']",
+        message: "Object.assign(globalThis, ...) is forbidden in startup.js."
+    }
+];
 
-                // Strategies
-                StrategyOrchestrator: "readonly",
-                SmartComplexStrategy: "readonly",
-                FreshStrategy: "readonly",
+const WEDDING_TEST_API_GLOBAL_RULES = [
+    {
+        selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='window'][left.property.name!='__WEDDING_TEST_API__']",
+        message: "testApi.js may only publish __WEDDING_TEST_API__ on window."
+    },
+    {
+        selector: "AssignmentExpression[left.type='MemberExpression'][left.object.name='globalThis'][left.property.name!='__WEDDING_TEST_API__']",
+        message: "testApi.js may only publish __WEDDING_TEST_API__ on globalThis."
+    },
+    {
+        selector: "CallExpression[callee.object.name='Object'][callee.property.name='assign'][arguments.0.name='window']",
+        message: "Object.assign(window, ...) is forbidden in testApi.js."
+    },
+    {
+        selector: "CallExpression[callee.object.name='Object'][callee.property.name='assign'][arguments.0.name='globalThis']",
+        message: "Object.assign(globalThis, ...) is forbidden in testApi.js."
+    }
+];
 
-                // UX
-                InputEngine: "readonly",
-                NameNormalizer: "readonly",
-                AddressNormalizer: "readonly",
-                DateNormalizer: "readonly",
-                NameValidator: "readonly",
-                AddressValidator: "readonly",
-                DateValidator: "readonly",
-                UnicodeNormalizer: "readonly",
-                AddressAutocomplete: "readonly",
+const WEDDING_RULES = {
+    "no-alert": "error",
+    "no-restricted-globals": ["error",
+        { name: "alert", message: "Use UIFeedback.showToast() instead." },
+        { name: "confirm", message: "Use UIFeedback.showToast() instead." },
+        { name: "prompt", message: "Use UIFeedback.showToast() instead." }
+    ],
+    "no-restricted-syntax": ["error", ...WEDDING_BASE_SYNTAX_RULES]
+};
 
-                // Components
-                DomFactory: "readonly",
-                DateGridWidget: "readonly",
-                DateGridRenderer: "readonly",
-                DateGridDOM: "readonly",
-                TabbedPanel: "readonly",
-                DateLogic: "readonly",
-                AddressService: "readonly",
-                FormLogic: "readonly",
-                FormComponents: "readonly",
-                CompactFormBuilder: "readonly",
-
-                // Controllers
-                UIFeedback: "readonly",
-                KeyNormalizer: "readonly",
-                WeddingProActionHandler: "readonly",
-                ConfigController: "readonly",
-                SchemaLoader: "readonly",
-
-                // Actions
-                ScanAction: "readonly",
-                UpdateAction: "readonly",
-                SwapAction: "readonly",
-
-                // App utilities
-                bridge: "readonly"
-            }
-        },
+const WEDDING_ARCHITECTURE_OVERRIDES = [
+    {
+        files: ["js/**/*.js"],
+        ignores: ["js/**/*.test.js", "js/bootstrap/startup.js", "js/bootstrap/testApi.js", "js/CSInterface.js", "js/infrastructure/cepHost.js", "js/infrastructure/hostFacade.js", "js/logic/ux/search/FuseAddressIndex.js"],
         rules: {
-            // --- Anti-Hallucination ---
-            "no-undef": "error",                    // F2: Chặn gọi hàm/biến không tồn tại
-            "no-unused-vars": ["error", {           // C5: Chặn biến rác
-                argsIgnorePattern: "^_",            // Cho phép _unused params
-                varsIgnorePattern: "^_"
+            "no-restricted-imports": ["error", {
+                patterns: [
+                    {
+                        group: ["./controllers/*", "../controllers/*", "../../controllers/*", "../../../controllers/*", "../../../../controllers/*"],
+                        message: "Legacy controllers layer was retired. Move modules into components/, logic/, bootstrap/, or infrastructure/."
+                    },
+                    {
+                        group: ["./components/modules/*", "../components/modules/*", "../../components/modules/*", "../../../components/modules/*", "../../../../components/modules/*"],
+                        message: "Generic components/modules bucket was retired. Move modules into named UI slices."
+                    },
+                    {
+                        group: ["./bridge.js", "../bridge.js", "../../bridge.js", "../../../bridge.js", "../../../../bridge.js"],
+                        message: "Top-level bridge.js was retired. Import infrastructure/bridge.js instead."
+                    },
+                    {
+                        group: ["./schemaLoader.js", "../schemaLoader.js", "../../schemaLoader.js", "../../../schemaLoader.js", "../../../../schemaLoader.js"],
+                        message: "Top-level schemaLoader.js was retired. Import infrastructure/schemaLoader.js instead."
+                    }
+                ]
             }],
-
-            // --- Anti-Over-Engineering ---
-            "max-lines-per-function": ["error", {   // F4: Hàm tối đa 80 dòng
-                max: 80,
-                skipBlankLines: true,
-                skipComments: true
-            }],
-            "max-depth": ["error", 4],              // F4: Chặn nesting quá sâu
-            "max-params": ["warn", 4],              // F4: Cảnh báo quá nhiều tham số
-
-            // --- Anti-Complexity ---
-            "complexity": ["warn", 12],             // Cảnh báo logic quá phức tạp
-            "consistent-return": "warn",            // Kiểu trả về nhất quán
-
-            // --- Code Quality ---
-            "no-var": "error",                      // Enforce const/let
-            "prefer-const": "warn",                 // Ưu tiên const
-            "no-duplicate-imports": "error",        // Chặn import trùng lặp
-            "eqeqeq": ["error", "always"],          // Luôn dùng ===
-            "no-eval": "error",                     // Chặn eval()
-            "no-implied-eval": "error",             // Chặn implied eval
-            "no-empty": "warn",
-
-            // ─────────────────────────────────────────────────────────
-            // AGENT CONVENTION ENFORCEMENT — UIFeedback is the ONLY
-            // approved notification API. Agents MUST use UIFeedback.
-            // Any violation below = build-blocking lint error.
-            // ─────────────────────────────────────────────────────────
-
-            // ❌ Ban alert() / confirm() / prompt() — use UIFeedback instead
-            "no-alert": "error",
-
-            // ❌ Ban window.showToast / window.alert / window.confirm
-            "no-restricted-globals": ["error",
-                { "name": "alert",   "message": "Use UIFeedback.showToast() instead." },
-                { "name": "confirm", "message": "Use UIFeedback.showToast() instead." },
-                { "name": "prompt",  "message": "Use UIFeedback.showToast() instead." }
-            ],
-
-            // ❌ Ban window.showToast — it was removed. Use UIFeedback.showToast()
-            "no-restricted-syntax": [
-                "error",
-                {
-                    "selector": "MemberExpression[object.name='window'][property.name='showToast']",
-                    "message": "window.showToast was removed. Use UIFeedback.showToast() instead (import from controllers/helpers/UIFeedback.js)."
-                },
-                {
-                    "selector": "MemberExpression[object.name='ctx'][property.name='showToast']",
-                    "message": "ctx.showToast was removed. Use UIFeedback.showToast() instead (import from controllers/helpers/UIFeedback.js)."
-                }
-            ]
+            "no-restricted-globals": ["error", ...WEDDING_LEGACY_AMBIENT_GLOBALS],
+            "no-restricted-syntax": ["error", ...WEDDING_BASE_SYNTAX_RULES, ...WEDDING_GLOBAL_WRITE_RULES, ...WEDDING_CEP_VENDOR_ACCESS_RULES]
         }
     },
-
-    // 4. Overrides: Architecture Boundaries
     {
-        // DOMAIN LAYER: Pure, no dependency on upper layers
-        files: ["js/logic/domain/**/*.js"],
+        files: ["js/logic/ux/search/FuseAddressIndex.js"],
+        rules: {
+            "no-restricted-globals": ["error", ...WEDDING_LEGACY_AMBIENT_GLOBALS.filter((entry) => entry.name !== "Fuse")],
+            "no-restricted-syntax": ["error", ...WEDDING_BASE_SYNTAX_RULES, ...WEDDING_GLOBAL_WRITE_RULES, ...WEDDING_CEP_VENDOR_ACCESS_RULES.filter((rule) => !String(rule.selector).includes("[property.name='Fuse']"))]
+        }
+    },
+    {
+        files: ["js/bootstrap/startup.js"],
+        rules: {
+            "no-restricted-globals": ["error", ...WEDDING_LEGACY_AMBIENT_GLOBALS],
+            "no-restricted-syntax": ["error", ...WEDDING_BASE_SYNTAX_RULES, ...WEDDING_STARTUP_GLOBAL_RULES, ...WEDDING_CEP_VENDOR_ACCESS_RULES]
+        }
+    },
+    {
+        files: ["js/bootstrap/testApi.js"],
+        rules: {
+            "no-restricted-globals": ["error", ...WEDDING_LEGACY_AMBIENT_GLOBALS],
+            "no-restricted-syntax": ["error", ...WEDDING_BASE_SYNTAX_RULES, ...WEDDING_TEST_API_GLOBAL_RULES, ...WEDDING_CEP_VENDOR_ACCESS_RULES]
+        }
+    },
+    {
+        files: ["js/logic/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [
-                    { group: ["../pipeline/*", "../../pipeline/*"], message: "Domain KHÔNG được import từ Pipeline" },
-                    { group: ["../strategies/*", "../../strategies/*"], message: "Domain KHÔNG được import từ Strategies" },
-                    { group: ["../../components/*", "../components/*"], message: "Domain KHÔNG được import từ Components" },
-                    { group: ["../../controllers/*", "../controllers/*"], message: "Domain KHÔNG được import từ Controllers" },
-                    { group: ["../../actions/*", "../actions/*"], message: "Domain KHÔNG được import từ Actions" },
-                    { group: ["../../bridge*"], message: "Domain KHÔNG được import từ Bridge" }
+                    { group: ["../components/*", "../../components/*", "../../../components/*"], message: "Logic KHONG duoc import tu Components" },
+                    { group: ["../controllers/*", "../../controllers/*", "../../../controllers/*"], message: "Logic KHONG duoc import tu Controllers" },
+                    { group: ["../actions/*", "../../actions/*", "../../../actions/*"], message: "Logic KHONG duoc import tu Actions" },
+                    { group: ["../infrastructure/bridge*", "../../infrastructure/bridge*", "../../../infrastructure/bridge*"], message: "Logic KHONG duoc import tu Bridge" }
                 ]
             }]
-        }
-    },
-    {
-        // CORE LAYER: Purest utilities
-        files: ["js/logic/core/**/*.js"],
-        rules: {
-            "no-restricted-imports": ["error", {
-                patterns: [
-                    { group: ["../*", "../../*"], message: "Core KHÔNG được import từ bất kỳ module nào khác" }
-                ]
-            }]
-        }
-    },
-    {
-        // PIPELINE LAYER: Import from Domain/Core only (plus libs)
-        files: ["js/logic/pipeline/**/*.js"],
-        rules: {
-            "no-restricted-imports": ["error", {
-                patterns: [
-                    { group: ["../../components/*"], message: "Pipeline KHÔNG được import từ Components" },
-                    { group: ["../../controllers/*"], message: "Pipeline KHÔNG được import từ Controllers" },
-                    { group: ["../../actions/*"], message: "Pipeline KHÔNG được import từ Actions" }
-                ]
-            }]
-        }
-    },
-
-    // 5. Overrides: Tests
-    {
-        files: ["**/*.test.js"],
-        rules: {
-            "max-lines-per-function": "off",
-            "no-undef": "off",
-            "no-unused-vars": "off"
         }
     }
 ];
+
+export default createCepLintConfig({
+    namePrefix: "wedding-app",
+    ignores: [
+        "**/bundle.js",
+        "js/libs/**",
+        "dist/**",
+        "node_modules/**"
+    ],
+    files: ["js/**/*.js", "js/**/*.mjs"],
+    rules: WEDDING_RULES,
+    extraArchitectureConfig: WEDDING_ARCHITECTURE_OVERRIDES
+});

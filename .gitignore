@@ -1,9 +1,15 @@
 # Dependencies
 node_modules/
+wedding-cep/cep/package-lock.json
+
+# Nx local workspace state
+.nx/
 
 # Build artifacts
 */cep/js/bundle.js
 */cep/js/bundle.js.map
+*/cep/.generated/
+symbol-cep/cep/wedding suite print template.ai
 
 # OS files
 Thumbs.db
@@ -14,11 +20,31 @@ desktop.ini
 .vscode/
 *.code-workspace
 
-# Debug & temp
-*/cep/debug_scripts/
+# Smoke harness code is source. Ignore only its generated output.
+*/cep/debug_scripts/output/
+*/cep/debug_scripts/artifacts/
+*/cep/debug_scripts/*.log
 */cep/shadow_*.bat
 *.tmp
 *.log
+
+# Runtime-owned mutable state
+symbol-cep/cep/data/presets.usage.json
+symbol-cep/cep/data/*.bak
+
+# Local quarantine and accidentally materialized install roots
+/local-artifacts/
+/%APPDATA%/
+
+# Operator/customer files belong in local-artifacts, except the shipped template.
+/binhbai4c.ai
+/*.xlsx
+/symbol-cep/*.ai
+/symbol-cep/*.pdf
+!/symbol-cep/wedding suite print template.ai
+/symbol-cep/runtime_probe_out/
+/.tmp_*.json
+/temp_*.cjs
 
 # Google Drive artifacts
 ~$*

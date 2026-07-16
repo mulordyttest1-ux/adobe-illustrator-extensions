@@ -1,94 +1,80 @@
-# Adobe Illustrator Extensions — Monorepo
+# Adobe Illustrator Extensions
 
-> **Monorepo chứa các CEP Extension chuyên dụng cho Adobe Illustrator.**
-> *Được phát triển với kiến trúc Hexagonal (Domain-Driven Design) để đảm bảo tính ổn định và dễ bảo trì.*
+Public, standalone monorepo for the Wedding, Symbol/Imposition, and Toolkit Adobe Illustrator CEP extensions.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Adobe CEP](https://img.shields.io/badge/Adobe-CEP-FF0000.svg)](https://github.com/Adobe-CEP)
+## Repository contract
 
----
-
-## 📂 Cấu trúc Dự Án
-
-```bash
-├── .agent/              # Governance (workflows, rules, hooks)
-├── shared/              # Shared Tooling (ESLint config, helpers)
-├── symbol-cep/          # [NEW] Imposition Extension (Clean Architecture)
-├── wedding-cep/         # [LEGACY] Wedding Scripter (Đang refactor)
-├── package.json         # Root devDependencies
-└── .gitignore
+```text
+C:\Projects\
+|- adobe-illustrator-extensions\  # public product source, specs, tests, CI
+`- adobe-illustrator-devkit\      # private developer/AI control plane
 ```
 
----
+The product repository can be cloned, installed, built, tested, and used by public CI without private access. Planning, implementation, debugging, review, migration, and workstation setup load the private devkit pinned by `devkit.lock.json`.
 
-## 🚀 Quick Start
+GitHub content must always be cloned locally before CEP live links are created. GitHub cannot run an Illustrator panel directly.
 
-### 1. Yêu Cầu (Prerequisites)
-- **Node.js**: v16+ (Khuyên dùng v18 LTS)
-- **Adobe Illustrator**: CC 2020 (v24.0) trở lên.
-- **OS**: Windows / macOS
+## New machine
 
-### 2. Cài Đặt (Installation)
+Save the contents of `NEW_MACHINE_PROMPT.txt` in Notepad and paste it into a blank Codex task. Codex will clone this repository, read `AGENTS.md`, bootstrap the exact devkit release, and run setup plus doctor. The only expected user checkpoints are Administrator elevation, GitHub/Codex sign-in, Adobe licensing, and licensed fonts.
 
-Chạy lệnh sau tại thư mục gốc để cài đặt dependencies và tạo symlink tự động:
+Manual entrypoint after cloning:
 
-```bash
-# 1. Cài đặt dependencies
-npm install
-
-# 2. Tạo Symlink vào thư mục Extensions của Adobe (Yêu cầu Admin/Sudo)
-# Windows:
-Get-Content .agent/create_symlink.ps1 | PowerShell.exe -noprofile -
-# Mac/Linux:
-# sh .agent/create_symlink.sh (Chưa implement)
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap-machine.ps1
 ```
 
-> **Lưu ý:** Nếu không chạy script symlink, hãy copy thủ công folder `wedding-cep` và `symbol-cep` vào đường dẫn extensions của Adobe:
-> - **Win:** `C:\Program Files (x86)\Common Files\Adobe\CEP\extensions\`
-> - **Mac:** `/Library/Application Support/Adobe/CEP/extensions/`
+See `MACHINE_SETUP.md` for the full recovery contract.
 
-### 3. Debugging
-1. Mở **Adobe Illustrator**.
-2. Vào menu `Window` > `Extensions` > `Imposition Panel (Dev)` hoặc `Wedding Scripter (Dev)`.
-3. Mở trình duyệt (Chrome) và truy cập cổng debug:
-   - **Symbol CEP:** `http://localhost:9088`
-   - **Wedding CEP:** `http://localhost:9097`
+## Product commands
 
----
+```powershell
+npm ci
+npm run devkit:ensure -- --json
+npm run setup:repo
+npm run doctor:repo -- --json
+npm run install:cep-live-links
+npm run verify
+npm run verify:smoke
+```
 
-## 🛠️ Development
+Compatibility proxies retained for one release:
 
-### Commands
-| Command | Mô tả |
-| :--- | :--- |
-| `npm run lint:all` | Kiểm tra lỗi cú pháp (Lint) toàn bộ projects. |
-| `npm run lint:symbol` | Chỉ lint project Symbol CEP. |
-| `npm run lint:wedding` | Chỉ lint project Wedding CEP. |
-| `npm run build:wedding` | Build bản production cho Wedding CEP. |
+```powershell
+npm run setup:dev
+npm run doctor:dev -- --json
+npm run backup:machine -- --destination <folder>
+npm run restore:machine -- --archive <file> --target <empty-folder>
+```
 
-### Architecture Guidelines
-Dự án tuân thủ nghiêm ngặt quy chuẩn kiến trúc "Agent Friendly":
-- **Small Files:** Max 150 dòng/file.
-- **Explicit Deps:** Không dùng biến global ẩn.
-- **Layered:** Tách biệt Logic (Domain) và Giao diện (UI).
+These proxies delegate to the pinned private devkit and print a deprecation warning.
 
-Xem chi tiết governance tại `.agent/`.
+## Source map
 
----
+- `wedding-cep/`: Wedding Scripter.
+- `symbol-cep/`: Imposition Panel and Wedding Suite Print.
+- `toolkit-cep/`: utility launcher.
+- `libs/wedding/domain/`: UI-independent wedding rules.
+- `libs/shared/cep-ui/`: shared CEP UI helpers.
+- `shared/`: public repository tooling.
+- `specs/`: product specifications and plans.
+- `.agents/skills/`: official Spec Kit integration for Codex.
+- `.specify/`: Spec Kit constitution, templates, and integration state.
 
-## ⚠️ Known Limitations
-- **Wedding CEP:** Vẫn sử dụng kiến trúc cũ (Monolithic) ở một số module (`CompactFormBuilder`). Đang trong quá trình refactor.
-- **Cross-Platform:** Script tạo symlink hiện chỉ hỗ trợ Windows (PowerShell).
+Read root `AGENTS.md` and the nearest nested `AGENTS.md` before changing code.
 
----
+## Verification lanes
 
-## 🤝 Contributing
-1. Fork dự án.
-2. Tạo branch feature (`git checkout -b feature/AmazingFeature`).
-3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`).
-4. Push lên branch (`git push origin feature/AmazingFeature`).
-5. Open một Pull Request.
+- `npm run verify`: encoding, hygiene, lint, build, and CI-safe tests.
+- `npm run verify:smoke`: host-dependent CEP smoke tests.
+- `npm run verify:full`: both lanes.
+- Symbol debug port: `9198`.
+- Wedding debug port: `9197`.
+- Toolkit Illustrator 2026 test port: `9099`.
 
----
+## Security and size policy
 
-*(c) 2024-2026 DinhSon. All rights reserved.*
+- Clean tracked checkout budget: 10 MiB, excluding `.git` and installed dependencies.
+- Never commit credentials, `.env*`, sessions, cache, SQLite, Adobe/font binaries, or machine-local Codex paths.
+- Runtime assets must be explicitly reviewed and allowlisted.
+- Machine backups are encrypted disaster recovery for uncommitted work, not routine source synchronization.

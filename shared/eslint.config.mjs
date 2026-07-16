@@ -3,206 +3,285 @@ import js from "@eslint/js";
 import nxPlugin from "@nx/eslint-plugin";
 
 /**
- * ESLint Configuration (Flat Config) — Agent Governance Rules
- * 
- * PURPOSE: Enforce architecture boundaries and naming conventions.
- * Agent CANNOT bypass these rules via eslint-disable comments.
+ * Shared ESLint flat config for CEP apps and repo libs.
+ * Inline suppressions are still allowed today, but unused disables are errors.
  */
 
-export default [
-    // 1. Global Ignores
-    {
-        ignores: [
-            "**/bundle.js",
-            "**/js/libs/**",
-            "dist/**",
-            "node_modules/**"
-        ]
-    },
+const DEFAULT_IGNORES = [
+    "**/bundle.js",
+    "**/js/libs/**",
+    "dist/**",
+    "node_modules/**"
+];
 
-    // 2. Base Configuration (Recommended)
-    js.configs.recommended,
+const SHARED_LINTER_OPTIONS = {
+    reportUnusedDisableDirectives: "error"
+};
 
-    // 3. Main Rules & Globals
-    {
-        files: ["**/cep/js/**/*.js", "**/cep/js/**/*.mjs", "libs/**/*.js", "libs/**/*.ts"],
-        languageOptions: {
-            ecmaVersion: 2020,
-            sourceType: "module",
-            globals: {
-                ...globals.browser,
-                ...globals.node,
+export const CEP_APP_LANGUAGE_OPTIONS = {
+    ecmaVersion: 2020,
+    sourceType: "module",
+    globals: {
+        ...globals.browser,
+        ...globals.node,
 
-                // Adobe CEP
-                CSInterface: "readonly",
-                SystemPath: "readonly",
+        // Adobe CEP
+        CSInterface: "readonly",
+        SystemPath: "readonly",
 
-                // Symbol CEP Domain
-                ImpositionDomain: "writable",
-                WeddingRules: "readonly",
-                NameAnalysis: "readonly",
-                CalendarEngine: "readonly",
-                TimeAutomation: "readonly",
-                VenueAutomation: "readonly",
-                SmartContent: "readonly",
-                ConflictResolver: "readonly",
-                DataResolver: "readonly",
-                IsolationChecker: "readonly",
+        // Shared domain globals
+        ImpositionDomain: "writable",
+        WeddingRules: "readonly",
+        NameAnalysis: "readonly",
+        CalendarEngine: "readonly",
+        TimeAutomation: "readonly",
+        VenueAutomation: "readonly",
+        SmartContent: "readonly",
+        ConflictResolver: "readonly",
+        DataResolver: "readonly",
+        IsolationChecker: "readonly",
 
-                // Core
-                StringUtils: "readonly",
-                DateUtils: "readonly",
+        // Core
+        StringUtils: "readonly",
+        DateUtils: "readonly",
 
-                // Pipeline
-                Normalizer: "readonly",
-                Validator: "readonly",
-                DataValidator: "readonly",
-                WeddingAssembler: "readonly",
+        // Pipeline
+        Normalizer: "readonly",
+        Validator: "readonly",
+        DataValidator: "readonly",
+        WeddingAssembler: "readonly",
 
-                // Strategies
-                StrategyOrchestrator: "readonly",
-                SmartComplexStrategy: "readonly",
-                FreshStrategy: "readonly",
+        // Strategies
+        StrategyOrchestrator: "readonly",
+        SmartComplexStrategy: "readonly",
+        FreshStrategy: "readonly",
 
-                // UX
-                InputEngine: "readonly",
-                NameNormalizer: "readonly",
-                AddressNormalizer: "readonly",
-                DateNormalizer: "readonly",
-                NameValidator: "readonly",
-                AddressValidator: "readonly",
-                DateValidator: "readonly",
-                UnicodeNormalizer: "readonly",
-                AddressAutocomplete: "readonly",
+        // UX
+        InputEngine: "readonly",
+        NameNormalizer: "readonly",
+        AddressNormalizer: "readonly",
+        DateNormalizer: "readonly",
+        NameValidator: "readonly",
+        AddressValidator: "readonly",
+        DateValidator: "readonly",
+        UnicodeNormalizer: "readonly",
+        AddressAutocomplete: "readonly",
 
-                // Components
-                DomFactory: "readonly",
-                DateGridWidget: "readonly",
-                DateGridRenderer: "readonly",
-                DateGridDOM: "readonly",
-                TabbedPanel: "readonly",
-                DateLogic: "readonly",
-                AddressService: "readonly",
-                FormLogic: "readonly",
-                FormComponents: "readonly",
-                CompactFormBuilder: "readonly",
+        // Components
+        DomFactory: "readonly",
+        DateGridWidget: "readonly",
+        DateGridRenderer: "readonly",
+        DateGridDOM: "readonly",
+        TabbedPanel: "readonly",
+        DateLogic: "readonly",
+        AddressService: "readonly",
+        FormLogic: "readonly",
+        FormComponents: "readonly",
+        CompactFormBuilder: "readonly",
 
-                // Controllers
-                UIFeedback: "readonly",
-                KeyNormalizer: "readonly",
-                WeddingProActionHandler: "readonly",
-                ConfigController: "readonly",
-                SchemaLoader: "readonly",
+        // Controllers
+        UIFeedback: "readonly",
+        KeyNormalizer: "readonly",
+        WeddingProActionHandler: "readonly",
+        ConfigController: "readonly",
+        SchemaLoader: "readonly",
 
-                // Actions
-                ScanAction: "readonly",
-                UpdateAction: "readonly",
-                SwapAction: "readonly",
+        // Actions
+        ScanAction: "readonly",
+        UpdateAction: "readonly",
+        SwapAction: "readonly",
 
-                // App utilities
-                showToast: "readonly",
-                bridge: "readonly"
+        bridge: "readonly"
+    }
+};
+
+export const SHARED_LIB_LANGUAGE_OPTIONS = {
+    ecmaVersion: 2020,
+    sourceType: "module",
+    globals: {
+        ...globals.browser
+    }
+};
+
+export const PURE_LIB_LANGUAGE_OPTIONS = {
+    ecmaVersion: 2020,
+    sourceType: "module",
+    globals: {}
+};
+
+export const NODE_TOOLING_LANGUAGE_OPTIONS = {
+    ecmaVersion: 2020,
+    sourceType: "commonjs",
+    globals: {
+        ...globals.node
+    }
+};
+
+export const CEP_RULES = {
+    "no-undef": "error",
+    "no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_"
+    }],
+    "max-lines-per-function": ["error", {
+        max: 80,
+        skipBlankLines: true,
+        skipComments: true
+    }],
+    "max-depth": ["error", 4],
+    "max-params": ["warn", 4],
+    "complexity": ["warn", 12],
+    "consistent-return": "warn",
+    "no-var": "error",
+    "prefer-const": "warn",
+    "no-duplicate-imports": "error",
+    "eqeqeq": ["error", "always"],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-empty": "warn",
+    "camelcase": ["warn", { properties: "never", ignoreDestructuring: true }],
+    "no-restricted-imports": ["error", {
+        patterns: [
+            {
+                group: ["wedding-scripter-cep", "imposition-panel-cep"],
+                message: "\u274c SCOPE VIOLATION: App chi duoc import tu shared/domain packages, khong import package cua app khac."
+            },
+            {
+                group: ["**/wedding-cep/**", "../../wedding-cep/**", "../../../wedding-cep/**"],
+                message: "\u274c SCOPE VIOLATION: Dung import truc tiep tu wedding-cep. Dung @shared/cep-ui thay the."
+            },
+            {
+                group: ["**/symbol-cep/**", "../../symbol-cep/**", "../../../symbol-cep/**"],
+                message: "\u274c SCOPE VIOLATION: Dung import truc tiep tu symbol-cep. Dung @shared/cep-ui thay the."
             }
-        },
-        rules: {
-            // --- Anti-Hallucination ---
-            "no-undef": "error",                    // F2: Chặn gọi hàm/biến không tồn tại
-            "no-unused-vars": ["error", {           // C5: Chặn biến rác
-                argsIgnorePattern: "^_",            // Cho phép _unused params
-                varsIgnorePattern: "^_"
-            }],
+        ]
+    }]
+};
 
-            // --- Anti-Over-Engineering ---
-            "max-lines-per-function": ["error", {   // F4: Hàm tối đa 80 dòng
-                max: 80,
-                skipBlankLines: true,
-                skipComments: true
-            }],
-            "max-depth": ["error", 4],              // F4: Chặn nesting quá sâu
-            "max-params": ["warn", 4],              // F4: Cảnh báo quá nhiều tham số
-
-            // --- Anti-Complexity ---
-            "complexity": ["warn", 12],             // Cảnh báo logic quá phức tạp
-            "consistent-return": "warn",            // Kiểu trả về nhất quán
-
-            // --- Code Quality ---
-            "no-var": "error",                      // Enforce const/let
-            "prefer-const": "warn",                 // Ưu tiên const
-            "no-duplicate-imports": "error",        // Chặn import trùng lặp
-            "eqeqeq": ["error", "always"],          // Luôn dùng ===
-            "no-eval": "error",                     // Chặn eval()
-            "no-implied-eval": "error",             // Chặn implied eval
-            "no-empty": "warn",
-
-            // --- Naming Conventions ---
-            "camelcase": ["warn", { "properties": "never", "ignoreDestructuring": true }]
-        }
-    },
-
-    // 4. Overrides: Architecture Boundaries
+export const SHARED_ARCHITECTURE_OVERRIDES = [
     {
-        // DOMAIN LAYER: Pure, no dependency on upper layers
+        name: "cep/domain-architecture",
         files: ["**/js/logic/domain/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [
-                    { group: ["../pipeline/*", "../../pipeline/*"], message: "Domain KHÔNG được import từ Pipeline" },
-                    { group: ["../strategies/*", "../../strategies/*"], message: "Domain KHÔNG được import từ Strategies" },
-                    { group: ["../../components/*", "../components/*"], message: "Domain KHÔNG được import từ Components" },
-                    { group: ["../../controllers/*", "../controllers/*"], message: "Domain KHÔNG được import từ Controllers" },
-                    { group: ["../../actions/*", "../actions/*"], message: "Domain KHÔNG được import từ Actions" },
-                    { group: ["../../bridge*"], message: "Domain KHÔNG được import từ Bridge" }
+                    { group: ["../pipeline/*", "../../pipeline/*"], message: "Domain KHONG duoc import tu Pipeline" },
+                    { group: ["../strategies/*", "../../strategies/*"], message: "Domain KHONG duoc import tu Strategies" },
+                    { group: ["../../components/*", "../components/*"], message: "Domain KHONG duoc import tu Components" },
+                    { group: ["../../controllers/*", "../controllers/*"], message: "Domain KHONG duoc import tu Controllers" },
+                    { group: ["../../actions/*", "../actions/*"], message: "Domain KHONG duoc import tu Actions" },
+                    { group: ["../../bridge*"], message: "Domain KHONG duoc import tu Bridge" }
                 ]
             }]
         }
     },
     {
-        // CORE LAYER: Purest utilities
+        name: "cep/core-architecture",
         files: ["**/js/logic/core/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [
-                    { group: ["../*", "../../*"], message: "Core KHÔNG được import từ bất kỳ module nào khác" }
+                    { group: ["../*", "../../*"], message: "Core KHONG duoc import tu bat ky module nao khac" }
                 ]
             }]
         }
     },
     {
-        // PIPELINE LAYER: Import from Domain/Core only (plus libs)
+        name: "cep/pipeline-architecture",
         files: ["**/js/logic/pipeline/**/*.js"],
         rules: {
             "no-restricted-imports": ["error", {
                 patterns: [
-                    { group: ["../../components/*"], message: "Pipeline KHÔNG được import từ Components" },
-                    { group: ["../../controllers/*"], message: "Pipeline KHÔNG được import từ Controllers" },
-                    { group: ["../../actions/*"], message: "Pipeline KHÔNG được import từ Actions" }
-                ]
-            }]
-        }
-    },
-
-    // 5. Overrides: Tests
-    {
-        files: ["**/*.test.js"],
-        rules: {
-            "max-lines-per-function": "off",
-            "no-undef": "off",
-            "no-unused-vars": "off"
-        }
-    },
-
-    // 6. Nx Architecture Enforcement
-    {
-        plugins: { "@nx": nxPlugin },
-        rules: {
-            "@nx/enforce-module-boundaries": ["error", {
-                "enforceBuildableLibDependency": true,
-                "allow": [],
-                "depConstraints": [
-                    { "sourceTag": "scope:domain", "onlyDependOnLibsWithTags": [] },
-                    { "sourceTag": "scope:app", "onlyDependOnLibsWithTags": ["scope:domain"] }
+                    { group: ["../../components/*"], message: "Pipeline KHONG duoc import tu Components" },
+                    { group: ["../../controllers/*"], message: "Pipeline KHONG duoc import tu Controllers" },
+                    { group: ["../../actions/*"], message: "Pipeline KHONG duoc import tu Actions" }
                 ]
             }]
         }
     }
 ];
+
+export const TEST_OVERRIDES = {
+    name: "cep/tests",
+    files: ["**/*.test.js"],
+    rules: {
+        "max-lines-per-function": "off",
+        "no-undef": "off",
+        "no-unused-vars": "off"
+    }
+};
+
+export const NODE_TOOLING_OVERRIDES = {
+    name: "cep/node-tooling",
+    files: [
+        "**/*.cjs",
+        "**/build.cjs",
+        "**/scripts/**/*.cjs",
+        "**/debug_scripts/**/*.cjs"
+    ],
+    languageOptions: NODE_TOOLING_LANGUAGE_OPTIONS
+};
+
+export const NX_BOUNDARY_OVERRIDES = {
+    name: "cep/nx-boundaries",
+    plugins: { "@nx": nxPlugin },
+    rules: {
+        "@nx/enforce-module-boundaries": ["error", {
+            enforceBuildableLibDependency: true,
+            allow: [],
+            depConstraints: [
+                { sourceTag: "scope:domain", onlyDependOnLibsWithTags: [] },
+                { sourceTag: "scope:shared", onlyDependOnLibsWithTags: ["scope:shared"] },
+                { sourceTag: "scope:app", onlyDependOnLibsWithTags: ["scope:domain", "scope:shared"] }
+            ]
+        }]
+    }
+};
+
+export function createCepLintConfig({
+    namePrefix = "cep",
+    ignores = DEFAULT_IGNORES,
+    files = ["**/cep/js/**/*.js", "**/cep/js/**/*.mjs", "libs/**/*.js", "libs/**/*.ts"],
+    languageOptions = CEP_APP_LANGUAGE_OPTIONS,
+    globals: extraGlobals = {},
+    rules: extraRules = {},
+    linterOptions = SHARED_LINTER_OPTIONS,
+    extraArchitectureConfig = [],
+    extraConfig = [],
+    includeNx = true
+} = {}) {
+    const mergedLanguageOptions = {
+        ...languageOptions,
+        globals: {
+            ...(languageOptions.globals || {}),
+            ...extraGlobals
+        }
+    };
+
+    return [
+        {
+            name: `${namePrefix}/ignores`,
+            ignores
+        },
+        js.configs.recommended,
+        {
+            name: `${namePrefix}/main`,
+            files,
+            linterOptions,
+            languageOptions: mergedLanguageOptions,
+            rules: {
+                ...CEP_RULES,
+                ...extraRules
+            }
+        },
+        ...extraArchitectureConfig,
+        ...SHARED_ARCHITECTURE_OVERRIDES,
+        TEST_OVERRIDES,
+        NODE_TOOLING_OVERRIDES,
+        ...(includeNx ? [NX_BOUNDARY_OVERRIDES] : []),
+        ...extraConfig
+    ];
+}
+
+export default createCepLintConfig();
+

@@ -1,10 +1,10 @@
 /*
-    🧹 MODULE: CLEANUP
+    f9 MODULE: CLEANUP
     ----------------------------------------------------------------------------
     PROTOCOL: Scenario A (Logic Fix)
     - Edit this file directly.
     - Maintain run(item) signature.
-    - See [.agent/plans/modular_architecture_risk_and_roadmap.md] for details.
+    - See [symbol-cep/AGENTS.md] and [symbol-cep/ARCHITECTURE.md] for current boundaries.
     ----------------------------------------------------------------------------
     Responsibility: Pre-flight cleanup (Outlines, Expand, Flatten).
     Interface: run(item: PageItem)
@@ -14,7 +14,7 @@
 (function () {
     var Module = {
         id: "cleanup",
-        version: "1.0.0",
+        version: "1.1.0",
 
         /**
          * Main Execution Point
@@ -28,47 +28,73 @@
 
         // --- INTERNAL LOGIC ---
 
-        cleanupForPrint: function (item) {
-            // 1. Text to Outlines
+        outlineTextOnly: function (item) {
             var textFrames = [];
-            function findText(obj) {
-                try {
-                    if (obj.typename === 'TextFrame') {
-                        textFrames.push(obj);
-                    } else if (obj.typename === 'GroupItem') {
-                        for (var i = 0; i < obj.pageItems.length; i++) {
-                            findText(obj.pageItems[i]);
-                        }
-                    }
-                } catch (e) { }
-            }
-            findText(item);
+            var i;
 
-            for (var i = 0; i < textFrames.length; i++) {
+            this._collectTextFrames(item, textFrames);
+
+            for (i = 0; i < textFrames.length; i++) {
                 try { textFrames[i].createOutline(); } catch (e) { }
             }
+        },
 
-            // 2. Expand Appearance
-            // CRITICAL: Selection must be an ARRAY for some AI versions
-            var doc = app.activeDocument;
-            // Step 2163 Option C: Removed unused oldSel capture
-            doc.selection = null; // Clear first
+        hasTextFrames: function (item) {
+            var textFrames = [];
+
+            this._collectTextFrames(item, textFrames);
+            return textFrames.length > 0;
+        },
+
+        cleanupForPrint: function (item) {
+            this.outlineTextOnly(item);
+            this._expandAppearance(item);
+        },
+
+        _collectTextFrames: function (obj, bucket) {
+            var i;
 
             try {
-                // Must act on the object in the document context
+                if (!obj || obj.locked || obj.hidden) {
+                    return;
+                }
+            } catch (stateError) {
+                return;
+            }
+
+            try {
+                if (obj.typename === 'TextFrame') {
+                    bucket.push(obj);
+                    return;
+                }
+            } catch (typenameError) {
+                return;
+            }
+
+            try {
+                if (obj.typename === 'GroupItem') {
+                    for (i = 0; i < obj.pageItems.length; i++) {
+                        this._collectTextFrames(obj.pageItems[i], bucket);
+                    }
+                }
+            } catch (groupError) { }
+        },
+
+        _expandAppearance: function (item) {
+            var doc = app.activeDocument;
+            doc.selection = null;
+
+            try {
                 item.selected = true;
-                doc.selection = [item]; // Force array selection
+                doc.selection = [item];
 
-                app.executeMenuCommand('expandStyle'); // Expand Appearance
-                app.executeMenuCommand('expand'); // General Expand
+                app.executeMenuCommand('expandStyle');
+                app.executeMenuCommand('expand');
 
-                // Cleanup selection
                 doc.selection = null;
             } catch (e) {
                 // Ignore selection errors, proceed
             }
-
-            // Restore selection if needed? No, cleanup implies changing structure.
         }
     };
 

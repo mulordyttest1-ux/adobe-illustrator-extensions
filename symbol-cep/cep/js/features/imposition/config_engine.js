@@ -62,7 +62,7 @@ export const ConfigEngine = {};
      */
     function _compileSectionFields(section, getValue, rules) {
         if (!section.fields) return;
-        section.fields.forEach(field => _compileField(field, getValue, rules));
+        section.fields.forEach(field => _compileField(field, getValue, rules, null));
     }
 
     /**
@@ -79,7 +79,7 @@ export const ConfigEngine = {};
                 if (f.binding === undefined) {
                     f.binding = { classification: row.classification, edge: key };
                 }
-                _compileField(f, getValue, rules);
+                _compileField(f, getValue, rules, row);
             }
         });
     }
@@ -88,7 +88,7 @@ export const ConfigEngine = {};
      * Compile a single field into rules
      * @private
      */
-    function _compileField(field, getValue, rules) {
+    function _compileField(field, getValue, rules, row) {
         if (!field.binding || !field.binding.classification) return;
 
         const rawVal = getValue(field.id);
@@ -101,6 +101,15 @@ export const ConfigEngine = {};
             type: field.binding.classification,
             edge: _resolveEdge(field, getValue)
         };
+
+        if (row && row.id) {
+            rule.drawBorder = _resolveCheckbox(getValue(row.id + '_draw_border'));
+            rule.borderStyle = getValue(row.id + '_border_style') || 'dashed';
+        }
+
+        if (rule.val <= 0) {
+            return;
+        }
 
         if (rule.edge === 'all') {
             _expandAllEdges(rule, rules);
@@ -132,9 +141,15 @@ export const ConfigEngine = {};
                 id: rule.id + '_' + e,
                 val: rule.val,
                 type: rule.type,
-                edge: e
+                edge: e,
+                drawBorder: rule.drawBorder,
+                borderStyle: rule.borderStyle
             });
         });
+    }
+
+    function _resolveCheckbox(value) {
+        return value === true || value === 'true' || value === 'on' || value === 1 || value === '1';
     }
 
 })(ConfigEngine);

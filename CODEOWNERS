@@ -1,0 +1,111 @@
+# Default owner
+* @mulordyttest1-ux
+
+# Governance and repo control plane
+/AGENTS.md @mulordyttest1-ux
+/NEW_MACHINE_PROMPT.txt @mulordyttest1-ux
+/devkit.lock.json @mulordyttest1-ux
+/POSTFLIGHT_TAXONOMY.md @mulordyttest1-ux
+/README.md @mulordyttest1-ux
+/.agents/ @mulordyttest1-ux
+/.specify/ @mulordyttest1-ux
+/specs/ @mulordyttest1-ux
+/scripts/bootstrap-machine.ps1 @mulordyttest1-ux
+/scripts/ensure-devkit.ps1 @mulordyttest1-ux
+/.github/ @mulordyttest1-ux
+/adr/ @mulordyttest1-ux
+/.task_steps/templates/ @mulordyttest1-ux
+
+# Shared and elevated-risk surfaces
+/libs/shared/ @mulordyttest1-ux
+/libs/wedding/domain/ @mulordyttest1-ux
+/shared/ @mulordyttest1-ux
+
+# Wedding CEP - Runtime / Boot
+/wedding-cep/AGENTS.md @mulordyttest1-ux
+/wedding-cep/FEATURE_MAP.md @mulordyttest1-ux
+/wedding-cep/ARCHITECTURE.md @mulordyttest1-ux
+/wedding-cep/PROJECT_STATUS.md @mulordyttest1-ux
+/wedding-cep/cep/js/app.js @mulordyttest1-ux
+/wedding-cep/cep/js/bootstrap/ @mulordyttest1-ux
+
+# Wedding CEP - Workspace / Form Entry
+/wedding-cep/cep/js/components/compact-form/ @mulordyttest1-ux
+/wedding-cep/cep/js/components/helpers/DomFactory.js @mulordyttest1-ux
+/wedding-cep/cep/js/components/TabbedPanel.js @mulordyttest1-ux
+
+# Wedding CEP - Date Intelligence
+/wedding-cep/cep/js/components/date-grid/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/ux/InputEngine.js @mulordyttest1-ux
+
+# Wedding CEP - Input Assistance
+/wedding-cep/cep/js/components/compact-form/AddressService.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/ux/input/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/ux/search/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/ux/validators/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/ux/normalizers/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/ux/AddressAutocomplete.js @mulordyttest1-ux
+
+# Wedding CEP - Template Authoring
+/wedding-cep/cep/js/components/schema-tab/ @mulordyttest1-ux
+/wedding-cep/cep/js/actions/InjectSchemaAction.js @mulordyttest1-ux
+/wedding-cep/cep/js/actions/ManualInjectAction.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/schema/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/use-cases/injectSchemaDocument.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/use-cases/manualInjection.js @mulordyttest1-ux
+
+# Wedding CEP - Document Sync
+/wedding-cep/cep/js/actions/ScanAction.js @mulordyttest1-ux
+/wedding-cep/cep/js/actions/UpdateAction.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/pipeline/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/strategies/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/use-cases/scanDocument.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/use-cases/updateDocument.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/use-cases/applyStrategyUpdate.js @mulordyttest1-ux
+/wedding-cep/cep/js/logic/use-cases/support/schemaMeta.js @mulordyttest1-ux
+
+# Wedding CEP - Postflight
+/wedding-cep/cep/js/actions/PostflightAction.js @mulordyttest1-ux
+/wedding-cep/cep/js/components/postflight/ @mulordyttest1-ux
+/wedding-cep/cep/js/logic/validators/ @mulordyttest1-ux
+
+# Wedding CEP - Platform / Illustrator Host
+/wedding-cep/cep/js/infrastructure/ @mulordyttest1-ux
+/wedding-cep/cep/jsx/ @mulordyttest1-ux
+
+# Symbol CEP - Runtime / Boot
+/symbol-cep/AGENTS.md @mulordyttest1-ux
+/symbol-cep/FEATURE_MAP.md @mulordyttest1-ux
+/symbol-cep/PROJECT_STATUS.md @mulordyttest1-ux
+/symbol-cep/cep/js/app.js @mulordyttest1-ux
+/symbol-cep/cep/js/bridge.js @mulordyttest1-ux
+/symbol-cep/cep/js/config.js @mulordyttest1-ux
+
+# Symbol CEP - Preset / Config
+/symbol-cep/cep/js/features/imposition/config_tab.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/config_engine.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/config_renderer.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/config_events.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/config_pane_renderer.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/config_persistence.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/builtin_presets.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/schema_editor.js @mulordyttest1-ux
+
+# Symbol CEP - Preflight
+/symbol-cep/cep/js/features/imposition/preflight/ @mulordyttest1-ux
+
+# Symbol CEP - Engine / Execution
+/symbol-cep/cep/js/features/imposition/action_tab.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/processing_options.js @mulordyttest1-ux
+/symbol-cep/cep/js/features/imposition/bridge_codec.js @mulordyttest1-ux
+/symbol-cep/cep/js/domain/layout_engine.js @mulordyttest1-ux
+
+# Symbol CEP - Postflight / Hooks
+/symbol-cep/cep/js/features/imposition/postflight/ @mulordyttest1-ux
+
+# Symbol CEP - Platform / Illustrator Host
+/symbol-cep/cep/jsx/ @mulordyttest1-ux
+
+# Symbol CEP - Data / Persistence
+/symbol-cep/cep/js/features/imposition/data_store.js @mulordyttest1-ux
+/symbol-cep/cep/data/ @mulordyttest1-ux

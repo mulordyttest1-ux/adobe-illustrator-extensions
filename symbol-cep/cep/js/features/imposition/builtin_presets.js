@@ -85,11 +85,13 @@ export const BuiltinPresets = [
                 id: "sec_options",
                 title: "Tùy chọn Xử lý (Pipeline Order)",
                 layout: "stack",
+                readOnlySummary: [
+                    { id: "pipeline_clone", label: "01. [Bắt buộc] Tạo bản sao (Isolation)", note: "Luôn bật để giữ artwork gốc an toàn." },
+                    { id: "pipeline_resize_checkpoint", label: "04. Resize selection", note: "Checkpoint nội bộ luôn chạy trước bước layout." }
+                ],
                 fields: [
-                    { id: "opt_clone", label: "01. [Bắt buộc] Tạo bản sao (Isolation)", type: "checkbox", default: true, protected: true },
                     { id: "opt_cleanup", label: "02. Làm sạch (Pre-flight Cleanup)", type: "checkbox", default: true, protected: true },
                     { id: "opt_k100", label: "03. Chuyển màu đen (K100)", type: "checkbox", default: true, protected: true },
-                    { id: "opt_mod_layout_checkpoint", label: "04. Resize selection", type: "checkbox", default: true, protected: true, disabled: true, semantic: "CHECKPOINT", binding: false },
                     { id: "opt_symbol_mode", label: "05. Tạo Symbol (Proxy Asset)", type: "checkbox", default: true, protected: true },
                     { id: "opt_layout_head_to_head", label: "06. Xếp kiểu đấu đầu (Head-to-Head 180°)", type: "checkbox", default: false, note: "Xoay ngược hàng chẵn" },
                     { id: "opt_n_up", label: "07. Bình dàn trang (N-Up Layout)", type: "checkbox", default: true, protected: true },
@@ -115,11 +117,34 @@ export const BuiltinPresets = [
                     },
                     {
                         id: "info_template",
-                        label: "10. Mẫu thông tin Pasteboard (Template)",
+                        label: "10. Ghi chu in tuy chinh",
                         type: "textarea",
-                        placeholder: "{count} tem - Khổ {width}x{height}",
+                        placeholder: "{preset_name} | {count} tem | {width}x{height} | {date} {time}\\n{margin_summary}",
                         binding: false,
-                        note: "Biến hỗ trợ: {preset_name}, {count}, {width}, {height}, {timestamp}"
+                        note: "Dung che do Tuy chinh neu can viet mau slug rieng; cac token co san trong muc Ghi chu in."
+                    }
+                ]
+            },
+            {
+                id: "sec_output_save",
+                title: "Luu sau khi binh",
+                layout: "stack",
+                fields: [
+                    {
+                        id: "save_filename_prefix",
+                        label: "Tien to ten file",
+                        type: "text",
+                        placeholder: "Vi du: bai in thiep cuoi",
+                        binding: false,
+                        note: "Bo trong thi se dung ten file hien tai lam tien to. Neu co nhap, he thong se dung tien to nay truoc moc thoi gian luu."
+                    },
+                    {
+                        id: "save_output_dir",
+                        label: "Thu muc luu",
+                        type: "text",
+                        placeholder: "Chon thu muc luu bai in",
+                        binding: false,
+                        note: "Co thu muc thi preset se luu AI sau khi binh. Sau khi doi thu muc, hay Luu Preset de tab Chay dung gia tri moi."
                     }
                 ]
             },

@@ -1,0 +1,19 @@
+{
+  "id": "recolor_selection_red_c0_m100_y100_k0",
+  "title": "Recolor Selection Red C0 M100 Y100 K0",
+  "buttonLabel": "Recolor Red",
+  "category": "Daily Work",
+  "order": 14,
+  "aliases": [
+    "recolor red",
+    "red cmyk",
+    "c0 m100 y100 k0",
+    "doi mau do",
+    "red"
+  ],
+  "description": "Replace supported selection colors with process red C0 M100 Y100 K0.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

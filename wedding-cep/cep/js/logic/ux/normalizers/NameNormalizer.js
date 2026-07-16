@@ -8,7 +8,7 @@
  */
 
 
-import { StringUtils } from '@wedding/domain';
+import { CatholicSaintNames, StringUtils } from '@wedding/domain';
 
 export const NameNormalizer = {
     /**
@@ -40,8 +40,16 @@ export const NameNormalizer = {
         }
 
         // Step 2: Smart Title Case (capitalize-UP only, never lowercase)
+        // If a saint prefix is recognized, keep its spelling but title-case it like a proper name.
         const originalTitle = result;
-        result = StringUtils.toSmartTitleCase(result);
+        const saintName = options.allowSaintName ? CatholicSaintNames.detectPrefix(result) : null;
+        if (saintName) {
+            const saintPrefix = StringUtils.toSmartTitleCase(result.slice(saintName.start, saintName.end));
+            const ordinaryName = StringUtils.toSmartTitleCase(result.slice(saintName.end));
+            result = result.slice(0, saintName.start) + saintPrefix + ordinaryName;
+        } else {
+            result = StringUtils.toSmartTitleCase(result);
+        }
         if (result !== originalTitle) {
             applied.push('title_case');
         }

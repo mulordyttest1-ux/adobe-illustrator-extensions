@@ -24,6 +24,26 @@ export class Bridge {
         });
     }
 
+    async reloadHostScripts() {
+        const hostPath = `${this.hostRoot}host.jsx`;
+        const escapedHostPath = hostPath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+        return new Promise((resolve, reject) => {
+            this.cs.evalScript(`$.evalFile(new File("${escapedHostPath}"))`, (result) => {
+                const rawResult = String(result || '');
+                if (
+                    rawResult.indexOf('EvalScript') === 0 ||
+                    rawResult.indexOf('ReferenceError') === 0 ||
+                    /^Error\b/.test(rawResult)
+                ) {
+                    reject(new Error(rawResult));
+                    return;
+                }
+                resolve(result);
+            });
+        });
+    }
+
     /**
      * Generic Eval Helper
      */

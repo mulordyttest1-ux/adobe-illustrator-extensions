@@ -1,104 +1,43 @@
-/* global Fuse */
 /**
  * MODULE: AddressAutocomplete
  * LAYER: UX Automation
- * PURPOSE: Fuzzy search cho địa chỉ Việt Nam. Sử dụng Fuse.js để tìm kiếm địa chỉ theo alias hoặc tên đầy đủ.
- * DEPENDENCIES: Fuse.js (vendor), CSInterface
- * SIDE EFFECTS: DOM Injection (list container), CEP FS (File System reads)
+ * PURPOSE: Fuzzy search for Vietnamese addresses
+ * DEPENDENCIES: FuseAddressIndex, CEP host adapter
+ * SIDE EFFECTS: CEP file reads during initialization
  * EXPORTS: AddressAutocomplete
  */
+import { FuseAddressIndex } from './search/FuseAddressIndex.js';
+import {
+    createAddressIndexBuilder,
+    formatAddressMatch,
+    loadAddressAutocompleteData,
+    resetAddressAutocompleteState
+} from './addressAutocompleteRuntimeSupport.js';
+
 export class AddressAutocomplete {
-    /**
-     * Khởi tạo Fuse.js với dữ liệu địa chỉ
-     * @returns {Promise<void>}
-     */
-    static async init() {
+    static async init({ hostFacade, host, FuseCtor, createIndex } = {}) {
         if (this.isReady) return;
 
         try {
-            // 1. Get extension path and normalize it
-            const cs = new CSInterface();
-            let extPath = cs.getSystemPath(CSInterface.EXTENSION);
-
-            // Normalize: remove file:// prefix
-            if (extPath.startsWith('file:///')) {
-                extPath = extPath.substring(8);
-            } else if (extPath.startsWith('file://')) {
-                extPath = extPath.substring(7);
-            }
-            // Windows: /C:/ -> C:/
-            if (/^\/[a-zA-Z]:/.test(extPath)) {
-                extPath = extPath.substring(1);
-            }
-
-            const dataPath = extPath + '/data/vn_address_custom.json';
-
-
-            // 2. Load using CEP FS API (most reliable in CEP)
-            const result = window.cep.fs.readFile(dataPath);
-            if (result.err !== 0) {
-                throw new Error(`CEP FS Error ${result.err} at: ${dataPath}`);
-            }
-            this.data = JSON.parse(result.data);
-
-            // 3. Initialize Fuse
-            this.fuse = new Fuse(this.data, {
-                keys: [
-                    { name: 'a', weight: 0.5 },  // Alias
-                    { name: 's', weight: 0.3 },  // Search string
-                    { name: 'c', weight: 0.2 }   // Full name
-                ],
-                threshold: 0.4,
-                distance: 100,
-                includeScore: true,
-                minMatchCharLength: 2,
-                ignoreLocation: true
-            });
-
+            this.data = await loadAddressAutocompleteData(hostFacade || host);
+            const buildIndex = createAddressIndexBuilder(createIndex, FuseCtor);
+            this.fuse = buildIndex(this.data);
             this.isReady = true;
-
         } catch (error) {
+            resetAddressAutocompleteState(this);
             console.warn('[AddressAutocomplete] init failed:', error.message);
         }
     }
 
-    /**
-     * Tìm kiếm địa chỉ (Updated for Dropdown)
-     * @param {string} query - Từ khóa
-     * @returns {Array} - Danh sách kết quả (Top 5)
-     */
     static search(query) {
-        if (!this.fuse || !query) return [];
-
-        // [FIX - MULTILINE] Ép phẳng ký tự Xuống dòng (\n, \r) thành Khoảng trắng (Best Practice cho Fuse.js)
-        const normalizedQuery = query.replace(/[\n\r]+/g, ' ').toLowerCase().trim();
-
-        // Tìm kiếm
-        const results = this.fuse.search(normalizedQuery);
-
-        // Lấy top 5 kết quả tốt nhất
-        return results.slice(0, 15).map(r => r.item);
+        return FuseAddressIndex.search(this.fuse, query);
     }
 
-    /**
-     * Format kết quả theo mode
-     * @param {Object} match - Kết quả từ search()
-     * @param {string} separator - Dấu phân cách (VD: ', ' hoặc ' - ')
-     * @returns {string|null}
-     */
     static format(match, separator = ", ") {
-        if (!match) return null;
-
-        // Database vn_address_custom.json có tự chứa dấu ' - ' trong match.p (VD: 'Quận 1 - TP.HCM')
-        // Ta đè luôn dấu này bằng separator kế thừa để đồng bộ 100%
-        const cleanP = match.p.replace(/\s*-\s*/g, separator);
-
-        return `${match.c}${separator}${cleanP}`;
+        return formatAddressMatch(match, separator);
     }
 }
 
-// Static properties initialization
 AddressAutocomplete.fuse = null;
 AddressAutocomplete.data = [];
 AddressAutocomplete.isReady = false;
-

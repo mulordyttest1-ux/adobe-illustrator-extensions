@@ -1,0 +1,20 @@
+{
+  "id": "swap_selection_size_and_position",
+  "title": "Swap Selection Size and Position",
+  "buttonLabel": "Swap Size + Position",
+  "category": "Daily Work",
+  "order": 11,
+  "aliases": [
+    "swap size",
+    "swap both",
+    "swap size position",
+    "exchange size",
+    "doi size",
+    "swap 2 size"
+  ],
+  "description": "Swap the positions and geometric sizes of exactly two selected items while keeping each item's own rotation.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

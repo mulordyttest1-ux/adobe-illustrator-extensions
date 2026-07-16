@@ -1,221 +1,140 @@
-/**
- * ManualInjectAction.js
- * Xử lý logic tiêm Schema thủ công (Single mode) và theo Cụm Tọa độ (Bulk mode)
- */
-import { UIFeedback } from '../controllers/helpers/UIFeedback.js';
-import { LayoutUtils } from '../logic/ux/LayoutUtils.js';
+import { UIFeedback } from '@shared/cep-ui';
+import { runTemplateAuthoringService } from '../logic/use-cases/template-authoring/templateAuthoringService.js';
+
+function createDeps(overrides = {}) {
+    return {
+        runTemplateAuthoringService: overrides.runTemplateAuthoringService || runTemplateAuthoringService,
+        showToast: overrides.showToast || ((message, type) => UIFeedback.showToast(message, type))
+    };
+}
+
+function handleSelectionFailure(selectionResult, showToast) {
+    if (selectionResult.reason === 'READ_FAILED') {
+        showToast('L\u1ed7i \u0111\u1ecdc Text: ' + selectionResult.error, 'error');
+        return { success: false, error: selectionResult.error };
+    }
+
+    showToast('\u26a0\ufe0f Vui l\u00f2ng b\u00f4i \u0111en (ch\u1ecdn) ph\u1ea7n ch\u1eef tr\u00ean thi\u1ebft k\u1ebf AI!', 'warning');
+    return { success: false, error: 'No selection' };
+}
+
+function handleBuildFailure(result, showToast) {
+    if (result.reason === 'INVALID_FRAME_COUNT') {
+        showToast(
+            `\u26a0\ufe0f Vui l\u00f2ng ch\u1ecdn \u0111\u00fang b\u1ed9 4 d\u00f2ng (\u00d4ng B\u00e0, \u00d4ng, B\u00e0, \u0110/C) \u0111\u1ec3 ti\u00eam c\u1ee5m. B\u1ea1n \u0111ang ch\u1ecdn ${result.frameCount} d\u00f2ng.`,
+            'warning'
+        );
+        return { success: false, error: result.reason };
+    }
+
+    if (result.reason === 'NO_DATE_TIEC_METADATA') {
+        showToast('\u26a0\ufe0f Kh\u00f4ng t\u00ecm th\u1ea5y frame n\u00e0o c\u00f3 metadata date.tiec.* \u0111\u1ec3 clone.', 'warning');
+        return { success: false, error: result.reason };
+    }
+
+    if (result.reason === 'APPLY_FAILED') {
+        showToast('L\u1ed7i ghi \u0111\u00e8 Text: ' + result.error, 'error');
+        return { success: false, error: result.error };
+    }
+
+    return { success: false, error: result.reason || 'BUILD_FAILED' };
+}
+
+async function runManualAction({ action, ctx, input, successMsg, deps }) {
+    const { button } = ctx;
+
+    try {
+        action._setButtonState(button, true);
+
+        const result = await deps.runTemplateAuthoringService(input, deps);
+        if (!result.success) {
+            if (result.reason === 'READ_FAILED' || result.reason === 'EMPTY_SELECTION') {
+                return handleSelectionFailure(result, deps.showToast);
+            }
+            return handleBuildFailure(result, deps.showToast);
+        }
+
+        deps.showToast(successMsg(result), 'success');
+        return {
+            success: true,
+            count: result.count
+        };
+    } catch (err) {
+        console.error(err);
+        deps.showToast('L\u1ed7i h\u1ec7 th\u1ed1ng: ' + err.message, 'error');
+        return { success: false, error: err.message };
+    } finally {
+        action._setButtonState(button, false);
+    }
+}
 
 export const ManualInjectAction = {
-    /**
-     * Tiêm thủ công 1 biến ({pos1.ong}) vào toàn bộ các TextFrames đang chọn
-     */
-    async injectSingle(ctx) {
-        const { bridge, button, schemaValue } = ctx;
-        if (!schemaValue) return;
-
-        try {
-            this._setButtonState(button, true);
-
-            const frames = await this._fetchFrames(bridge);
-            if (!frames) return;
-            const plans = frames.map(frame => ({
-                id: frame.id,
-                plan: {
-                    mode: 'DIRECT',
-                    content: schemaValue, // Schema key trực tiếp vào content
-                    meta: { action: 'clear' }
-                }
-            }));
-
-            await this._applyChanges(bridge, plans, `🪄 Đã tiêm ${schemaValue}`);
-
-        } catch (err) {
-            console.error(err);
-            UIFeedback.showToast('Lỗi hệ thống: ' + err.message, 'error');
-            return;
-        } finally {
-            this._setButtonState(button, false);
-        }
+    async injectSingle(ctx, deps = {}) {
+        const resolvedDeps = createDeps(deps);
+        const hostFacade = ctx.hostFacade || ctx.bridge;
+        return runManualAction({
+            action: this,
+            ctx,
+            input: {
+                hostFacade,
+                bridge: hostFacade,
+                mode: 'single',
+                schemaValue: ctx.schemaValue
+            },
+            successMsg: () => `\ud83e\ude84 \u0110\u00e3 ti\u00eam ${ctx.schemaValue}`,
+            deps: resolvedDeps
+        });
     },
 
-    /**
-     * Tiêm Compound — 2 keys trên 1 TextFrame (vd: ho_dau + ten)
-     * schemaValue: "{pos1.con_full.ho_dau}|{pos1.con_full.ten}"
-     * Logic: Thay toàn bộ content bằng 2 schema keys nối khoảng trắng.
-     */
-    async injectCompound(ctx) {
-        const { bridge, button, schemaValue } = ctx;
-        if (!schemaValue) return;
-
-        try {
-            this._setButtonState(button, true);
-
-            const frames = await this._fetchFrames(bridge);
-            if (!frames) return;
-
-            // Tách keys: "{pos1.con_full.ho_dau}|{pos1.con_full.ten}" → rawKeys
-            const rawKeys = schemaValue.split('|');
-            const keys = rawKeys.map(k => { const m = k.match(/\{([\w.]+)\}/); return m ? m[1] : k; });
-
-            // Content = nối các schema keys bằng khoảng trắng
-            const compoundContent = rawKeys.join(' ');
-            const plans = frames.map(frame => ({
-                id: frame.id,
-                plan: {
-                    mode: 'DIRECT',
-                    content: compoundContent,
-                    meta: { action: 'clear' }
-                }
-            }));
-
-            if (plans.length === 0) return;
-            await this._applyChanges(bridge, plans, `🔗 Đã tiêm compound [${keys.join(' + ')}]`);
-
-        } catch (err) {
-            console.error(err);
-            UIFeedback.showToast('Lỗi hệ thống: ' + err.message, 'error');
-        } finally {
-            this._setButtonState(button, false);
-        }
+    async injectCompound(ctx, deps = {}) {
+        const resolvedDeps = createDeps(deps);
+        const hostFacade = ctx.hostFacade || ctx.bridge;
+        return runManualAction({
+            action: this,
+            ctx,
+            input: {
+                hostFacade,
+                bridge: hostFacade,
+                mode: 'compound',
+                schemaValue: ctx.schemaValue
+            },
+            successMsg: (result) => `\ud83d\udd17 \u0110\u00e3 ti\u00eam compound [${result.keys.join(' + ')}]`,
+            deps: resolvedDeps
+        });
     },
 
-    /**
-     * Tiêm Cụm Top-Down dựa trên thuộc tính 'top' của TextFrame
-     * @param {string} prefix 'pos1' hoặc 'pos2'
-     */
-    async injectBulk(ctx) {
-        const { bridge, button, prefix } = ctx;
-
-        try {
-            this._setButtonState(button, true);
-
-            const frames = await this._fetchFrames(bridge);
-            if (!frames) return;
-
-            if (frames.length !== 4) {
-                UIFeedback.showToast(`⚠️ Vui lòng chọn đúng bộ 4 dòng (Đ/C, Ông, Bà, Ông Bà) để tiêm cụm. Bạn đang chọn ${frames.length} dòng.`, 'warning');
-                return;
-            }
-
-            // [BUG #03 FIX] Secondary Sort: Left-to-Right
-            const sortedFrames = LayoutUtils.sortFrames(frames);
-
-            // Map variables top-down (Theo Layout: ÔngBà [Top] -> Ông -> Bà -> Địa Chỉ)
-            const variables = [`{${prefix}.ongba}`, `{${prefix}.ong}`, `{${prefix}.ba}`, `{${prefix}.diachi}`];
-            const plans = [];
-
-            for (let i = 0; i < sortedFrames.length; i++) {
-                if (variables[i]) {
-                    plans.push({
-                        id: sortedFrames[i].id,
-                        plan: {
-                            mode: 'DIRECT',
-                            content: variables[i], // Schema key trực tiếp vào content
-                            meta: { action: 'clear' }
-                        }
-                    });
-                }
-            }
-
-            await this._applyChanges(bridge, plans, `☄️ Tiêm cụm Top-Down thành công!`);
-
-        } catch (err) {
-            console.error(err);
-            UIFeedback.showToast('Lỗi hệ thống: ' + err.message, 'error');
-            return;
-        } finally {
-            this._setButtonState(button, false);
-        }
+    async injectBulk(ctx, deps = {}) {
+        const resolvedDeps = createDeps(deps);
+        const hostFacade = ctx.hostFacade || ctx.bridge;
+        return runManualAction({
+            action: this,
+            ctx,
+            input: {
+                hostFacade,
+                bridge: hostFacade,
+                mode: 'bulk',
+                prefix: ctx.prefix
+            },
+            successMsg: () => '\u2601\ufe0f Ti\u00eam c\u1ee5m Top-Down th\u00e0nh c\u00f4ng!',
+            deps: resolvedDeps
+        });
     },
 
-    /**
-     * Clone metadata tiec → le hoặc nhap cho các frame đang chọn.
-     * Frame nào có key chứa "date.tiec." → đổi thành "date.{targetMoc}."
-     */
-    async injectDateClone(ctx) {
-        const { bridge, button, targetMoc } = ctx; // targetMoc: 'le' | 'nhap'
-
-        try {
-            this._setButtonState(button, true);
-
-            const frames = await this._fetchFrames(bridge);
-            if (!frames) return;
-
-            const plans = [];
-            for (const frame of frames) {
-                // Content giờ chứa schema key trực tiếp (vd: "{date.tiec.ngay}")
-                // Tìm tất cả date.tiec key trong content
-                const content = frame.text || '';
-                const matches = content.match(/\{date\.tiec\.[^}]+\}/g) || [];
-
-                if (matches.length === 0) continue;
-
-                // Swap tiec → targetMoc in content using ATOMIC mode to preserve RichText format
-                const regex = /\{date\.tiec\.[^}]+\}/g;
-                const replacements = [];
-                let match;
-                while ((match = regex.exec(content)) !== null) {
-                    const oldWord = match[0];
-                    const newWord = oldWord.replace('date.tiec.', `date.${targetMoc}.`);
-                    replacements.push({
-                        start: match.index,
-                        end: match.index + oldWord.length,
-                        val: newWord
-                    });
-                }
-
-                if (replacements.length > 0) {
-                    plans.push({
-                        id: frame.id,
-                        plan: {
-                            mode: 'ATOMIC',
-                            replacements: replacements,
-                            meta: { action: 'clear' }
-                        }
-                    });
-                }
-            }
-
-            if (plans.length === 0) {
-                UIFeedback.showToast('⚠️ Không tìm thấy frame nào có metadata date.tiec.* để clone.', 'warning');
-                return;
-            }
-
-            await this._applyChanges(bridge, plans,
-                `📋 Đã clone ${plans.length} frame sang date.${targetMoc}.*`);
-
-        } catch (err) {
-            console.error(err);
-            UIFeedback.showToast('Lỗi hệ thống: ' + err.message, 'error');
-        } finally {
-            this._setButtonState(button, false);
-        }
-    },
-
-
-    async _fetchFrames(bridge) {
-        const result = await bridge.readSelectionObjects();
-        if (!result || !result.success) {
-            UIFeedback.showToast('Lỗi đọc Text: ' + (result?.error || 'Unknown'), 'error');
-            return null;
-        }
-
-        const frames = result.data || [];
-        if (frames.length === 0) {
-            UIFeedback.showToast('⚠️ Vui lòng bôi đen (chọn) phần chữ trên thiết kế AI!', 'warning');
-            return null;
-        }
-        return frames;
-    },
-
-    async _applyChanges(bridge, plans, successMsg) {
-        const applyResult = await bridge.applyPlan(plans);
-        if (!applyResult || !applyResult.success) {
-            UIFeedback.showToast('Lỗi ghi đè Text: ' + (applyResult?.error || 'Unknown'), 'error');
-            return { success: false, error: applyResult?.error };
-        }
-        UIFeedback.showToast(successMsg, 'success');
-        return { success: true, count: plans.length };
+    async injectDateClone(ctx, deps = {}) {
+        const resolvedDeps = createDeps(deps);
+        const hostFacade = ctx.hostFacade || ctx.bridge;
+        return runManualAction({
+            action: this,
+            ctx,
+            input: {
+                hostFacade,
+                bridge: hostFacade,
+                mode: 'dateClone',
+                targetMoc: ctx.targetMoc
+            },
+            successMsg: (result) => `\ud83d\udccb \u0110\u00e3 clone ${result.affectedCount} frame sang date.${ctx.targetMoc}.*`,
+            deps: resolvedDeps
+        });
     },
 
     _setButtonState(button, isProcessing) {
@@ -223,7 +142,7 @@ export const ManualInjectAction = {
         button.disabled = isProcessing;
         if (isProcessing) {
             button.dataset.originalText = button.innerHTML;
-            button.innerHTML = '⏳ Đang xử lý...';
+            button.innerHTML = '\u23f3 \u0110ang x\u1eed l\u00fd...';
         } else if (button.dataset.originalText) {
             button.innerHTML = button.dataset.originalText;
         }

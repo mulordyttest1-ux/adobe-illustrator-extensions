@@ -54,46 +54,14 @@
         },
 
         /**
-         * Check if rotation should be applied based on rawValues
-         * @param {Object} rawValues - UI form values
-         * @returns {Object} {enabled, angle}
-         */
-        parseOptions: function (rawValues) {
-            var raw = rawValues || {};
-
-            // DEBUG: Log what we receive
-            $.writeln("[Rotate] Raw opt_custom_rotate = " + raw.opt_custom_rotate + " (type: " + typeof raw.opt_custom_rotate + ")");
-            $.writeln("[Rotate] Raw custom_rotate_angle = " + raw.custom_rotate_angle);
-
-            // Handle all possible checkbox values: true, 'true', 'on', 1
-            var isEnabled = (
-                raw.opt_custom_rotate === true ||
-                raw.opt_custom_rotate === 'true' ||
-                raw.opt_custom_rotate === 'on' ||
-                raw.opt_custom_rotate === 1 ||
-                raw.opt_custom_rotate === '1'
-            );
-
-            var angle = parseFloat(raw.custom_rotate_angle) || 0;
-
-            $.writeln("[Rotate] Parsed: enabled=" + isEnabled + ", angle=" + angle);
-
-            return {
-                enabled: isEnabled,
-                angle: angle
-            };
-        },
-
-        /**
-         * Convenience method: Parse options + process
+         * Convenience method: process normalized rotate options
          * @param {Document} doc
          * @param {Array} items
-         * @param {Object} rawValues - From UI payload
+         * @param {Object} options - {enabled, angle}
          * @returns {Object} Result
          */
-        run: function (doc, items, rawValues) {
-            var options = this.parseOptions(rawValues);
-            return this.process(doc, items, options);
+        run: function (doc, items, options) {
+            return this.process(doc, items, options || {});
         }
     };
 

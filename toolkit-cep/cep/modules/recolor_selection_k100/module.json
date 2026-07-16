@@ -1,0 +1,19 @@
+{
+  "id": "recolor_selection_k100",
+  "title": "Recolor Selection K100",
+  "buttonLabel": "Recolor K100",
+  "category": "Daily Work",
+  "order": 13,
+  "aliases": [
+    "recolor black",
+    "k100",
+    "black 100",
+    "black cmyk",
+    "doi mau den"
+  ],
+  "description": "Replace supported selection colors with process black C0 M0 Y0 K100.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

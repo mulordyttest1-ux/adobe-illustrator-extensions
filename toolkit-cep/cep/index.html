@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolkit Panel</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="app-shell">
+        <header class="toolkit-header">
+            <div>
+                <strong class="toolkit-title">Toolkit</strong>
+            </div>
+            <button type="button" id="btn-reload-panel" class="ghost-button" title="Reload panel">↻</button>
+        </header>
+
+        <main class="toolkit-main">
+            <section class="search-panel">
+                <label class="search-label" for="toolkit-search">Command</label>
+                <input id="toolkit-search" class="search-input" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
+            </section>
+
+            <section id="toolkit-execution-summary" class="execution-summary" aria-live="polite">
+                Ready.
+            </section>
+
+            <section id="results-panel" class="section-panel" hidden>
+                <div class="section-header">
+                    <h2>Results</h2>
+                    <span id="results-count" class="section-meta"></span>
+                </div>
+                <ul id="results-list" class="results-list"></ul>
+            </section>
+
+            <section id="dashboard-panel" class="dashboard-panel">
+                <div class="section-header">
+                    <h2>Commands</h2>
+                </div>
+                <div id="dashboard-groups" class="dashboard-groups"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Toolkit...</div>
+    </div>
+
+    <script src="lib/CSInterface.js" charset="utf-8"></script>
+    <script src="js/libs/fuse.basic.min.js" charset="utf-8"></script>
+    <script src="js/bundle.js" charset="utf-8"></script>
+</body>
+
+</html>

@@ -24,7 +24,7 @@ module.exports = {
         {
             name: 'logic-cannot-import-ui',
             severity: 'error',
-            comment: 'Logic Layer (L1/L2) must NOT depend on UI/Components (L3).',
+            comment: 'Logic layer must not depend on components.',
             from: {
                 path: "^js/logic"
             },
@@ -33,14 +33,58 @@ module.exports = {
             }
         },
         {
-            name: 'domain-must-be-pure',
+            name: 'logic-cannot-import-controllers',
             severity: 'error',
-            comment: 'Domain Layer (L1) must NOT depend on anything external (except untyped utils).',
+            comment: 'Logic layer must not depend on controllers.',
             from: {
-                path: "^js/logic/domain"
+                path: "^js/logic"
             },
             to: {
-                path: "^js/(actions|controllers|components|bridge)"
+                path: "^js/controllers"
+            }
+        },
+        {
+            name: 'logic-cannot-import-actions',
+            severity: 'error',
+            comment: 'Logic layer must not depend on actions.',
+            from: {
+                path: "^js/logic"
+            },
+            to: {
+                path: "^js/actions"
+            }
+        },
+        {
+            name: 'logic-cannot-import-bridge',
+            severity: 'error',
+            comment: 'Logic layer must not depend on bridge infrastructure.',
+            from: {
+                path: "^js/logic"
+            },
+            to: {
+                path: "^js/bridge\\.js$"
+            }
+        },
+        {
+            name: 'core-must-stay-isolated',
+            severity: 'error',
+            comment: 'Core utilities must stay isolated from upper layers.',
+            from: {
+                path: "^js/logic/core"
+            },
+            to: {
+                path: "^js/(?!logic/core)"
+            }
+        },
+        {
+            name: 'pipeline-cannot-import-upper-layers',
+            severity: 'error',
+            comment: 'Pipeline may depend on logic/domain helpers, but not UI layers.',
+            from: {
+                path: "^js/logic/pipeline"
+            },
+            to: {
+                path: "^js/(components|controllers|actions)"
             }
         }
     ],

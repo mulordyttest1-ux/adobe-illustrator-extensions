@@ -2,8 +2,9 @@
     🛑 SYSTEM KERNEL - DO NOT EDIT
     ================================================================================
     📜 COMPLIANCE STANDARDS (Required Reading)
-    1. Architecture:      [.agent/plans/modular_architecture_risk_and_roadmap.md]
-    2. Domain Separation: [.agent/domain_separation_standard.md] (Firewall Enforced)
+    1. Module rules:    [symbol-cep/AGENTS.md]
+    2. Architecture:    [symbol-cep/ARCHITECTURE.md]
+    3. Risk routing:    [AGENT_OPERATING_MODEL.md]
     
     PROTOCOL: KERNEL_ORCHESTRATOR
     - Splits Data into YieldCtx and SheetCtx.
@@ -109,22 +110,21 @@
                     sheetInfo = Mods.layout.getSheetGeometry(doc);
                 }
 
-                // Inject Margins and RawValues into Sheet Info (Essential for Layout & Guides & Marks)
+                // Inject margins + normalized processing decisions into sheet info.
                 sheetInfo.margin = sm;
-                sheetInfo.rawValues = payload.rawValues; // Step 2267: Enable head-to-head & marks options
+                sheetInfo.processingOptions = payload.processingOptions || {};
 
                 // 4. PARSE FLAGS (Respect User Decisions)
-                var raw = payload.rawValues || {};
+                var processing = payload.processingOptions || {};
+                var layoutOptions = processing.layout || {};
+                var rotateOptions = processing.rotate || {};
+                var marksOptions = processing.marks || {};
+                var outputOptions = processing.output || {};
 
-                // Helper function to parse checkbox value (handles 'on', 'true', true, etc.)
-                function isChecked(val) {
-                    return val === true || val === 'true' || val === 'on' || val === 1 || val === '1';
-                }
-
-                var useSymbol = isChecked(raw.opt_symbol_mode); // Default: unchecked = false
-                var useNUp = isChecked(raw.opt_n_up);           // Default: unchecked = false
-                var useCleanup = isChecked(raw.opt_cleanup);
-                var useK100 = isChecked(raw.opt_k100);
+                var useSymbol = outputOptions.mode !== 'group';
+                var useNUp = layoutOptions.mode !== 'single';
+                var useCleanup = !!processing.cleanup;
+                var useK100 = !!processing.k100;
 
                 $.writeln("[Engine] FLAGS: Symbol=" + useSymbol + ", N-Up=" + useNUp + ", Cleanup=" + useCleanup + ", K100=" + useK100);
 
@@ -135,16 +135,32 @@
                     var item = sel[i];
                     var tempGroup = doc.groupItems.add();
                     var clone = item.duplicate(tempGroup, ElementPlacement.PLACEATBEGINNING);
+                    var needsPostCleanupK100 = false;
 
-                    // Step 5a: Cleanup (Optional)
-                    if (useCleanup && Mods.cleanup) {
-                        Mods.cleanup.run(clone);
+                    if (useCleanup && useK100 && Mods.cleanup && Mods.cleanup.hasTextFrames) {
+                        needsPostCleanupK100 = !!Mods.cleanup.hasTextFrames(clone);
+                    }
+
+                    // Step 5a: Text-only pre-cleanup (Optional, only for Cleanup + K100)
+                    if (useCleanup && useK100 && Mods.cleanup && Mods.cleanup.outlineTextOnly) {
+                        Mods.cleanup.outlineTextOnly(clone);
                         if (tempGroup.pageItems.length > 0) clone = tempGroup.pageItems[0];
                     }
 
                     // Step 5b: K100 (Optional)
                     if (useK100 && Mods.color) {
                         Mods.color.run(clone);
+                    }
+
+                    // Step 5c: Cleanup (Optional)
+                    if (useCleanup && Mods.cleanup) {
+                        Mods.cleanup.run(clone);
+                        if (tempGroup.pageItems.length > 0) clone = tempGroup.pageItems[0];
+
+                        // Expand can reintroduce live text appearance colors; re-apply K100 only for text-bearing roots.
+                        if (needsPostCleanupK100 && Mods.color) {
+                            Mods.color.run(clone);
+                        }
                     }
 
                     // Step 5c: Yield Builder (ALWAYS create container with guides)
@@ -188,7 +204,7 @@
                     }
 
                     // 7. DRAW REGISTRATION MARKS (Optional)
-                    if (isChecked(raw.opt_draw_marks)) {
+                    if (marksOptions.enabled) {
                         $.writeln("Calling Marks Module...");
                         var marksResult = Mods.marks.process(doc, processedItems, frame, sheetInfo);
                         if (marksResult && marksResult.status === 'error') {
@@ -203,9 +219,9 @@
                     $.writeln("[Engine] Already rotated by placeSingle: " + alreadyRotated);
                     $.writeln("[Engine] itemsToRotate count: " + itemsToRotate.length);
 
-                    if (Mods.rotate && isChecked(raw.opt_custom_rotate) && itemsToRotate.length > 0 && !alreadyRotated) {
-                        $.writeln("[Engine] Custom Rotate ENABLED. Angle=" + raw.custom_rotate_angle);
-                        var rotateResult = Mods.rotate.run(doc, itemsToRotate, raw);
+                    if (Mods.rotate && rotateOptions.enabled && itemsToRotate.length > 0 && !alreadyRotated) {
+                        $.writeln("[Engine] Custom Rotate ENABLED. Angle=" + rotateOptions.angle);
+                        var rotateResult = Mods.rotate.run(doc, itemsToRotate, rotateOptions);
                         if (rotateResult && rotateResult.status === 'error') {
                             throw new Error("Rotate Error: " + rotateResult.message);
                         }
@@ -226,7 +242,12 @@
                         itemsProcessed: processedItems.length,
                         isRotated: alreadyRotated,
                         // Could expose frame boundaries later if needed by pasteboard
-                        finishSize: frame.finish
+                        finishSize: {
+                            width: frame.finish.w,
+                            height: frame.finish.h,
+                            w: frame.finish.w,
+                            h: frame.finish.h
+                        }
                     },
                     logs: trace
                 };

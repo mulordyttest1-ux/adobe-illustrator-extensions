@@ -7,7 +7,12 @@
  * EXPORTS: FreshStrategy.analyze()
  */
 
-const REGEX_PLACEHOLDER = /\{([\w.]+)\}/g;
+import { StatefulMarkerCodec } from '../pipeline/StatefulMarkerCodec.js';
+import { TemplatePlaceholderCodec } from '../pipeline/TemplatePlaceholderCodec.js';
+import {
+    createReplacementStyles,
+    normalizeStyledValueForKey
+} from './textStylePlanner.js';
 
 export class FreshStrategy {
     /**
@@ -21,7 +26,7 @@ export class FreshStrategy {
     static analyze(content, packet, meta, constants = {}) {
         if (!this._isValidForAnalysis(content, meta)) return null;
 
-        const GHOST = constants.CHARS?.GHOST || '\u200B';
+        const GHOST = constants.CHARS?.GHOST || StatefulMarkerCodec.MARKER;
         const placeholders = this._scanPlaceholders(content, packet, GHOST);
 
         if (placeholders.length === 0) return null;
@@ -54,37 +59,42 @@ export class FreshStrategy {
         return {
             mode: 'ATOMIC',
             replacements: execList,
-            meta: { type: 'stateful', keys: keys, mappings: [] }
+            meta: StatefulMarkerCodec.createMetadata(keys)
         };
     }
 
     static _scanPlaceholders(content, packet, ghostChar) {
         const results = [];
-        REGEX_PLACEHOLDER.lastIndex = 0;
-        let match;
 
-        while ((match = REGEX_PLACEHOLDER.exec(content)) !== null) {
-            const rawKey = match[1];
+        for (const placeholder of TemplatePlaceholderCodec.findAll(content)) {
+            const rawKey = placeholder.key;
 
             // [FIX] Tạo replacement cho TẤT CẢ placeholders, không chỉ những key có trong packet
             // Điều này cho phép inject markers vào AI file để sau này update được
             // Nếu packet không có value → dùng empty string (vẫn có marker bọc)
             let val = '';
             if (Object.prototype.hasOwnProperty.call(packet, rawKey)) {
-                val = String(packet[rawKey] || '');
+                val = normalizeStyledValueForKey(rawKey, packet[rawKey] || '');
             }
 
             // [STATELESS MARKER]: Wrap value in markers
             // Standard: \u200B{content}\u200B
-            const wrappedVal = ghostChar + val + ghostChar;
+            const wrappedVal = StatefulMarkerCodec.wrap(val, ghostChar);
+            const styles = createReplacementStyles(rawKey, val, ghostChar.length);
 
-            results.push({
-                start: match.index,
-                end: match.index + match[0].length,
+            const replacement = {
+                start: placeholder.start,
+                end: placeholder.end,
                 val: wrappedVal,
                 key: rawKey,
                 priority: 1
-            });
+            };
+
+            if (styles.length > 0) {
+                replacement.styles = styles;
+            }
+
+            results.push(replacement);
         }
         return results;
     }

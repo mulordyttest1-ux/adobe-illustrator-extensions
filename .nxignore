@@ -1,5 +1,8 @@
-node_modules
-dist
-build
-.git
-.agent
+.agents/
+.specify/
+.task_steps/archive/
+local-artifacts/
+%APPDATA%/
+symbol-cep/runtime_probe_out/
+**/cep/js/bundle.js
+**/cep/.generated/

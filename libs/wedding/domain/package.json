@@ -13,6 +13,11 @@
     },
     "./package.json": "./package.json"
   },
+  "scripts": {
+    "lint:raw": "eslint src/ --config eslint.config.mjs --ignore-pattern bundle.js --max-warnings 0",
+    "lint": "node ../../../scripts/ensure_nx_project_graph.cjs && npm run lint:raw",
+    "test": "node --test src/**/*.test.js"
+  },
   "dependencies": {},
   "nx": {
     "tags": [

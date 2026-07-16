@@ -19,7 +19,14 @@ var ImpositionDomain = (typeof $ !== 'undefined' && $.global)
     /**
      * N-Up Grid Layout Calculation
      */
-    exports.calculateNUpLayout = function (artboardRect, yieldDim, variantCount, spacing, sheetGripper, headToHead) {
+    exports.calculateNUpLayout = function () {
+        var input = _normalizeLayoutInput(arguments);
+        var artboardRect = input.artboardRect;
+        var yieldDim = input.yieldDim;
+        var variantCount = input.variantCount;
+        var spacing = input.spacing;
+        var sheetGripper = input.sheetGripper;
+        var headToHead = input.headToHead;
         var abL = artboardRect[0];
         var abT = artboardRect[1];
         var abW = artboardRect[2] - artboardRect[0];
@@ -37,16 +44,41 @@ var ImpositionDomain = (typeof $ !== 'undefined' && $.global)
 
         if (cols <= 0 || rows <= 0) return [];
 
-        var grid = _calculateGridOrigin(
-            abL, abT, gripper, useW, useH,
-            cols, rows, yieldDim, spacing
-        );
-
-        return _generatePlacements(
-            grid, cols, rows, yieldDim, spacing,
-            variantCount, headToHead
-        );
+        return _generatePlacements({
+            grid: _calculateGridOrigin({
+                abL: abL,
+                abT: abT,
+                gripper: gripper,
+                useW: useW,
+                useH: useH,
+                cols: cols,
+                rows: rows,
+                yieldDim: yieldDim,
+                spacing: spacing
+            }),
+            cols: cols,
+            rows: rows,
+            yieldDim: yieldDim,
+            spacing: spacing,
+            variantCount: variantCount,
+            headToHead: headToHead
+        });
     };
+
+    function _normalizeLayoutInput(argsLike) {
+        if (argsLike.length === 1 && typeof argsLike[0] === 'object' && argsLike[0]) {
+            return argsLike[0];
+        }
+
+        return {
+            artboardRect: argsLike[0],
+            yieldDim: argsLike[1],
+            variantCount: argsLike[2],
+            spacing: argsLike[3],
+            sheetGripper: argsLike[4],
+            headToHead: argsLike[5]
+        };
+    }
 
     function _normalizeGripper(sheetGripper) {
         var m = { top: 0, bottom: 0, left: 0, right: 0 };
@@ -62,15 +94,15 @@ var ImpositionDomain = (typeof $ !== 'undefined' && $.global)
         return m;
     }
 
-    function _calculateGridOrigin(abL, abT, gripper, useW, useH, cols, rows, yieldDim, spacing) {
-        var gridW = cols * yieldDim.w + (cols - 1) * spacing.x;
-        var gridH = rows * yieldDim.h + (rows - 1) * spacing.y;
+    function _calculateGridOrigin(layout) {
+        var gridW = layout.cols * layout.yieldDim.w + (layout.cols - 1) * layout.spacing.x;
+        var gridH = layout.rows * layout.yieldDim.h + (layout.rows - 1) * layout.spacing.y;
 
-        var usableL = abL + gripper.left;
-        var usableT = abT - gripper.top;
+        var usableL = layout.abL + layout.gripper.left;
+        var usableT = layout.abT - layout.gripper.top;
 
-        var usableCX = usableL + (useW / 2);
-        var usableCY = usableT - (useH / 2);
+        var usableCX = usableL + (layout.useW / 2);
+        var usableCY = usableT - (layout.useH / 2);
 
         return {
             left: usableCX - (gridW / 2),
@@ -78,17 +110,17 @@ var ImpositionDomain = (typeof $ !== 'undefined' && $.global)
         };
     }
 
-    function _generatePlacements(grid, cols, rows, yieldDim, spacing, variantCount, headToHead) {
-        var rowsPerVariant = Math.floor(rows / variantCount);
+    function _generatePlacements(layout) {
+        var rowsPerVariant = Math.floor(layout.rows / layout.variantCount);
         var placements = [];
 
-        for (var r = 0; r < rows; r++) {
-            for (var c = 0; c < cols; c++) {
-                var variantIndex = _getVariantIndex(r, c, rowsPerVariant, variantCount);
-                var rotation = (headToHead && r % 2 !== 0) ? 180 : 0;
+        for (var r = 0; r < layout.rows; r++) {
+            for (var c = 0; c < layout.cols; c++) {
+                var variantIndex = _getVariantIndex(r, c, rowsPerVariant, layout.variantCount);
+                var rotation = (layout.headToHead && r % 2 !== 0) ? 180 : 0;
 
-                var x = grid.left + (c * (yieldDim.w + spacing.x)) + (yieldDim.w / 2);
-                var y = grid.top - (r * (yieldDim.h + spacing.y)) - (yieldDim.h / 2);
+                var x = layout.grid.left + (c * (layout.yieldDim.w + layout.spacing.x)) + (layout.yieldDim.w / 2);
+                var y = layout.grid.top - (r * (layout.yieldDim.h + layout.spacing.y)) - (layout.yieldDim.h / 2);
 
                 placements.push({
                     x: x,

@@ -1,204 +1,272 @@
 /**
  * MODULE: ConfigRenderer
  * LAYER: UI/Renderer (L6)
- * PURPOSE: Generate HTML from JSON Schema (field rendering)
- * DEPENDENCIES: None (pure DOM string generation)
+ * PURPOSE: Render HTML from schema definitions
+ * DEPENDENCIES: None
  * SIDE EFFECTS: None
  * EXPORTS: ConfigRenderer
  */
 
-export const ConfigRenderer = {
+const SECTION_HINTS = {
+    sec_sheet_layout: 'Nhap theo mm cho phan bien giay hoac nhip may in.',
+    sec_margins: 'Nhap theo mm cho tung canh. Gia tri 0 se bo qua canh do trong rule tuong ung.'
+};
 
-    /**
-     * Generate full form body HTML from JSON Schema
-     * @param {Object} schema - The preset schema definition
-     * @param {boolean} isEditMode - Whether edit mode is active
-     * @returns {string} HTML string
-     */
+function renderFieldNote(field) {
+    return field && field.note
+        ? `<div class="field-note">${field.note}</div>`
+        : '';
+}
+
+function renderSectionHint(section) {
+    const text = (section && (section.note || section.description || SECTION_HINTS[section.id])) || '';
+    return text ? `<div class="section-hint">${text}</div>` : '';
+}
+
+function getSectionClasses(section, isEditMode) {
+    const classes = ['panel-card', 'panel-card-compact', 'form-section-card'];
+    if (section && section.layout) classes.push(`section-layout-${section.layout}`);
+    if (section && section.id) classes.push(`section-${section.id}`);
+    if (isEditMode) classes.push('is-edit-mode');
+    return classes.join(' ');
+}
+
+function getStackWrapperClass(section) {
+    const classes = ['section-fields', 'compact-form-grid'];
+
+    if (section && (section.id === 'sec_options' || section.id === 'sec_marks')) {
+        classes.push('compact-form-grid-2');
+    } else {
+        classes.push('compact-form-grid-1');
+    }
+
+    return classes.join(' ');
+}
+
+function getFieldWrapperClasses(field, isEditMode) {
+    const classes = ['field-wrapper'];
+    if (field && field.type) classes.push(`field-type-${field.type}`);
+    if (isEditMode) classes.push('field-wrapper-edit');
+
+    if (field && (field.type === 'textarea' || field.type === 'radio' || field.type === 'edge_selector')) {
+        classes.push('field-span-full');
+    }
+
+    return classes.join(' ');
+}
+
+export const ConfigRenderer = {
     renderSchema(schema, isEditMode) {
         if (!schema.sections) return '';
 
-        return schema.sections.map(section => {
+        return schema.sections.map((section) => {
             let fieldsHtml;
+            const summaryHtml = section.readOnlySummary ? this.renderReadOnlySummary(section.readOnlySummary, section.id) : '';
+            const sectionHint = renderSectionHint(section);
 
             if (section.layout === 'matrix') {
                 fieldsHtml = this.renderMatrix(section, isEditMode);
             } else if (section.layout === 'stack') {
-                fieldsHtml = section.fields.map(f => this.renderFieldStack(f, isEditMode)).join('');
-            } else if (section.layout && section.layout.startsWith('grid-')) {
+                fieldsHtml = `<div class="${getStackWrapperClass(section)}">${section.fields.map((field) => this.renderFieldStack(field, isEditMode)).join('')}</div>`;
+            } else if (section.layout && section.layout.indexOf('grid-') === 0) {
                 const cols = section.layout.split('-')[1];
-                fieldsHtml = `<div class="grid grid-${cols}" style="gap: 10px;">` +
-                    section.fields.map(f => this.renderFieldGrid(f, isEditMode)).join('') +
-                    `</div>`;
+                fieldsHtml = `<div class="grid grid-${cols} compact-grid">${section.fields.map((field) => this.renderFieldGrid(field, isEditMode)).join('')}</div>`;
             } else if (section.layout === 'complex') {
-                fieldsHtml = section.fields.map(f => this.renderFieldComplex(f)).join('');
+                fieldsHtml = `<div class="section-fields">${section.fields.map((field) => this.renderFieldComplex(field)).join('')}</div>`;
             } else {
-                fieldsHtml = section.fields.map(f => this.renderFieldStack(f, isEditMode)).join('');
+                fieldsHtml = `<div class="${getStackWrapperClass(section)}">${section.fields.map((field) => this.renderFieldStack(field, isEditMode)).join('')}</div>`;
             }
 
-            const addBtn = isEditMode ?
-                `<button type="button" class="btn-add-field outline" data-section="${section.id}" style="font-size:10px; padding:2px 5px; float:right;">＋ Add Field</button>` : '';
+            const addBtn = isEditMode
+                ? `<button type="button" class="btn-add-field outline btn-inline-small" data-section="${section.id}">+ Them truong</button>`
+                : '';
 
             return `
-                    <div style="margin-bottom: 15px;">
-                        ${section.title ? `<h4 style="margin: 0 0 5px 0; font-weight: normal; color: #bbb;">${section.title} ${addBtn}</h4>` : ''}
-                        ${fieldsHtml}
-                        <hr style="border-color: #444; margin: 10px 0;" />
+                <section class="${getSectionClasses(section, isEditMode)}" data-section="${section.id}">
+                    <div class="form-section-head">
+                        ${section.title ? `<h4 class="form-section-title">${section.title}</h4>` : '<span></span>'}
+                        ${addBtn}
                     </div>
-                `;
+                    ${sectionHint}
+                    ${summaryHtml}
+                    ${fieldsHtml}
+                </section>
+            `;
         }).join('');
     },
 
-    /**
-     * Render a field as a grid cell (Label + Input)
-     */
-    renderFieldGrid(f, isEditMode) {
-        const required = f.required ? 'required' : '';
-        const step = f.step ? `step="${f.step}"` : '';
-        const val = f.default !== undefined ? `value="${f.default}"` : '';
-        const ph = f.placeholder ? `placeholder="${f.placeholder}"` : '';
+    renderFieldGrid(field, isEditMode) {
+        const required = field.required ? 'required' : '';
+        const step = field.step ? `step="${field.step}"` : '';
+        const val = field.default !== undefined ? `value="${field.default}"` : '';
+        const ph = field.placeholder ? `placeholder="${field.placeholder}"` : '';
+        const removeBtn = (isEditMode && !field.protected)
+            ? `<button type="button" class="btn-remove-field field-remove-chip" data-id="${field.id}" aria-label="Xoa truong ${field.label}" title="Xoa truong">Xoa</button>`
+            : '';
 
-        const removeBtn = (isEditMode && !f.protected) ?
-            `<button type="button" class="btn-remove-field" data-id="${f.id}" style="color:red; background:none; border:none; font-size:10px; padding:0; float:right;">✕</button>` : '';
-
-        const note = f.note ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">${f.note}</div>` : '';
-
-        const inputHtml = f.type === 'textarea'
-            ? `<textarea name="${f.id}" id="${f.id}" ${ph} ${required} style="width:100%; padding: 6px; background: #111; border: 1px solid #444; color: #eee; border-radius: 4px; box-sizing: border-box; min-height: 60px; resize: vertical;">${f.default || ''}</textarea>`
-            : `<input type="${f.type}" name="${f.id}" id="${f.id}" ${step} ${val} ${ph} ${required} style="width:100%; padding: 6px; background: #111; border: 1px solid #444; color: #eee; border-radius: 4px; box-sizing: border-box;">`;
+        const inputHtml = field.type === 'textarea'
+            ? `<textarea name="${field.id}" id="${field.id}" ${ph} ${required} class="panel-textarea">${field.default || ''}</textarea>`
+            : `<input type="${field.type}" name="${field.id}" id="${field.id}" ${step} ${val} ${ph} ${required} class="panel-input">`;
 
         return `
-                <div style="position:relative; margin-bottom: 8px;">
+            <div class="${getFieldWrapperClasses(field, isEditMode)}" data-field-wrapper="${field.id}">
+                <div class="field-header">
+                    <label class="panel-field-label" for="${field.id}">${field.label}</label>
                     ${removeBtn}
-                    <label style="font-size: 11px; display: block; margin-bottom: 2px;">${f.label}</label>
-                    ${inputHtml}
-                    ${note}
                 </div>
-            `;
-    },
-
-    /**
-     * Render a field as a stacked row (Checkbox, Select, Edge Selector, etc.)
-     */
-    renderFieldStack(f, isEditMode) {
-        if (f.type === 'checkbox') {
-            return this._renderCheckbox(f);
-        }
-        if (f.type === 'edge_selector') {
-            return this._renderEdgeSelector(f);
-        }
-        if (f.type === 'select' && f.options) {
-            return this._renderSelect(f);
-        }
-        if (f.type === 'radio' && f.options) {
-            return this._renderRadioGroup(f);
-        }
-        return this.renderFieldGrid(f, isEditMode);
-    },
-
-    /** @private */
-    _renderCheckbox(f) {
-        const checked = f.default ? 'checked' : '';
-
-        if (f.disabled) {
-            return `
-                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; opacity: 0.6; pointer-events: none;">
-                        <input type="checkbox" checked disabled />
-                        <label style="margin:0; font-weight:bold; color:#ddd;">${f.label}</label>
-                    </div>
-                `;
-        }
-
-        return `
-                <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
-                    <input type="checkbox" id="${f.id}" name="${f.id}" ${checked} />
-                    <label for="${f.id}" style="margin:0; cursor:pointer;">${f.label}</label>
-                </div>
-            `;
-    },
-
-    /** @private */
-    _renderEdgeSelector(f) {
-        const val = f.default || "top,right,bottom,left";
-        const has = (edge) => val.indexOf(edge) !== -1;
-
-        return `
-                <div class="edge-selector-wrapper" style="margin-bottom: 15px;">
-                    <label style="font-size: 11px; margin-bottom: 5px; display:block;">${f.label}</label>
-                    <div style="display: flex; gap: 4px;">
-                        <button type="button" class="btn-edge ${has('left') ? 'active' : ''}" data-edge="left">⬅️ L</button>
-                        <button type="button" class="btn-edge ${has('right') ? 'active' : ''}" data-edge="right">➡️ R</button>
-                        <button type="button" class="btn-edge ${has('top') ? 'active' : ''}" data-edge="top">⬆️ T</button>
-                        <button type="button" class="btn-edge ${has('bottom') ? 'active' : ''}" data-edge="bottom">⬇️ B</button>
-                    </div>
-                    <input type="hidden" id="${f.id}" name="${f.id}" value="${val}" />
-                </div>
-            `;
-    },
-
-    /** @private */
-    _renderSelect(f) {
-        const opts = f.options.map(o => {
-            const selected = (f.default === o.val) ? 'selected' : '';
-            return `<option value="${o.val}" ${selected}>${o.txt}</option>`;
-        }).join('');
-        const note = f.note ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">${f.note}</div>` : '';
-        return `
-                <div style="margin-bottom: 8px;">
-                    <label style="font-size: 11px; display: block; margin-bottom: 2px;">${f.label}</label>
-                    <select name="${f.id}" id="${f.id}" style="width: 100%; padding: 6px; background: #111; border: 1px solid #444; color: #eee; border-radius: 4px;">${opts}</select>
-                    ${note}
-                </div>
-            `;
-    },
-
-    /** @private */
-    _renderRadioGroup(f) {
-        const items = f.options.map(o => {
-            const checked = (f.default === o.val) ? 'checked' : '';
-            return `
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                    <input type="radio" id="${f.id}_${o.val}" name="${f.id}" value="${o.val}" ${checked} style="width: auto; margin: 0;">
-                    <label for="${f.id}_${o.val}" style="margin:0; font-size: 11px; cursor: pointer; color: #ccc;">${o.txt}</label>
-                </div>
-            `;
-        }).join('');
-        const note = f.note ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">${f.note}</div>` : '';
-        return `
-            <div style="margin-bottom: 8px;">
-                <label style="font-size: 11px; display: block; margin-bottom: 4px; color: #888;">${f.label}</label>
-                <div style="background: #1a1a1a; padding: 8px; border-radius: 4px; border: 1px solid #333;">
-                    ${items}
-                </div>
-                ${note}
+                ${inputHtml}
+                ${renderFieldNote(field)}
             </div>
         `;
     },
 
-    /**
-     * Render a Matrix layout (rows × columns table)
-     */
+    renderFieldStack(field, isEditMode) {
+        if (field.type === 'checkbox') {
+            return this._renderCheckbox(field, isEditMode);
+        }
+        if (field.type === 'edge_selector') {
+            return this._renderEdgeSelector(field);
+        }
+        if (field.type === 'select' && field.options) {
+            return this._renderSelect(field, isEditMode);
+        }
+        if (field.type === 'radio' && field.options) {
+            return this._renderRadioGroup(field, isEditMode);
+        }
+        return this.renderFieldGrid(field, isEditMode);
+    },
+
+    renderReadOnlySummary(items, sectionId) {
+        if (!items || items.length === 0) return '';
+
+        const rows = items.map((item) => `
+            <div data-invariant-id="${item.id}" class="readonly-summary-row">
+                <div class="readonly-summary-label">${item.label}</div>
+                ${item.note ? `<div class="field-note">${item.note}</div>` : ''}
+            </div>
+        `).join('');
+
+        return `
+            <div data-readonly-summary="${sectionId}" class="readonly-summary-card">
+                <div class="readonly-summary-heading">Luồng cố định</div>
+                ${rows}
+            </div>
+        `;
+    },
+
+    _renderCheckbox(field, isEditMode) {
+        const checked = field.default ? 'checked' : '';
+        const removeBtn = (isEditMode && !field.protected)
+            ? `<button type="button" class="btn-remove-field field-remove-chip" data-id="${field.id}" aria-label="Xoa truong ${field.label}" title="Xoa truong">Xoa</button>`
+            : '';
+
+        if (field.disabled) {
+            return `
+                <div class="${getFieldWrapperClasses(field, isEditMode)}" data-field-wrapper="${field.id}">
+                    <div class="field-header compact-field-header">
+                        <div class="checkbox-row checkbox-row-disabled">
+                            <input type="checkbox" checked disabled />
+                            <span class="checkbox-label">${field.label}</span>
+                        </div>
+                        ${removeBtn}
+                    </div>
+                    ${renderFieldNote(field)}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="${getFieldWrapperClasses(field, isEditMode)}" data-field-wrapper="${field.id}">
+                <div class="field-header compact-field-header">
+                    <div class="checkbox-row compact-checkbox-row">
+                        <input type="checkbox" id="${field.id}" name="${field.id}" ${checked} />
+                        <label for="${field.id}" class="checkbox-label">${field.label}</label>
+                    </div>
+                    ${removeBtn}
+                </div>
+                ${renderFieldNote(field)}
+            </div>
+        `;
+    },
+
+    _renderEdgeSelector(field) {
+        const val = field.default || 'top,right,bottom,left';
+        const has = (edge) => val.indexOf(edge) !== -1;
+
+        return `
+            <div class="${getFieldWrapperClasses(field, false)} edge-selector-wrapper" data-field-wrapper="${field.id}">
+                <label class="panel-field-label" for="${field.id}">${field.label}</label>
+                <div class="edge-button-row">
+                    <button type="button" class="btn-edge ${has('left') ? 'active' : ''}" data-edge="left">L</button>
+                    <button type="button" class="btn-edge ${has('right') ? 'active' : ''}" data-edge="right">R</button>
+                    <button type="button" class="btn-edge ${has('top') ? 'active' : ''}" data-edge="top">T</button>
+                    <button type="button" class="btn-edge ${has('bottom') ? 'active' : ''}" data-edge="bottom">B</button>
+                </div>
+                <input type="hidden" id="${field.id}" name="${field.id}" value="${val}" />
+                ${renderFieldNote(field)}
+            </div>
+        `;
+    },
+
+    _renderSelect(field, isEditMode) {
+        const opts = field.options.map((option) => {
+            const selected = (field.default === option.val) ? 'selected' : '';
+            return `<option value="${option.val}" ${selected}>${option.txt}</option>`;
+        }).join('');
+
+        return `
+            <div class="${getFieldWrapperClasses(field, isEditMode)}" data-field-wrapper="${field.id}">
+                <label class="panel-field-label" for="${field.id}">${field.label}</label>
+                <select name="${field.id}" id="${field.id}" class="panel-select">${opts}</select>
+                ${renderFieldNote(field)}
+            </div>
+        `;
+    },
+
+    _renderRadioGroup(field, isEditMode) {
+        const items = field.options.map((option) => {
+            const checked = (field.default === option.val) ? 'checked' : '';
+            return `
+                <div class="radio-row">
+                    <input type="radio" id="${field.id}_${option.val}" name="${field.id}" value="${option.val}" ${checked}>
+                    <label for="${field.id}_${option.val}" class="radio-label">${option.txt}</label>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="${getFieldWrapperClasses(field, isEditMode)}" data-field-wrapper="${field.id}">
+                <label class="panel-field-label">${field.label}</label>
+                <div class="radio-group-card compact-radio-group">
+                    ${items}
+                </div>
+                ${renderFieldNote(field)}
+            </div>
+        `;
+    },
+
     renderMatrix(section, isEditMode) {
         const colors = {
-            'BASELINE': 'rgba(40, 167, 69, 0.15)',
-            'STRUCTURAL': 'rgba(255, 193, 7, 0.15)',
-            'ADDITIVE': 'rgba(0, 123, 255, 0.15)'
+            BASELINE: 'rgba(40, 167, 69, 0.15)',
+            STRUCTURAL: 'rgba(255, 193, 7, 0.15)',
+            ADDITIVE: 'rgba(0, 123, 255, 0.15)'
         };
 
-        const headers = section.headers || ["Left", "Right", "Top", "Bottom"];
-        const th = headers.map(h =>
-            `<th style="font-size: 10px; color: #aaa; text-align: center; font-weight: normal; padding-bottom:5px;">${h}</th>`
+        const headers = section.headers || ['Left', 'Right', 'Top', 'Bottom'];
+        const th = headers.map((header) =>
+            `<th class="matrix-header-cell">${header}</th>`
         ).join('');
 
-        const rowsHtml = section.rows.map(row =>
+        const rowsHtml = section.rows.map((row) =>
             this._renderMatrixRow(row, colors, isEditMode)
         ).join('');
 
         return `
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+            <div class="matrix-shell">
+                <table class="matrix-table compact-matrix-table">
                     <thead>
                         <tr>
-                            <th style="width: 25%;"></th>
+                            <th class="matrix-header-label"></th>
                             ${th}
                         </tr>
                     </thead>
@@ -206,92 +274,92 @@ export const ConfigRenderer = {
                         ${rowsHtml}
                     </tbody>
                 </table>
-            `;
+            </div>
+        `;
     },
 
-    /** @private */
     _renderMatrixRow(row, colors, isEditMode) {
         const bg = colors[row.classification] || 'transparent';
         const edges = ['left', 'right', 'top', 'bottom'];
 
-        const cells = edges.map(edge => {
+        const cells = edges.map((edge) => {
             const field = row.fields[edge];
-            if (!field) return `<td></td>`;
+            if (!field) return '<td></td>';
 
             const val = field.default !== undefined ? `value="${field.default}"` : '';
             const step = field.step ? `step="${field.step}"` : '';
-
-            const removeBtn = (isEditMode && !field.protected) ?
-                `<div style="position:absolute; right:0; top:0; cursor:pointer; color:red; font-size:8px; line-height:1;" data-id="${field.id}" class="btn-remove-field">✕</div>` : '';
+            const removeBtn = (isEditMode && !field.protected)
+                ? `<button type="button" class="btn-remove-field field-remove-dot" data-id="${field.id}" aria-label="Xoa truong ${field.id}" title="Xoa truong">X</button>`
+                : '';
 
             return `
-                    <td style="padding: 2px; position: relative;">
-                        ${removeBtn}
-                        <input type="number" name="${field.id}" id="${field.id}" ${val} ${step} style="width: 100%; padding: 2px; text-align: center; background: rgba(0,0,0,0.2); border: 1px solid #444; color: #fff;">
-                    </td>
-                `;
+                <td class="matrix-cell" data-field-wrapper="${field.id}">
+                    ${removeBtn}
+                    <input type="number" name="${field.id}" id="${field.id}" ${val} ${step} class="matrix-input">
+                </td>
+            `;
         }).join('');
 
         const borderRow = this._renderBorderControl(row);
 
         return `
-                <tr style="background: ${bg}; border-bottom: 2px solid #222;">
-                    <td style="padding: 5px; font-size: 11px; white-space: nowrap;">
-                        <strong style="color:#ddd;">${row.label}</strong>
-                        ${isEditMode ? `<br><span style="font-size:9px; color:#888;">${row.classification}</span>` : ''}
-                    </td>
-                    ${cells}
-                </tr>
-                ${borderRow}
-            `;
+            <tr style="background: ${bg}; border-bottom: 1px solid #222;">
+                <td class="matrix-row-label">
+                    <strong>${row.label}</strong>
+                    ${isEditMode ? `<br><span class="matrix-row-type">${row.classification}</span>` : ''}
+                </td>
+                ${cells}
+            </tr>
+            ${borderRow}
+        `;
     },
 
-    /** @private */
     _renderBorderControl(row) {
-        const bcId = row.id + "_draw_border";
-        const bcStyleId = row.id + "_border_style";
+        const bcId = `${row.id}_draw_border`;
+        const bcStyleId = `${row.id}_border_style`;
         const bcDefault = row.borderControl ? row.borderControl.default : false;
-        const bcLabel = row.borderControl ? row.borderControl.label : "Vẽ viền (Draw Border)";
+        const bcLabel = row.borderControl ? row.borderControl.label : 'Ve vien';
 
         return `
-                <tr style="background: rgba(0,0,0,0.3);">
-                    <td colspan="5" style="padding: 5px 10px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="${bcId}" name="${bcId}" ${bcDefault ? 'checked' : ''} />
-                            <label for="${bcId}" style="margin:0; font-size: 10px; cursor: pointer; color: #ccc;">${bcLabel}</label>
-                            <select name="${bcStyleId}" id="${bcStyleId}" style="font-size: 10px; padding: 2px 5px; background: #222; color: #eee; border: 1px solid #444; margin-left: auto;">
-                                <option value="solid">—— Solid</option>
-                                <option value="dashed" selected>- - Dashed</option>
-                            </select>
+            <tr class="matrix-border-row">
+                <td colspan="5">
+                    <div class="matrix-border-controls compact-matrix-border-controls" data-field-wrapper="${bcId}">
+                        <div class="checkbox-row compact-checkbox-row">
+                            <input type="checkbox" id="${bcId}" name="${bcId}" ${bcDefault ? 'checked' : ''}>
+                            <label for="${bcId}" class="checkbox-label">${bcLabel}</label>
                         </div>
-                    </td>
-                </tr>
-            `;
+                        <select name="${bcStyleId}" id="${bcStyleId}" class="panel-select panel-select-inline">
+                            <option value="solid">Solid</option>
+                            <option value="dashed" selected>Dashed</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+        `;
     },
 
-    /**
-     * Render Complex field (Checkbox + Sub-fields)
-     */
-    renderFieldComplex(f) {
-        if (!f.subFields) return '';
+    renderFieldComplex(field) {
+        if (!field.subFields) return '';
 
-        const subHtml = f.subFields.map(sf => {
-            if (sf.type === 'select') {
-                const opts = sf.options.map(o => `<option value="${o.val}">${o.txt}</option>`).join('');
-                return `<select name="${sf.id}" id="${sf.id}" style="width: ${sf.width || 'auto'}; padding: 2px;">${opts}</select>`;
+        const subHtml = field.subFields.map((subField) => {
+            if (subField.type === 'select') {
+                const opts = subField.options.map((option) => `<option value="${option.val}">${option.txt}</option>`).join('');
+                return `<select name="${subField.id}" id="${subField.id}" class="panel-select panel-select-inline" style="width: ${subField.width || 'auto'};">${opts}</select>`;
             }
-            if (sf.type === 'number') {
-                return `<input type="number" name="${sf.id}" id="${sf.id}" placeholder="${sf.placeholder || ''}" style="flex:1;" step="0.1" value="10">`;
+            if (subField.type === 'number') {
+                return `<input type="number" name="${subField.id}" id="${subField.id}" placeholder="${subField.placeholder || ''}" class="panel-input" style="flex: 1;" step="0.1" value="10">`;
             }
             return '';
         }).join('');
 
         return `
-                <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
-                    <input type="checkbox" id="${f.id}" name="${f.id}" />
-                    <label for="${f.id}" style="margin:0; min-width: 60px;">${f.label}</label>
+            <div class="field-wrapper field-span-full" data-field-wrapper="${field.id}">
+                <div class="checkbox-row compact-checkbox-row">
+                    <input type="checkbox" id="${field.id}" name="${field.id}">
+                    <label for="${field.id}" class="checkbox-label" style="min-width: 70px;">${field.label}</label>
                     ${subHtml}
                 </div>
-            `;
+            </div>
+        `;
     }
 };

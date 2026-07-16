@@ -49,6 +49,18 @@ describe('NameAnalysis', () => {
             assert.equal(result['pos1.con_full.ho_dau'], 'Nguyễn');
             assert.equal(result['pos1.con_full.dau'], 'A');
         });
+        it('preserves saint prefixes and keeps split fields on the ordinary name', () => {
+            const packet = {
+                'pos1.con_full': 'te-r\u00ea-sa Nguy\u1ec5n Th\u1ecb An',
+                'pos1.con_full_split_idx': 0,
+            };
+            const result = NameAnalysis.enrichSplitNames(packet);
+
+            assert.equal(result['pos1.con_full'], 'te-r\u00ea-sa Nguy\u1ec5n Th\u1ecb An');
+            assert.equal(result['pos1.con_full.ten'], 'An');
+            assert.equal(result['pos1.con_full.ho_dau'], 'Nguy\u1ec5n');
+            assert.equal(result['pos1.con_full.dau'], 'A');
+        });
         it('handles packet without split_idx keys', () => {
             const packet = { 'pos1.ong': 'Ông A' };
             const result = NameAnalysis.enrichSplitNames(packet);

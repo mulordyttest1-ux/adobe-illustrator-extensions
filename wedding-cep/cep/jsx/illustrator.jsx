@@ -4,6 +4,8 @@
 // 1. UTILS (BASE64 & JSON)
 // =========================================================
 #include "utils.jsx"
+#include "textFrameIds.jsx"
+#include "hostValidation.jsx"
 
 // Helper gửi kết quả
 function sendResult(data) {
@@ -110,10 +112,127 @@ function sendResult(data) {
     if (typeof $.global !== 'undefined') { $.global.TextFrameManipulator = Manipulator; }
 })();
 
-
 // =========================================================
 // 4. ILLUSTRATOR BRIDGE
 // =========================================================
+
+function collectTextFramesInItems(items) {
+    var collected = [];
+    if (!items) return collected;
+
+    for (var i = 0; i < items.length; i++) {
+        var obj = items[i];
+        if (obj.typename === "TextFrame") {
+            collected.push(obj);
+        } else if (obj.typename === "GroupItem") {
+            collected = collected.concat(collectTextFramesInItems(obj.pageItems));
+        }
+    }
+
+    return collected;
+}
+
+function buildStableFrameMap(frames) {
+    var map = {};
+    var ids = [];
+
+    for (var i = 0; i < frames.length; i++) {
+        var frameId = getStableTextFrameId(frames[i], i);
+        map[frameId] = frames[i];
+        ids.push(frameId);
+    }
+
+    return {
+        map: map,
+        ids: ids
+    };
+}
+
+function resolveSelectFramesPayload(payloadJson) {
+    var payload = eval('(' + payloadJson + ')');
+
+    if (payload && payload.length !== undefined && typeof payload !== "string") {
+        return {
+            ids: payload,
+            source: "live-selection",
+            sessionId: null
+        };
+    }
+
+    payload = payload || {};
+    return {
+        ids: payload.ids || [],
+        source: payload.source || "live-selection",
+        sessionId: payload.sessionId || null
+    };
+}
+
+function selectOnlyItems(doc, items) {
+    var validItems = [];
+    doc.selection = null;
+
+    for (var i = 0; i < items.length; i++) {
+        try {
+            items[i].selected = true;
+            validItems.push(items[i]);
+        } catch (e) { }
+    }
+
+    if (validItems.length > 0) {
+        doc.selection = validItems;
+    }
+
+    try { app.redraw(); } catch (e) { }
+    return validItems.length;
+}
+
+function resolveBaselineOption(name) {
+    try {
+        if (typeof FontBaselineOption === "undefined") return null;
+        if (name === "superscript") return FontBaselineOption.SUPERSCRIPT;
+        return FontBaselineOption.NORMALBASELINE;
+    } catch (e) {
+        return null;
+    }
+}
+
+function applyBaselineRanges(item, ranges) {
+    if (!item || !ranges || ranges.length === 0) return;
+
+    var chars = item.characters;
+    for (var i = 0; i < ranges.length; i++) {
+        var r = ranges[i];
+        var start = parseInt(r.start, 10);
+        var end = parseInt(r.end, 10);
+        if (isNaN(start) || isNaN(end) || end <= start) continue;
+
+        var baselineName = r.baseline || r.baselinePosition || "normal";
+        var baselineOption = resolveBaselineOption(baselineName);
+        if (!baselineOption) continue;
+
+        for (var c = start; c < end && c < chars.length; c++) {
+            if (c >= 0) {
+                try { chars[c].characterAttributes.baselinePosition = baselineOption; } catch (e) { }
+            }
+        }
+    }
+}
+
+function offsetStyleRanges(ranges, offset) {
+    var result = [];
+    if (!ranges) return result;
+
+    for (var i = 0; i < ranges.length; i++) {
+        var r = ranges[i];
+        result.push({
+            start: offset + parseInt(r.start, 10),
+            end: offset + parseInt(r.end, 10),
+            baseline: r.baseline || r.baselinePosition || "normal"
+        });
+    }
+
+    return result;
+}
 
 $.global.IllustratorBridge = {
     ping: function () {
@@ -129,31 +248,16 @@ $.global.IllustratorBridge = {
             if (!doc.selection || doc.selection.length === 0) {
                 return sendResult({ success: true, data: [] });
             }
-
-            var _collectInSelection = function (items) {
-                var collected = [];
-                for (var k = 0; k < items.length; k++) {
-                    var obj = items[k];
-                    if (obj.typename === "TextFrame") {
-                        collected.push(obj);
-                    } else if (obj.typename === "GroupItem") {
-                        collected = collected.concat(_collectInSelection(obj.pageItems));
-                    }
-                }
-                return collected;
-            };
-
-            var frames = _collectInSelection(doc.selection);
-
+            var frames = collectTextFramesInItems(doc.selection);
+            if (frames.length === 0) {
+                return sendResult({ success: true, data: [] });
+            }
 
             var results = [];
             for (var i = 0; i < frames.length; i++) {
                 var item = frames[i];
                 try {
-                    // [BUG #01 FIX] Generate stable UUID based on content length + coordinates
-                    var contentHash = 0;
-                    try { contentHash = (item.contents && item.contents.length) ? item.contents.length : 0; } catch (e) { }
-                    var stableUuid = item.uuid || ("tf_" + Math.round(item.top || 0) + "_" + Math.round(item.left || 0) + "_" + contentHash + "_" + i);
+                    var stableUuid = getStableTextFrameId(item, i);
 
                     results.push({
                         id: stableUuid, // Use UUID instead of index
@@ -165,7 +269,10 @@ $.global.IllustratorBridge = {
                     });
                 } catch (e) { }
             }
-            return sendResult({ success: true, data: results });
+            return sendResult({
+                success: true,
+                data: results
+            });
         } catch (e) {
             return sendResult({ success: false, error: e.message });
         }
@@ -173,38 +280,30 @@ $.global.IllustratorBridge = {
 
     selectFramesById: function (payloadJson) {
         try {
+            if (app.documents.length === 0) {
+                return sendResult({ success: false, error: "No document open", errorCode: "sessionExpired" });
+            }
             var doc = app.activeDocument;
-            var ids = eval('(' + payloadJson + ')');
+            var payload = resolveSelectFramesPayload(payloadJson);
+            var ids = payload.ids;
             if (!ids || ids.length === 0) return sendResult({ success: true, selected: 0 });
 
-            // Collect all textframes từ selection (lần scan gần nhất dùng index làm id)
-            var sel = doc.selection;
-            var _collectInSelection = function (items) {
-                var collected = [];
-                for (var k = 0; k < items.length; k++) {
-                    var obj = items[k];
-                    if (obj.typename === 'TextFrame') collected.push(obj);
-                    else if (obj.typename === 'GroupItem') collected = collected.concat(_collectInSelection(obj.pageItems));
-                }
-                return collected;
-            };
-            var allFrames = _collectInSelection(sel);
-
-            // Deselect all, rồi select chỉ các frame khớp id
-            doc.selection = null;
+            var frameMap = buildStableFrameMap(collectTextFramesInItems(doc.selection || [])).map;
             var toSelect = [];
             for (var i = 0; i < ids.length; i++) {
-                if (allFrames[ids[i]]) toSelect.push(allFrames[ids[i]]);
+                var match = frameMap[ids[i]];
+                if (match) toSelect.push(match);
             }
-            if (toSelect.length > 0) doc.selection = toSelect;
 
-            return sendResult({ success: true, selected: toSelect.length });
+            return sendResult({
+                success: true,
+                selected: selectOnlyItems(doc, toSelect),
+                source: "live-selection"
+            });
         } catch (e) {
             return sendResult({ success: false, error: e.message });
         }
     },
-
-
 
     applyTextChanges: function (payloadJson) {
         try {
@@ -400,10 +499,7 @@ $.global.IllustratorBridge = {
             var frameMap = {};
             for (var f = 0; f < allItems.length; f++) {
                 var it = allItems[f];
-                var cHash = 0;
-                try { cHash = (it.contents && it.contents.length) ? it.contents.length : 0; } catch (e) { }
-                var suid = it.uuid || ("tf_" + Math.round(it.top || 0) + "_" + Math.round(it.left || 0) + "_" + cHash + "_" + f);
-                frameMap[suid] = it;
+                frameMap[getStableTextFrameId(it, f)] = it;
             }
 
             // Bắt đầu thực thi Plan
@@ -427,6 +523,7 @@ $.global.IllustratorBridge = {
                         for (var k = 0; k < plan.replacements.length; k++) {
                             var r = plan.replacements[k];
                             var val = String(r.val).replace(/\n/g, "\r");
+                            var insertStart = r.start;
 
                             if (r.end > r.start + 1) {
                                 for (var d = r.end - 1; d > r.start; d--) {
@@ -438,18 +535,38 @@ $.global.IllustratorBridge = {
                                 if (val === "") chars[r.start].remove();
                                 else chars[r.start].contents = val;
                             } else {
+                                insertStart = item.characters.length;
                                 item.contents += val;
                             }
+
+                            if (val !== "") {
+                                applyBaselineRanges(item, [{
+                                    start: insertStart,
+                                    end: insertStart + val.length,
+                                    baseline: "normal"
+                                }]);
+                                applyBaselineRanges(item, offsetStyleRanges(r.styles, insertStart));
+                            }
                         }
+                        applyBaselineRanges(item, plan.resetRanges);
+                        applyBaselineRanges(item, plan.styleRanges);
                         updated++;
                         affected.push({ id: p.id, text: item.contents });
                     }
-                    // CASE 2: DIRECT (Ghi đè toàn bộ - Luôn bọc Marker)
+                    // CASE 1B: STYLE (rich text only, no content change)
+                    else if (plan.mode === "STYLE") {
+                        applyBaselineRanges(item, plan.resetRanges);
+                        applyBaselineRanges(item, plan.styleRanges);
+                        updated++;
+                        affected.push({ id: p.id, text: item.contents });
+                    }
                     else if (plan.mode === "DIRECT") {
-                        // Ghi schema key trực tiếp vào content (không bọc U200B)
+                        // CASE 2: DIRECT (replace full text without U200B markers)
                         var cleanVal = String(plan.content).replace(/\u200B/g, "");
                         var val = cleanVal.replace(/\n/g, "\r");
                         item.contents = val;
+                        applyBaselineRanges(item, plan.resetRanges);
+                        applyBaselineRanges(item, plan.styleRanges);
                         updated++;
                         affected.push({ id: p.id, text: item.contents });
                     }
@@ -472,6 +589,19 @@ $.global.IllustratorBridge = {
             app.redraw();
             return sendResult({ success: true, updated: updated, affected: affected });
 
+        } catch (e) {
+            return sendResult({ success: false, error: e.message });
+        }
+    },
+
+    hostSelectionValidation: function (payloadJson) {
+        try {
+            var payload = payloadJson ? eval('(' + payloadJson + ')') : {};
+            if (typeof $.global.WeddingHostValidation === "undefined") {
+                return sendResult({ success: false, error: "WeddingHostValidation unavailable" });
+            }
+
+            return sendResult($.global.WeddingHostValidation.handle(payload));
         } catch (e) {
             return sendResult({ success: false, error: e.message });
         }

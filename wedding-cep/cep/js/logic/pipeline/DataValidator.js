@@ -7,12 +7,9 @@
  * EXPORTS: new DataValidator(), .analyze(), .heal()
  */
 
+import { StatefulMarkerCodec } from './StatefulMarkerCodec.js';
+
 export class DataValidator {
-    constructor() {
-        this.markerRegex = /\u200B([\s\S]*?)\u200B/g;
-
-    }
-
     /**
      * Analyze raw scan results from JSX.
      * @param {Array} rawItems - [{id, raw_content, meta_keys}]
@@ -25,8 +22,8 @@ export class DataValidator {
         if (!Array.isArray(rawItems)) return { healthyMap, brokenList };
 
         rawItems.forEach(item => {
-            const values = this._extractValues(item.raw_content);
             const keys = item.meta_keys || [];
+            const values = this._extractValues(item.raw_content, keys);
 
             // VALIDATION: Structure Match?
             if (values.length === keys.length) {
@@ -54,18 +51,8 @@ export class DataValidator {
      * @param {string} content 
      * @returns {Array} List of values
      */
-    _extractValues(content) {
-        const results = [];
-        if (!content) return results;
-
-        let match;
-        // Reset lastIndex because regex is global
-        this.markerRegex.lastIndex = 0;
-
-        while ((match = this.markerRegex.exec(content)) !== null) {
-            results.push(match[1]); // Capture group 1 is the content inside
-        }
-        return results;
+    _extractValues(content, keys = []) {
+        return StatefulMarkerCodec.extractValuesForKeys(content, keys);
     }
 
     /**

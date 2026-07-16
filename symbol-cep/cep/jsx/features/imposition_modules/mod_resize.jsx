@@ -2,8 +2,9 @@
     📐 MODULE: RESIZE (Pure Geometry)
     ================================================================================
     📜 COMPLIANCE STANDARDS (Required Reading)
-    1. Domain Separation: [.agent/domain_separation_standard.md]
-    2. SRP:               Single Responsibility Principle
+    1. Module rules:    [symbol-cep/AGENTS.md]
+    2. Architecture:    [symbol-cep/ARCHITECTURE.md]
+    3. Principle:       Single Responsibility Principle
     
     PROTOCOL: GEOMETRY_PROCESSOR
     - Single job: Resize content to fit within frame

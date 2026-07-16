@@ -7,6 +7,8 @@
  * EXPORTS: NameAnalysis.splitFullName(), .enrichSplitNames()
  */
 
+import { CatholicSaintNames } from './saint-name.js';
+
 export const NameAnalysis = {
     /** @type {Function|null} Injected from UX layer (NameValidator.suggestIdx) */
     _suggestIdxFn: null,
@@ -80,15 +82,17 @@ export const NameAnalysis = {
             const baseKey = idxKey.replace('_split_idx', '');
 
             if (Object.prototype.hasOwnProperty.call(packet, baseKey)) {
-                const fullName = packet[baseKey] || '';
+                const normalizedName = CatholicSaintNames.normalizeFullName(packet[baseKey] || '');
+                const fullName = normalizedName.value;
+                packet[baseKey] = fullName;
                 let idx = packet[idxKey] || 0;
 
                 // Smart IDX: only intervene when idx=0 (auto mode)
                 if (idx === 0 && this._suggestIdxFn) {
-                    idx = this._suggestIdxFn(fullName) || 0;
+                    idx = this._suggestIdxFn(normalizedName.ordinaryName || fullName) || 0;
                 }
 
-                const parts = this.splitFullName(fullName, idx);
+                const parts = this.splitFullName(normalizedName.ordinaryName || fullName, idx);
 
                 // Add derived fields
                 packet[`${baseKey}.ten`] = parts.ten;

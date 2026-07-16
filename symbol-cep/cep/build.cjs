@@ -1,53 +1,111 @@
 /**
- * build.js — esbuild configuration for Symbol Scripter CEP Panel
- * 
+ * build.cjs - esbuild configuration for Symbol Scripter CEP Panel
+ *
  * Usage:
- *   node build.js          → single build
- *   node build.js --watch  → watch mode (auto-rebuild on file change)
+ *   node build.cjs          -> single build
+ *   node build.cjs --watch  -> watch mode (auto-rebuild on file change)
+ *
+ * Uses esbuild JS API (not CLI) to support @shared/* path aliases.
  */
 
-const { execSync } = require('child_process');
+const esbuild = require('esbuild');
+const fs = require('fs');
+const path = require('path');
 
 const isWatch = process.argv.includes('--watch');
+const indexPath = path.resolve(__dirname, 'index.html');
+const test2026Root = path.resolve(
+    process.env.APPDATA || '',
+    'Adobe/CEP/extensions/com.dinhson.imposition.panel.test2026'
+);
+const test2026IndexPath = path.resolve(test2026Root, 'index.html');
+const test2026TemplatePath = path.resolve(test2026Root, 'wedding suite print template.ai');
 
-const args = [
-    'esbuild',
-    'js/app.js',
-    '--bundle',
-    '--outfile=js/bundle.js',
-    '--format=iife',
-    '--target=es2020',
-    '--sourcemap=inline',
-    '--charset=utf8',
-    '--external:CSInterface',
-];
-
-if (isWatch) {
-    args.push('--watch');
-    console.log('👁️  Watch mode — auto-rebuilding on changes...');
-}
-
-try {
-    // Check if esbuild is installed globally or use npx
-    // Using npx esbuild or assuming it's in path via npm modules
-    // Since root has esbuild, we probably need to invoke it via node_modules/.bin/esbuild 
-    // OR just 'esbuild' if in PATH.
-    // wedding-cep uses 'esbuild' in args and assumes it works. 
-    // But wait, wedding-cep/cep/build.cjs uses `execSync` with 'esbuild'.
-    // If esbuild is in devDependencies of root, it might not be in PATH unless we run via npm scripts.
-    // But since we will run `node symbol-cep/cep/build.cjs`, we might need full path or use `npx esbuild`.
-    // Let's use `npx esbuild` to be safe, or just `esbuild` if it worked for wedding.
-    // Actually, wedding build.cjs uses `args = ['esbuild', ...]` lines 13-14.
-    // If it works for wedding, I'll copy.
-
-    // Correction: I should probably use `npx esbuild` to be robust. 
-    // But I'll stick to parity with wedding-cep for now.
-
-    execSync(args.join(' '), { stdio: 'inherit', cwd: __dirname });
-    if (!isWatch) {
-        console.log('✅ Build complete: js/bundle.js');
+function copyTemplateBestEffort(sourcePath, targetPath) {
+    if (!fs.existsSync(sourcePath)) {
+        return;
     }
-} catch (error) {
-    console.error('❌ Build failed');
-    process.exit(1);
+
+    try {
+        fs.copyFileSync(sourcePath, targetPath);
+    } catch (error) {
+        if (fs.existsSync(targetPath) && (error.code === 'EPERM' || error.code === 'EBUSY')) {
+            console.warn(`[build] Template appears locked; keeping existing copy: ${targetPath}`);
+            return;
+        }
+
+        throw error;
+    }
 }
+
+function syncTest2026WrapperAssets() {
+    if (!test2026Root || !fs.existsSync(test2026Root)) {
+        return;
+    }
+
+    fs.copyFileSync(indexPath, test2026IndexPath);
+
+    const sourceTemplatePath = path.resolve(__dirname, 'wedding suite print template.ai');
+    if (fs.existsSync(sourceTemplatePath)) {
+        copyTemplateBestEffort(sourceTemplatePath, test2026TemplatePath);
+    }
+}
+
+/** @type {import('esbuild').BuildOptions} */
+const buildOptions = {
+    entryPoints: [path.resolve(__dirname, 'js/app.js')],
+    bundle: true,
+    outfile: path.resolve(__dirname, 'js/bundle.js'),
+    format: 'iife',
+    target: 'es2020',
+    sourcemap: 'inline',
+    charset: 'utf8',
+    external: ['CSInterface'],
+
+    // Shared library alias - resolves @shared/* to libs/shared/*
+    // Relative to THIS file's directory (symbol-cep/cep/)
+    alias: {
+        '@shared/cep-ui': path.resolve(__dirname, '../../libs/shared/cep-ui/src/index.js'),
+    },
+    plugins: [{
+        name: 'sync-test2026-wrapper',
+        setup(build) {
+            build.onEnd((result) => {
+                if (result.errors && result.errors.length > 0) {
+                    return;
+                }
+
+                syncTest2026WrapperAssets();
+            });
+        }
+    }]
+};
+
+function syncWeddingSuitePrintTemplate() {
+    const sourcePath = path.resolve(__dirname, '../wedding suite print template.ai');
+    const targetPath = path.resolve(__dirname, 'wedding suite print template.ai');
+
+    if (!fs.existsSync(sourcePath)) {
+        return;
+    }
+
+    copyTemplateBestEffort(sourcePath, targetPath);
+}
+
+(async () => {
+    if (isWatch) {
+        syncWeddingSuitePrintTemplate();
+        syncTest2026WrapperAssets();
+        const ctx = await esbuild.context(buildOptions);
+        await ctx.watch();
+        console.log('[build] Watch mode - auto-rebuilding on changes...');
+    } else {
+        syncWeddingSuitePrintTemplate();
+        await esbuild.build(buildOptions);
+        syncTest2026WrapperAssets();
+        console.log('[build] Build complete: js/bundle.js');
+    }
+})().catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

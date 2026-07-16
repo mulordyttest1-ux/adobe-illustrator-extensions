@@ -1,0 +1,20 @@
+{
+  "id": "rasterize_bitmap_300_transparent",
+  "title": "Rasterize Bitmap 300 Transparent",
+  "buttonLabel": "Rasterize Bitmap",
+  "category": "Daily Work",
+  "order": 12,
+  "aliases": [
+    "rasterize bitmap",
+    "bitmap 300",
+    "bitmap transparent",
+    "raster bitmap",
+    "rasterize 300",
+    "raster"
+  ],
+  "description": "Rasterize the current selection into one transparent 300 ppi bitmap image.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": true,
+  "successMessage": ""
+}

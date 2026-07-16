@@ -1,0 +1,3 @@
+#!/bin/sh
+
+npm run check:toolkit:shell-freeze -- --staged

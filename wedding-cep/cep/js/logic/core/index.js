@@ -12,3 +12,4 @@
 //
 // - StringUtils (string.js): clean, toProperCase, removeAccents, isEmpty
 // - DateUtils (date.js): parseDate, formatDate, getDayOfWeek, getDiffDays, addDays
+// - TextFrameIds (textFrameIds.js): stable UUID helpers for CEP/JSX frame lookup

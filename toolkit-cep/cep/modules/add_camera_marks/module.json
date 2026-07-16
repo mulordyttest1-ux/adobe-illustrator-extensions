@@ -1,0 +1,24 @@
+{
+  "id": "add_camera_marks",
+  "title": "Add Camera Marks",
+  "buttonLabel": "Camera Marks",
+  "category": "Cut Workflow",
+  "order": 10,
+  "aliases": [
+    "camera",
+    "marks",
+    "cam",
+    "round",
+    "both",
+    "smart",
+    "selection",
+    "artboard",
+    "multi",
+    "all"
+  ],
+  "description": "Choose Smart Line for automatic line marks from selection size, or use manual Line, Round, and Both with separate X/Y offsets. Supports one, many, or all artboards.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": false,
+  "successMessage": ""
+}

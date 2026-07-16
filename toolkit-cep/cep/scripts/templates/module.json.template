@@ -1,0 +1,13 @@
+{
+  "id": {{ID_JSON}},
+  "title": {{TITLE_JSON}},
+  "buttonLabel": {{BUTTON_LABEL_JSON}},
+  "category": {{CATEGORY_JSON}},
+  "order": {{ORDER_JSON}},
+  "aliases": {{ALIASES_JSON}},
+  "description": {{DESCRIPTION_JSON}},
+  "favoriteRank": {{FAVORITE_RANK_JSON}},
+  "requiresDocument": {{REQUIRES_DOCUMENT_JSON}},
+  "requiresSelection": {{REQUIRES_SELECTION_JSON}},
+  "successMessage": {{SUCCESS_MESSAGE_JSON}}
+}
