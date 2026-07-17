@@ -27,6 +27,19 @@ function Write-InstallLog([string]$Message) {
     Write-Host $Message
 }
 
+function Get-Sha256([string]$LiteralPath) {
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    $stream = $null
+    try {
+        $stream = [IO.File]::OpenRead($LiteralPath)
+        $bytes = $algorithm.ComputeHash($stream)
+        return ([BitConverter]::ToString($bytes)).Replace('-', '').ToLowerInvariant()
+    } finally {
+        if ($stream) { $stream.Dispose() }
+        $algorithm.Dispose()
+    }
+}
+
 function Remove-EntryNoFollow([string]$LiteralPath) {
     if (-not (Test-Path -LiteralPath $LiteralPath)) { return }
     $attributes = [IO.File]::GetAttributes($LiteralPath)
@@ -80,7 +93,7 @@ function Test-PackageIntegrity([string]$Root) {
         $seen[$relative] = $true
         $target = Join-Path $Root $relative
         if (-not (Test-Path -LiteralPath $target -PathType Leaf)) { Throw-InstallError 10 "Payload file is missing: $relative" }
-        $actual = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+        $actual = Get-Sha256 $target
         if ($actual -ne $expected) { Throw-InstallError 10 "Payload hash mismatch: $relative" }
     }
     $actualFiles = @(Get-PayloadFilesNoLinks $Root | Where-Object { $_ -ne 'SHA256SUMS.txt' } | Sort-Object)
@@ -179,7 +192,7 @@ try {
         if ($line -match '^([0-9a-fA-F]{64}) \*extensions[\\/](.+)$') {
             $expected = $Matches[1].ToLowerInvariant()
             $stagedPath = Join-Path $stageRoot $Matches[2].Replace('/', '\')
-            if (-not (Test-Path -LiteralPath $stagedPath -PathType Leaf) -or (Get-FileHash -LiteralPath $stagedPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
+            if (-not (Test-Path -LiteralPath $stagedPath -PathType Leaf) -or (Get-Sha256 $stagedPath) -ne $expected) {
                 Throw-InstallError 30 "Staged copy integrity failed: $($Matches[2])"
             }
         }
@@ -221,7 +234,7 @@ try {
         extensionsRoot = $ExtensionsRoot
         extensionIds = $ExtensionIds
         rollbackPath = $rollbackRoot
-        manifestSha256 = (Get-FileHash -LiteralPath (Join-Path $PackageRoot 'release-manifest.json') -Algorithm SHA256).Hash.ToLowerInvariant()
+        manifestSha256 = Get-Sha256 (Join-Path $PackageRoot 'release-manifest.json')
     }
     $state | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $StateRoot 'install-state.json') -Encoding UTF8
     Write-InstallLog "Installed $($manifest.release) successfully."
