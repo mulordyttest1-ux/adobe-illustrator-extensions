@@ -14,8 +14,14 @@ test('Toolkit module smoke manifest preserves every registered module scenario',
         scenarioLookup,
         selectedScenarioIds: {},
         results: {},
+        closeSmokeFixtureDocuments() {},
         runSelectedScenario(definition) { calls.push(definition.id); }
     });
+
+    await assert.rejects(
+        () => runToolkitModuleSmokeSuites({}),
+        /requires closeSmokeFixtureDocuments/
+    );
 
     const expected = smokeScenarioRegistry.filter((scenario) => scenario.scope === 'module').map((scenario) => scenario.id);
     assert.deepEqual(toolkitModuleSmokeSuites.map((suite) => suite.id), [

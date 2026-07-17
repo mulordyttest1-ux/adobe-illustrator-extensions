@@ -20,7 +20,7 @@ Browser GitHub login and a Codex GitHub connector do not replace GitHub CLI auth
 
 - Product source, tests, lockfile, build config, CI, distributable runtime assets, specifications, ADRs, and minimal agent routing stay public here.
 - Codex configuration, deep workflow skills, WinGet Configuration, workstation doctor, inventory, backup/restore, and historical process receipts live in private `mulordyttest1-ux/adobe-illustrator-devkit`.
-- The product pins devkit `v1.0.1` and its full commit SHA. It never follows private `main` automatically.
+- The product pins devkit `v1.0.2` and its full commit SHA. It never follows private `main` automatically.
 - Neither repository stores tokens, authentication state, `.env`, sessions, SQLite, Adobe credentials, or licensed fonts.
 
 ## Useful commands

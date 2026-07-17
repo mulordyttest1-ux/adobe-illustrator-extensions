@@ -1,5 +1,6 @@
 async function runRecolorSmokeSuite(context) {
     const { Runtime, scenarioLookup, selectedScenarioIds, results, tempOutputRoots, runSelectedScenario, assert, assertNear, evaluate, callHostBridge, prepareHostFacadeRunCount, readHostFacadeRunCount, restoreDefaultRuntime, waitForReady, prepareSelectionDocument, prepareCmykFixtureDocument, activateFixtureDocument, activateDocumentByName, runHostScript, runHostJson, assertPointNear, assertBoundsNear, assertCmykColor, assertAngleNear, extensionRoot, smokeFixtureLayerName, fs, os, path } = context;
+    const { closeSmokeFixtureDocuments } = context;
 
     await runSelectedScenario(scenarioLookup.recolor_selection_k100_basic_paths, selectedScenarioIds, results, async () => {
                 const fixture = await prepareCmykFixtureDocument(Runtime);

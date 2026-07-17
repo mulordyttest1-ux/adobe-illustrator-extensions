@@ -1,5 +1,6 @@
 async function runRasterizeSmokeSuite(context) {
     const { Runtime, scenarioLookup, selectedScenarioIds, results, tempOutputRoots, runSelectedScenario, assert, assertNear, evaluate, callHostBridge, prepareHostFacadeRunCount, readHostFacadeRunCount, restoreDefaultRuntime, waitForReady, prepareSelectionDocument, prepareCmykFixtureDocument, activateFixtureDocument, activateDocumentByName, runHostScript, runHostJson, assertPointNear, assertBoundsNear, assertCmykColor, assertAngleNear, extensionRoot, smokeFixtureLayerName, fs, os, path } = context;
+    const { closeSmokeFixtureDocuments } = context;
 
     await runSelectedScenario(scenarioLookup.rasterize_bitmap_basic, selectedScenarioIds, results, async () => {
                 const fixture = await prepareSelectionDocument(Runtime, false);

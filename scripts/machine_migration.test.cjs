@@ -23,7 +23,7 @@ const {
 } = require('./backup_machine_state.cjs');
 const { collectDoctorReport, isPluginEnabled } = require('./dev_machine_doctor.cjs');
 const { restoreArchive, restorePayload, verifyChecksumSidecar } = require('./restore_machine_state.cjs');
-const { buildSetupSteps } = require('./setup_dev_machine.cjs');
+const { buildSetupSteps, validatePrerequisites } = require('./setup_dev_machine.cjs');
 const { CEP_APPS, buildManifestXml, parseArgs: parseLiveLinkArgs } = require('./install_cep_live_links.cjs');
 
 function tempDir(prefix) {
@@ -101,6 +101,22 @@ test('setup command sequence is deterministic', () => {
     assert.ok(steps.some((step) => step.command === 'reg.exe' && step.args.includes('HKCU\\Software\\Adobe\\CSXS.11')));
     assert.ok(steps.some((step) => step.command === 'reg.exe' && step.args.includes('HKCU\\Software\\Adobe\\CSXS.12')));
     assert.equal(steps.at(-1).description, 'Run final machine doctor.');
+});
+
+test('setup preflight validates a complete Windows checkout', (t) => {
+    const root = tempDir('machine-setup-preflight-');
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const repoRoot = path.join(root, 'repo');
+    const programFiles = path.join(root, 'Program Files');
+    write(path.join(repoRoot, 'symbol-cep', 'wedding suite print template.ai'), 'fixture');
+    [2025, 2026].forEach((year) => {
+        fs.mkdirSync(path.join(programFiles, 'Adobe', `Adobe Illustrator ${year}`), { recursive: true });
+    });
+
+    assert.deepEqual(validatePrerequisites({ repoRoot }, {
+        platform: 'win32',
+        env: { ProgramFiles: programFiles }
+    }), []);
 });
 
 test('secret and machine-local exclusions are rejected or excluded', () => {

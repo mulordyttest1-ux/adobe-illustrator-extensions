@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('node:fs');
 const path = require('path');
 const {
     REPO_ROOT,

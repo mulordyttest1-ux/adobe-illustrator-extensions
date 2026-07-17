@@ -201,6 +201,9 @@ function registerRichTextSmokeTests(runner) {
                     }
 
                     builder.setData({
+                        'info.ten_le': 'T\\u00e2n H\\u00f4n',
+                        'ui.vithu_nam': 'Tr\\u01b0\\u1edfng Nam',
+                        'ui.vithu_nu': 'Tr\\u01b0\\u1edfng N\\u1eef',
                         'pos1.con_full': 'te-rê-sa Nguyễn Thị An',
                         'pos1.con_full_split_idx': 0
                     });
