@@ -536,6 +536,7 @@ async function main() {
             waitForReady,
             prepareSelectionDocument,
             prepareCmykFixtureDocument,
+            closeSmokeFixtureDocuments,
             activateFixtureDocument,
             activateDocumentByName,
             runHostScript,

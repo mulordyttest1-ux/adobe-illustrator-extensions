@@ -17,6 +17,9 @@ const toolkitModuleSmokeSuites = [
 ];
 
 async function runToolkitModuleSmokeSuites(context) {
+    if (!context || typeof context.closeSmokeFixtureDocuments !== 'function') {
+        throw new Error('Toolkit smoke suite context requires closeSmokeFixtureDocuments.');
+    }
     for (const suite of toolkitModuleSmokeSuites) {
         await suite.run(context);
     }

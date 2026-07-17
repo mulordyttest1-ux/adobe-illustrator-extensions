@@ -159,7 +159,11 @@ function registerDocumentSyncSmokeTests(runner) {
                         return { error: 'builder.setData missing' };
                     }
 
-                    builder.setData({ 'info.ten_le': 'T\\u00e2n H\\u00f4n' });
+                    builder.setData({
+                        'info.ten_le': 'T\\u00e2n H\\u00f4n',
+                        'ui.vithu_nam': 'Tr\\u01b0\\u1edfng Nam',
+                        'ui.vithu_nu': 'Tr\\u01b0\\u1edfng N\\u1eef'
+                    });
 
                     const applyPlanCalls = [];
                     bridge.collectFrames = async () => ({
@@ -301,7 +305,11 @@ function registerDocumentSyncSmokeTests(runner) {
                         return { error: 'builder.setData missing' };
                     }
 
-                    builder.setData({ 'info.ten_le': 'T\\u00e2n H\\u00f4n' });
+                    builder.setData({
+                        'info.ten_le': 'T\\u00e2n H\\u00f4n',
+                        'ui.vithu_nam': 'Tr\\u01b0\\u1edfng Nam',
+                        'ui.vithu_nu': 'Tr\\u01b0\\u1edfng N\\u1eef'
+                    });
 
                     let applyPlanCalls = 0;
                     bridge.collectFrames = async () => ({

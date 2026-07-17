@@ -9,3 +9,7 @@
 - [x] Run clean-clone verification and Windows contract/current-workstation acceptance checks.
 - [x] Close Review Gate and Verification Gate; keep host-panel smoke as a documented manual checkpoint.
 - [x] Patch portable skill routing in devkit v1.0.1 and repin the product to the reviewed release SHA.
+- [x] Run the pinned bootstrap and doctor from a fresh Windows checkout.
+- [x] Capture a licensed-font inventory and pass it through the workstation doctor comparison.
+- [x] Open the work/test CEP panels in Illustrator 2025 and 2026, then run the smoke suites.
+- [ ] Rerun gates and CI, record final evidence, and close the acceptance checklist.
