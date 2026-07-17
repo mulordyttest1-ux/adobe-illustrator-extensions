@@ -3,6 +3,7 @@ const path = require('path');
 const { generateToolkitArtifacts } = require('./scripts/generate_toolkit_artifacts.cjs');
 
 const rootDir = __dirname;
+const isProduction = process.argv.includes('--production');
 
 /** @type {import('esbuild').BuildOptions} */
 const buildOptions = {
@@ -11,7 +12,7 @@ const buildOptions = {
     outfile: path.resolve(rootDir, 'js/bundle.js'),
     format: 'iife',
     target: 'es2020',
-    sourcemap: 'inline',
+    sourcemap: isProduction ? false : 'inline',
     charset: 'utf8',
     external: ['CSInterface'],
     alias: {

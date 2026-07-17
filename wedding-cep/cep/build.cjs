@@ -11,6 +11,7 @@ const fs = require("fs");
 const path = require("path");
 
 const isWatch = process.argv.includes("--watch");
+const isProduction = process.argv.includes("--production");
 const indexPath = path.resolve(__dirname, "index.html");
 const test2026IndexPath = path.resolve(
     process.env.APPDATA || "",
@@ -32,12 +33,12 @@ const buildOptions = {
     outfile: path.resolve(__dirname, "js/bundle.js"),
     format: "iife",
     target: "es2020",
-    sourcemap: "inline",
+    sourcemap: isProduction ? false : "inline",
     charset: "utf8",
     alias: {
         "@shared/cep-ui": path.resolve(__dirname, "../../libs/shared/cep-ui/src/index.js")
     },
-    plugins: [{
+    plugins: isProduction ? [] : [{
         name: "sync-test2026-wrapper",
         setup(build) {
             build.onEnd((result) => {
@@ -52,6 +53,9 @@ const buildOptions = {
 };
 
 (async () => {
+    if (isWatch && isProduction) {
+        throw new Error("--watch and --production cannot be used together.");
+    }
     if (isWatch) {
         const ctx = await esbuild.context(buildOptions);
         await ctx.watch();

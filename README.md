@@ -34,6 +34,8 @@ npm run devkit:ensure -- --json
 npm run setup:repo
 npm run doctor:repo -- --json
 npm run install:cep-live-links
+npm run package:recovery -- --version <semver> --output <folder> --json
+npm run verify:recovery -- --archive <zip> --json
 npm run verify
 npm run verify:smoke
 ```
@@ -48,6 +50,8 @@ npm run restore:machine -- --archive <file> --target <empty-folder>
 ```
 
 These proxies delegate to the pinned private devkit and print a deprecation warning.
+
+See `RECOVERY_RELEASE.md` for the immutable last-known-good runtime artifact, offline installer, GitHub attestation, and encrypted off-site mirror contract.
 
 ## Source map
 

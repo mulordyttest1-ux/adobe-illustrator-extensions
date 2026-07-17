@@ -278,9 +278,9 @@ function buildManifestXml(manifest) {
         : manifest.scriptPath;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="${manifest.version}" ExtensionBundleId="${manifest.bundleId}" ExtensionBundleVersion="1.0.0" ExtensionBundleName="${manifest.bundleName}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="${manifest.version}" ExtensionBundleId="${manifest.bundleId}" ExtensionBundleVersion="${manifest.bundleVersion || '1.0.0'}" ExtensionBundleName="${manifest.bundleName}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <ExtensionList>
-        <Extension Id="${manifest.extensionId}" Version="1.0.0"/>
+        <Extension Id="${manifest.extensionId}" Version="${manifest.bundleVersion || '1.0.0'}"/>
     </ExtensionList>
     <ExecutionEnvironment>
         <HostList>

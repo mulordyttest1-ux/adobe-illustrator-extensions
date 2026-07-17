@@ -1,0 +1,114 @@
+name: Immutable Golden Recovery Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable SemVer for the recovery release (for example 1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: golden-recovery-release
+  cancel-in-progress: false
+
+jobs:
+  package-and-publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Require immutable releases
+        shell: powershell
+        run: |
+          $immutable = gh api "repos/${{ github.repository }}/immutable-releases" `
+            -H "Accept: application/vnd.github+json" `
+            -H "X-GitHub-Api-Version: 2026-03-10" | ConvertFrom-Json
+          if (-not $immutable.enabled) { throw 'GitHub Immutable Releases is not enabled.' }
+
+      - name: Reject an existing release
+        shell: powershell
+        run: |
+          gh release view "recovery-v$env:VERSION" --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) { throw "Recovery release already exists and will not be overwritten." }
+
+      - name: Verify product repository
+        run: npm run verify
+
+      - name: Test recovery contracts and installer
+        run: npm run test:recovery
+
+      - name: Package and verify recovery ZIP
+        id: package
+        shell: powershell
+        run: |
+          $line = npm run --silent package:recovery -- --version $env:VERSION --output .artifacts\recovery --json | Select-Object -Last 1
+          $package = $line | ConvertFrom-Json
+          if ($package.status -ne 'PASS') { throw 'Recovery package did not pass.' }
+          npm run --silent verify:recovery -- --archive $package.archive --json | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw 'Independent archive verification failed.' }
+          $archiveName = Split-Path -Leaf $package.archive
+          $checksumPath = "$($package.archive).sha256"
+          "$($package.sha256) *$archiveName" | Set-Content -LiteralPath $checksumPath -Encoding ascii
+          "archive=$($package.archive)" >> $env:GITHUB_OUTPUT
+          "checksum=$checksumPath" >> $env:GITHUB_OUTPUT
+          "archive_name=$archiveName" >> $env:GITHUB_OUTPUT
+
+      - name: Create draft release and upload exact assets
+        shell: powershell
+        run: |
+          $notes = @"
+          Immutable Golden Recovery Release v$env:VERSION
+
+          Runtime-only last-known-good recovery for the three production Adobe Illustrator CEP panels.
+          Supports Illustrator 2025 and 2026. See RECOVERY_README.txt inside the ZIP.
+          "@
+          $notesPath = Join-Path $env:RUNNER_TEMP 'recovery-release-notes.txt'
+          $notes | Set-Content -LiteralPath $notesPath -Encoding utf8
+          gh release create "recovery-v$env:VERSION" `
+            "${{ steps.package.outputs.archive }}" `
+            "${{ steps.package.outputs.checksum }}" `
+            --repo "${{ github.repository }}" `
+            --target "${{ github.sha }}" `
+            --title "Golden Recovery v$env:VERSION" `
+            --notes-file $notesPath `
+            --draft
+
+      - name: Publish immutable release
+        shell: powershell
+        run: |
+          gh release edit "recovery-v$env:VERSION" --repo "${{ github.repository }}" --draft=false --latest=false
+
+      - name: Verify release and exact asset attestations
+        shell: powershell
+        run: |
+          $verified = $false
+          foreach ($attempt in 1..12) {
+            gh release verify "recovery-v$env:VERSION" --repo "${{ github.repository }}" --format json | Out-Host
+            if ($LASTEXITCODE -eq 0) { $verified = $true; break }
+            Start-Sleep -Seconds 5
+          }
+          if (-not $verified) { throw 'GitHub release attestation was not available or valid.' }
+          gh release verify-asset "recovery-v$env:VERSION" "${{ steps.package.outputs.archive }}" --repo "${{ github.repository }}" --format json | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub asset attestation verification failed.' }
