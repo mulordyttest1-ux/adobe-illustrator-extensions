@@ -8,3 +8,4 @@
 - [x] Implement product resolver, bootstrap, setup, doctor, proxies, tests, and CI.
 - [x] Run clean-clone verification and Windows contract/current-workstation acceptance checks.
 - [x] Close Review Gate and Verification Gate; keep host-panel smoke as a documented manual checkpoint.
+- [x] Patch portable skill routing in devkit v1.0.1 and repin the product to the reviewed release SHA.
