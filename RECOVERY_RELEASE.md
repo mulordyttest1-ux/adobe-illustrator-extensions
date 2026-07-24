@@ -29,7 +29,19 @@ There is no dirty-worktree bypass.
 
 ## First release prerequisite
 
-Repository release immutability must be enabled before dispatching `.github/workflows/recovery-release.yml`. The workflow checks the repository setting through GitHub's immutable-releases API and refuses to publish if it is disabled. Published immutable tags/assets cannot be edited or replaced; every change requires a new SemVer.
+Repository release immutability must be enabled before dispatching `.github/workflows/recovery-release.yml`. GitHub's immutable-releases API requires repository Administration permission, which the workflow's least-privilege `GITHUB_TOKEN` does not receive. An administrator must verify the real setting, then record that completed preflight in the repository Actions variable:
+
+```powershell
+$immutable = gh api repos/mulordyttest1-ux/adobe-illustrator-extensions/immutable-releases `
+  -H "Accept: application/vnd.github+json" `
+  -H "X-GitHub-Api-Version: 2026-03-10" | ConvertFrom-Json
+if (-not $immutable.enabled) { throw 'Immutable Releases is not enabled.' }
+gh variable set RECOVERY_IMMUTABLE_RELEASES_ENABLED `
+  --repo mulordyttest1-ux/adobe-illustrator-extensions `
+  --body true
+```
+
+The workflow refuses to publish unless this repository variable is exactly `true`. GitHub itself remains the enforcing control: published immutable tags/assets cannot be edited or replaced, and every change requires a new SemVer.
 
 After publication, verify both levels:
 

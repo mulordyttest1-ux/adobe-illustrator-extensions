@@ -35,10 +35,11 @@ No Blocking Findings: review found no product runtime or `libs/shared` change; a
 ## Verification Gate
 
 Claims Verified: production-only allowlist, source-map-free ZIP, canonical version/commit identity, SHA inventory, 15 MiB budget, installer exit codes, preset preservation, idempotence, rollback, junction safety, immutable setting, devkit pin/release/mirror contract, and full repository compatibility.
-Evidence Run: `npm run verify` PASS; recovery `node:test` lane 12/12 PASS; devkit `tests/run-tests.ps1` PASS; devkit main/tag CI PASS; `npm run devkit:ensure -- --json` PASS at v1.0.3/ba224644; YAML and PowerShell parse PASS; GitHub immutable-releases API returned enabled true.
-Remaining Limits: product branch CI, merged-main packaging/release attestation, encrypted mirror using the operator password/destination, and Illustrator 2025/2026 visual smoke acceptance must occur in release order.
+Evidence Run: `npm run verify` PASS after the release-preflight fix with 42 repo-tooling tests; recovery workflow regression 8/8 PASS; PR CI and merged-main CI PASS on Ubuntu/Windows; devkit `tests/run-tests.ps1` and main/tag CI PASS; `npm run devkit:ensure -- --json` PASS at v1.0.3/ba224644; GitHub immutable-releases API returned enabled true.
+Release Preflight Finding: the first dispatch stopped before tag/asset creation because the least-privilege `GITHUB_TOKEN` cannot read the Administration-scoped immutable-releases endpoint. The workflow now requires an administrator-confirmed `RECOVERY_IMMUTABLE_RELEASES_ENABLED=true` repository variable, with the real GitHub immutability setting remaining the enforcement control.
+Remaining Limits: merged-main packaging/release attestation, encrypted mirror using the operator password/destination, and Illustrator 2025/2026 visual smoke acceptance must occur in release order.
 Unverified But Suspected: none in the implemented tooling; Adobe visual behavior cannot be claimed before the host acceptance run.
 
 ## Release Gate
 
-GitHub release immutability is enabled. Publication remains blocked until the product branch is merged to `main`, CI passes, and the manual Illustrator acceptance items are complete. The workflow itself rejects an existing tag/release and independently verifies the release and asset attestations after publication.
+GitHub release immutability is enabled, the product branch is merged, and merged-main CI passes. Publication may proceed after the release-preflight fix merges; the release is not declared fully accepted until the encrypted mirror and Illustrator 2025/2026 manual checks pass. The workflow rejects an existing tag/release and independently verifies the release and asset attestations after publication.
