@@ -104,6 +104,36 @@ test('Node wrappers preserve PowerShell flags and inline values', () => {
     );
 });
 
+test('native command capture keeps successful stderr as output instead of a terminating error', {
+    skip: process.platform !== 'win32'
+}, (t) => {
+    const root = tempDir('native-capture-');
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    execFileSync('git', ['init', '--quiet'], { cwd: root });
+    execFileSync('git', ['config', 'user.name', 'Native Capture Test'], { cwd: root });
+    execFileSync('git', ['config', 'user.email', 'native-capture@example.invalid'], { cwd: root });
+    write(root, 'fixture.txt');
+    execFileSync('git', ['add', 'fixture.txt'], { cwd: root });
+    execFileSync('git', ['commit', '--quiet', '-m', 'fixture'], { cwd: root });
+    const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+    const probePath = path.join(root, 'probe.ps1');
+    const helperPath = path.join(__dirname, 'native_command.ps1').replace(/'/g, "''");
+    const repoPath = root.replace(/'/g, "''");
+    fs.writeFileSync(probePath, [
+        "$ErrorActionPreference = 'Stop'",
+        `. '${helperPath}'`,
+        `$result = Invoke-NativeCaptured -FilePath 'git' -Arguments @('-C', '${repoPath}', 'switch', '--detach', '${commit}')`,
+        '$result | ConvertTo-Json -Depth 3'
+    ].join('\n'), 'utf8');
+    const result = spawnSync('powershell.exe', [
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', probePath
+    ], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.ExitCode, 0);
+    assert.match(JSON.stringify(report.Output), /HEAD is now at/);
+});
+
 test('ensure-devkit handles missing, pinned, wrong-pin, and dirty targets', {
     skip: process.platform !== 'win32'
 }, (t) => {

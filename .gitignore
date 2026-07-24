@@ -54,6 +54,9 @@ symbol-cep/cep/data/*.bak
 
 test-output
 
+# Generated release artifacts
+/.artifacts/
+
 # Secrets
 .env
 .env*

@@ -9,6 +9,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 if (-not $LockFile) { $LockFile = Join-Path $repoRoot 'devkit.lock.json' }
+. (Join-Path $PSScriptRoot 'native_command.ps1')
 
 function Complete-DevkitResult {
     param(
@@ -74,9 +75,9 @@ try {
         }
         $parent = Split-Path $TargetPath -Parent
         New-Item -ItemType Directory -Force -Path $parent | Out-Null
-        $cloneOutput = & gh repo clone ([string]$lock.repository) $TargetPath 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Complete-DevkitResult FAIL 'Private devkit clone failed.' ([string]($cloneOutput | Select-Object -Last 1)) 1 $lock $TargetPath
+        $cloneResult = Invoke-NativeCaptured -FilePath 'gh' -Arguments @('repo', 'clone', ([string]$lock.repository), $TargetPath)
+        if ($cloneResult.ExitCode -ne 0) {
+            Complete-DevkitResult FAIL 'Private devkit clone failed.' ([string]($cloneResult.Output | Select-Object -Last 1)) 1 $lock $TargetPath
         }
     }
 
@@ -101,17 +102,17 @@ try {
         if ($DryRun) {
             Complete-DevkitResult WARN "Devkit would move from $current to $($lock.commit)." 'Rerun without --dry-run.' 0 $lock $TargetPath
         }
-        $fetchOutput = & git -C $TargetPath fetch --tags --prune origin 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Complete-DevkitResult FAIL 'Could not fetch the pinned devkit commit.' ([string]($fetchOutput | Select-Object -Last 1)) 1 $lock $TargetPath
+        $fetchResult = Invoke-NativeCaptured -FilePath 'git' -Arguments @('-C', $TargetPath, 'fetch', '--tags', '--prune', 'origin')
+        if ($fetchResult.ExitCode -ne 0) {
+            Complete-DevkitResult FAIL 'Could not fetch the pinned devkit commit.' ([string]($fetchResult.Output | Select-Object -Last 1)) 1 $lock $TargetPath
         }
         & git -C $TargetPath cat-file -e "$($lock.commit)^{commit}" 2>$null
         if ($LASTEXITCODE -ne 0) {
             Complete-DevkitResult FAIL 'Pinned devkit commit does not exist on origin.' 'Publish the devkit release before updating devkit.lock.json.' 1 $lock $TargetPath
         }
-        $switchOutput = & git -C $TargetPath switch --detach ([string]$lock.commit) 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Complete-DevkitResult FAIL 'Could not checkout the pinned devkit commit.' ([string]($switchOutput | Select-Object -Last 1)) 1 $lock $TargetPath
+        $switchResult = Invoke-NativeCaptured -FilePath 'git' -Arguments @('-C', $TargetPath, 'switch', '--detach', ([string]$lock.commit))
+        if ($switchResult.ExitCode -ne 0) {
+            Complete-DevkitResult FAIL 'Could not checkout the pinned devkit commit.' ([string]($switchResult.Output | Select-Object -Last 1)) 1 $lock $TargetPath
         }
     }
 
@@ -120,9 +121,9 @@ try {
         if ($DryRun) {
             Complete-DevkitResult WARN "Devkit tag $($lock.release) would be fetched and verified." 'Rerun without --dry-run.' 0 $lock $TargetPath
         }
-        $tagFetchOutput = & git -C $TargetPath fetch --tags --prune origin 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Complete-DevkitResult FAIL "Could not fetch devkit tag $($lock.release)." ([string]($tagFetchOutput | Select-Object -Last 1)) 1 $lock $TargetPath
+        $tagFetchResult = Invoke-NativeCaptured -FilePath 'git' -Arguments @('-C', $TargetPath, 'fetch', '--tags', '--prune', 'origin')
+        if ($tagFetchResult.ExitCode -ne 0) {
+            Complete-DevkitResult FAIL "Could not fetch devkit tag $($lock.release)." ([string]($tagFetchResult.Output | Select-Object -Last 1)) 1 $lock $TargetPath
         }
         $tags = @(& git -C $TargetPath tag --points-at ([string]$lock.commit) 2>$null)
         if ($tags -notcontains [string]$lock.release) {

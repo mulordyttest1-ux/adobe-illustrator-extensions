@@ -48,6 +48,9 @@ jobs:
       - name: Test machine migration tooling
         run: npm run test:machine-setup
 
+      - name: Test immutable recovery tooling
+        run: npm run test:recovery
+
       - name: Validate pinned devkit bootstrap contract
         run: npm run devkit:ensure -- --dry-run --json
 
