@@ -42,10 +42,9 @@ jobs:
       - name: Require immutable releases
         shell: powershell
         run: |
-          $immutable = gh api "repos/${{ github.repository }}/immutable-releases" `
-            -H "Accept: application/vnd.github+json" `
-            -H "X-GitHub-Api-Version: 2026-03-10" | ConvertFrom-Json
-          if (-not $immutable.enabled) { throw 'GitHub Immutable Releases is not enabled.' }
+          if ("${{ vars.RECOVERY_IMMUTABLE_RELEASES_ENABLED }}" -ne 'true') {
+            throw 'RECOVERY_IMMUTABLE_RELEASES_ENABLED is not true. Verify the immutable-releases API with an administrator token, then set the repository Actions variable.'
+          }
 
       - name: Reject an existing release
         shell: powershell

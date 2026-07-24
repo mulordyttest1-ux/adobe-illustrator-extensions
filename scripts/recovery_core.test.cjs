@@ -119,6 +119,15 @@ test('archive listing rejects symbolic links before extraction', () => {
     }), /symbolic link/);
 });
 
+test('release workflow uses the administrator-confirmed immutability preflight', () => {
+    const workflow = fs.readFileSync(
+        path.join(__dirname, '..', '.github', 'workflows', 'recovery-release.yml'),
+        'utf8'
+    );
+    assert.match(workflow, /vars\.RECOVERY_IMMUTABLE_RELEASES_ENABLED/);
+    assert.doesNotMatch(workflow, /gh api .*immutable-releases/);
+});
+
 test('verifier uses exit 1 for an invalid archive and exit 2 for invalid CLI', (t) => {
     const root = tempDir('recovery-invalid-archive-');
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
