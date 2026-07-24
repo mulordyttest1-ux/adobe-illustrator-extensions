@@ -35,5 +35,6 @@
 - [x] T016 Run product lint/build/test/encoding/gate verification and Windows recovery integration tests after all fixes.
 - [x] T017 Run Review Gate and Verification Gate, resolve findings, and record fresh evidence in C2.
 - [x] T018 Push the scoped branch and open a draft pull request without staging unrelated files.
-- [ ] T019 After merge, enable GitHub Immutable Releases, publish and verify `recovery-v1.0.0`, and create/test the Drive AES mirror.
+- [x] T019a After merge, enable GitHub Immutable Releases and publish/verify `recovery-v1.0.0`.
+- [ ] T019b Create and test the Drive AES mirror using the operator-held password.
 - [ ] T020 Complete Illustrator 2025/2026 manual panel acceptance, preset checks, smoke tests, and restore development live links.
