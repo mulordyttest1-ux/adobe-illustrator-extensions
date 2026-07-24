@@ -49,8 +49,22 @@ jobs:
       - name: Reject an existing release
         shell: powershell
         run: |
-          gh release view "recovery-v$env:VERSION" --repo "${{ github.repository }}" *> $null
-          if ($LASTEXITCODE -eq 0) { throw "Recovery release already exists and will not be overwritten." }
+          $headers = @{
+            Accept = 'application/vnd.github+json'
+            Authorization = "Bearer $env:GH_TOKEN"
+            'X-GitHub-Api-Version' = '2026-03-10'
+          }
+          $tag = [Uri]::EscapeDataString("recovery-v$env:VERSION")
+          $uri = "https://api.github.com/repos/${{ github.repository }}/releases/tags/$tag"
+          $exists = $false
+          try {
+            $null = Invoke-RestMethod -Uri $uri -Headers $headers
+            $exists = $true
+          } catch {
+            $statusCode = [int]$_.Exception.Response.StatusCode
+            if ($statusCode -ne 404) { throw }
+          }
+          if ($exists) { throw "Recovery release already exists and will not be overwritten." }
 
       - name: Verify product repository
         run: npm run verify
@@ -103,10 +117,19 @@ jobs:
         shell: powershell
         run: |
           $verified = $false
-          foreach ($attempt in 1..12) {
-            gh release verify "recovery-v$env:VERSION" --repo "${{ github.repository }}" --format json | Out-Host
-            if ($LASTEXITCODE -eq 0) { $verified = $true; break }
-            Start-Sleep -Seconds 5
+          $previousErrorAction = $ErrorActionPreference
+          try {
+            # Attestations can take a few seconds to propagate. A non-zero gh
+            # result is an expected retry state, not a terminating PowerShell error.
+            $ErrorActionPreference = 'Continue'
+            foreach ($attempt in 1..12) {
+              gh release verify "recovery-v$env:VERSION" --repo "${{ github.repository }}" --format json 2>&1 | Out-Host
+              $verifyExit = $LASTEXITCODE
+              if ($verifyExit -eq 0) { $verified = $true; break }
+              Start-Sleep -Seconds 5
+            }
+          } finally {
+            $ErrorActionPreference = $previousErrorAction
           }
           if (-not $verified) { throw 'GitHub release attestation was not available or valid.' }
           gh release verify-asset "recovery-v$env:VERSION" "${{ steps.package.outputs.archive }}" --repo "${{ github.repository }}" --format json | Out-Host
