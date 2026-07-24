@@ -126,6 +126,11 @@ test('release workflow uses the administrator-confirmed immutability preflight',
     );
     assert.match(workflow, /vars\.RECOVERY_IMMUTABLE_RELEASES_ENABLED/);
     assert.doesNotMatch(workflow, /gh api .*immutable-releases/);
+    assert.match(workflow, /Invoke-RestMethod -Uri \$uri/);
+    assert.match(workflow, /releases\/tags\/\$tag/);
+    assert.doesNotMatch(workflow, /gh release view/);
+    assert.match(workflow, /\$ErrorActionPreference = 'Continue'/);
+    assert.match(workflow, /\$verifyExit = \$LASTEXITCODE/);
 });
 
 test('verifier uses exit 1 for an invalid archive and exit 2 for invalid CLI', (t) => {
