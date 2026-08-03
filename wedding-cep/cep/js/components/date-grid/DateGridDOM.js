@@ -14,9 +14,55 @@ import {
     clearLogicWarningVisual,
     collectRefValue,
     findGridRoot,
+    isYearAuto,
+    isYearExplicit,
+    markYearSource,
     toggleEditableRef,
+    toggleYearInput,
     writeRefValue
 } from './dateGridDomSupport.js';
+
+function readDatasetNumber(dataset, key) {
+    const value = dataset?.[key];
+    return value === undefined || value === '' ? null : Number(value);
+}
+
+function readLunarMetadata(yearInput) {
+    const dataset = yearInput?.dataset || {};
+    return {
+        lunarYear: readDatasetNumber(dataset, 'lunarYear'),
+        lunarMonth: readDatasetNumber(dataset, 'lunarMonth'),
+        lunarLeap: readDatasetNumber(dataset, 'lunarLeap')
+    };
+}
+
+function buildSolarAnchor(solarState) {
+    if (!solarState.d || !solarState.m || !solarState.y) {
+        return null;
+    }
+
+    return {
+        day: Number(solarState.d),
+        month: Number(solarState.m),
+        year: Number(solarState.y)
+    };
+}
+
+function writeLunarMetadata(yearInput, lunar) {
+    if (!yearInput?.dataset) {
+        return;
+    }
+
+    yearInput.dataset.lunarYear = lunar.lunar_year === undefined
+        ? ''
+        : String(lunar.lunar_year);
+    yearInput.dataset.lunarMonth = lunar.lunar_month === undefined
+        ? ''
+        : String(lunar.lunar_month);
+    yearInput.dataset.lunarLeap = lunar.leap === undefined
+        ? ''
+        : String(lunar.leap);
+}
 
 export const DateGridDOM = {
     /**
@@ -29,7 +75,7 @@ export const DateGridDOM = {
         return {
             d: refs[`${baseKey}.ngay`]?.value,
             m: refs[`${baseKey}.thang`]?.value,
-            y: new Date().getFullYear()
+            y: refs[`${baseKey}.nam`]?.value || String(new Date().getFullYear())
         };
     },
 
@@ -37,12 +83,17 @@ export const DateGridDOM = {
      * Get lunar date values from DOM.
      * @param {Object} refs - Widget refs map
      * @param {string} baseKey - Date base key
-     * @returns {{d: string, m: string}}
+     * @returns {{d: string, m: string, y: string}}
      */
     getLunarState(refs, baseKey) {
+        const yearInput = refs[`${baseKey}.nam`];
+        const solarState = this.getSolarState(refs, baseKey);
         return {
             d: refs[`${baseKey}.ngay_al`]?.value,
-            m: refs[`${baseKey}.thang_al`]?.value
+            m: refs[`${baseKey}.thang_al`]?.value,
+            y: yearInput?.value || String(new Date().getFullYear()),
+            ...readLunarMetadata(yearInput),
+            anchor: buildSolarAnchor(solarState)
         };
     },
 
@@ -67,6 +118,7 @@ export const DateGridDOM = {
     updateSolarUI(refs, baseKey, solar) {
         this.updateFieldSilently(refs, `${baseKey}.ngay`, solar.day);
         this.updateFieldSilently(refs, `${baseKey}.thang`, solar.month);
+        this.updateFieldSilently(refs, `${baseKey}.nam`, solar.year);
     },
 
     /**
@@ -77,14 +129,21 @@ export const DateGridDOM = {
      */
     updateComputedInfo(refs, baseKey, lunar) {
         const thuRef = refs[`${baseKey}.thu`];
-        const namRef = refs[`${baseKey}.nam`];
         const namyyRef = refs[`${baseKey}.namyy`];
         const namAlRef = refs[`${baseKey}.nam_al`];
 
         if (thuRef?.el) thuRef.el.textContent = lunar.thu || '';
-        if (namRef?.el) namRef.el.textContent = String(lunar.year);
-        if (namyyRef) namyyRef.value = String(lunar.year).slice(-2);
+        if (isYearAuto(refs, baseKey)) {
+            this.updateFieldSilently(refs, `${baseKey}.nam`, lunar.year);
+            if (!isYearExplicit(refs, baseKey)) {
+                markYearSource(refs, baseKey, 'smart');
+            }
+        }
+        const effectiveYear = refs[`${baseKey}.nam`]?.value || lunar.year;
+        if (namyyRef) namyyRef.value = String(effectiveYear).slice(-2);
         if (namAlRef?.el) namAlRef.el.textContent = lunar.lunar_year_txt || '';
+
+        writeLunarMetadata(refs[`${baseKey}.nam`], lunar);
     },
 
     /**
@@ -107,6 +166,31 @@ export const DateGridDOM = {
         ['.ngay', '.thang', '.ngay_al', '.thang_al'].forEach(s => {
             toggleEditableRef(refs[baseKey + s], isLocked);
         });
+        const yearAutoRef = refs[`${baseKey}.nam_auto`];
+        if (yearAutoRef) {
+            yearAutoRef.disabled = isLocked;
+        }
+        toggleYearInput(refs, baseKey, isLocked || isYearAuto(refs, baseKey));
+    },
+
+    toggleYearState(refs, baseKey, isAutomatic) {
+        toggleYearInput(refs, baseKey, isAutomatic);
+    },
+
+    isYearAuto(refs, baseKey) {
+        return isYearAuto(refs, baseKey);
+    },
+
+    isYearExplicit(refs, baseKey) {
+        return isYearExplicit(refs, baseKey);
+    },
+
+    markYearSource(refs, baseKey, source) {
+        markYearSource(refs, baseKey, source);
+    },
+
+    getCurrentYear() {
+        return new Date().getFullYear();
     },
 
     /**

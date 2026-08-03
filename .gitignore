@@ -35,6 +35,8 @@ symbol-cep/cep/data/*.bak
 # Local quarantine and accidentally materialized install roots
 /local-artifacts/
 /%APPDATA%/
+/.specify/feature.json
+/symbol-cep/cep/com.dinhson.weddingscripter.panel.dev/
 
 # Operator/customer files belong in local-artifacts, except the shipped template.
 /binhbai4c.ai

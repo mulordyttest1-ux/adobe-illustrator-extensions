@@ -21,7 +21,7 @@ export const ScanAction = {
      * @returns {Promise<{success: boolean, count?: number, error?: string}>}
      */
     async execute(ctx, deps = {}) {
-        const hostFacade = ctx.hostFacade || ctx.bridge;
+        const hostFacade = ctx.hostFacade;
         const { builder, button } = ctx;
         const scanDocument = deps.runScanDocument || runScanDocument;
         const showToast = deps.showToast || UIFeedback.showToast;
@@ -36,7 +36,7 @@ export const ScanAction = {
             const scanFailure = this._getScanFailure(result);
 
             if (scanFailure) {
-                console.error('[ScanAction] Bridge scan failed:', result);
+                console.error('[ScanAction] HostFacade scan failed:', result);
                 showToast(scanFailure.message, 'error');
                 return scanFailure.result;
             }

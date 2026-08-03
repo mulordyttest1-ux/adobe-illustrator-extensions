@@ -3,6 +3,13 @@ import assert from 'node:assert/strict';
 import { WeddingAssembler } from './assembler.js';
 
 describe('WeddingAssembler', () => {
+    it('exposes only the stateless assembleWith entrypoint', () => {
+        assert.equal(typeof WeddingAssembler.assembleWith, 'function');
+        assert.equal('assemble' in WeddingAssembler, false);
+        assert.equal('setDependencies' in WeddingAssembler, false);
+        assert.equal('_deps' in WeddingAssembler, false);
+    });
+
     it('assembles with injected deps without mutating raw input and supports solar_date keys', async () => {
         const rawData = {
             'date.tiec.ngay': '5',
@@ -23,7 +30,6 @@ describe('WeddingAssembler', () => {
             normalize: [],
             enrichSplitNames: [],
             enrichParentPrefixes: [],
-            loadDatabase: 0,
             expandDate: [],
             enrichTimeLocks: [],
             detectVenueState: [],
@@ -55,11 +61,6 @@ describe('WeddingAssembler', () => {
                 }
             },
             calendarEngine: {
-                _isLoaded: false,
-                loadDatabase() {
-                    calls.loadDatabase += 1;
-                    this._isLoaded = true;
-                },
                 expandDate(date) {
                     calls.expandDate.push([
                         date.getFullYear(),
@@ -103,7 +104,6 @@ describe('WeddingAssembler', () => {
             'info.ten_le_idx': 2,
             untouched: 'value'
         });
-        assert.equal(calls.loadDatabase, 1);
         assert.deepEqual(calls.expandDate, [[2027, 4, 5]]);
         assert.equal(calls.normalize[0].packet['info.ten_le_split_idx'], 2);
         assert.equal(calls.normalize[0].packet['date.tiec'], '2027-04-05');

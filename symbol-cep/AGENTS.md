@@ -25,13 +25,14 @@ Huong dan scoped cho `symbol-cep/`.
 
 - `npm run lint:symbol`
 - `npm run build:symbol`
+- `npm run test:symbol`
 - `npm run test:smoke:symbol`
 - `npm run test:e2e:symbol` - alias compatibility cho smoke test
 
 ## Test note
 
-- Hien tai `symbol-cep` co runtime smoke coverage la chinh.
-- Command `npm run test` trong package hien chua co official unit suite dung nghia.
+- `npm run test:symbol` la unit/contract lane cho panel va developer tooling.
+- Runtime Illustrator chi duoc xac nhan boi `npm run test:smoke:symbol` tren lane 2026.
 
 ## Cross-app note
 

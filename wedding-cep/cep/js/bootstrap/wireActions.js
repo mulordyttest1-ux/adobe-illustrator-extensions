@@ -11,13 +11,11 @@ function wireButton(button, handler) {
     }
 }
 
-export function wireActionButtons({ hostFacade, bridge, compactBuilder }) {
-    const resolvedHostFacade = hostFacade || bridge;
+export function wireActionButtons({ hostFacade, compactBuilder }) {
     const scanBtn = document.getElementById("btn-compact-scan");
     wireButton(scanBtn, () => {
         ScanAction.execute({
-            hostFacade: resolvedHostFacade,
-            bridge: resolvedHostFacade,
+            hostFacade,
             builder: compactBuilder,
             button: scanBtn
         });
@@ -26,8 +24,7 @@ export function wireActionButtons({ hostFacade, bridge, compactBuilder }) {
     const updateBtn = document.getElementById("btn-compact-update");
     wireButton(updateBtn, () => {
         UpdateAction.execute({
-            hostFacade: resolvedHostFacade,
-            bridge: resolvedHostFacade,
+            hostFacade,
             builder: compactBuilder,
             button: updateBtn
         });

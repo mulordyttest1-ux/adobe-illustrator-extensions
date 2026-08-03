@@ -45,6 +45,9 @@ describe('dateGridRenderSupport', () => {
             assert.equal(refs['date.tiec_auto'], undefined);
             assert.equal(dependentCol.children[0].type, 'checkbox');
             assert.equal(refs['date.le_auto'].type, 'checkbox');
+            assert.equal(refs['date.le.nam'].type, 'number');
+            assert.equal(refs['date.le.nam_auto'].checked, true);
+            assert.equal(refs['date.le.nam'].dataset.yearSource, 'default');
             assert.equal(refs['date.le.thu'].isComputed, true);
             assert.equal(refs['date.le.namyy'].value, '');
             assert.equal(refs['date.le.nam_al'].isComputed, true);

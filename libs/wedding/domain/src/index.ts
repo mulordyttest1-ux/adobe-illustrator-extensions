@@ -5,4 +5,5 @@ export * from './lib/saint-name.js';
 export * from './lib/time.js';
 export * from './lib/venue.js';
 export * from './lib/date-logic.js';
+export * from './lib/smart-year.js';
 export * from './lib/string.js';

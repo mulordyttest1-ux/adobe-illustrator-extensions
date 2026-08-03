@@ -3,10 +3,17 @@ import assert from 'node:assert/strict';
 import { runApplyStrategyUpdate } from './applyStrategyUpdate.js';
 
 describe('runApplyStrategyUpdate', () => {
+    it('requires the canonical hostFacade input', async () => {
+        await assert.rejects(
+            () => runApplyStrategyUpdate({ bridge: {} }),
+            { message: 'runApplyStrategyUpdate requires a hostFacade' }
+        );
+    });
+
     it('returns a structured error when collecting frames fails', async () => {
         const result = await runApplyStrategyUpdate(
             {
-                bridge: {}
+                hostFacade: {}
             },
             {
                 collectFrames: async () => ({ success: false, error: 'Collect failed hard' })
@@ -22,7 +29,7 @@ describe('runApplyStrategyUpdate', () => {
     it('returns a no-op success when there are no frames', async () => {
         const result = await runApplyStrategyUpdate(
             {
-                bridge: {}
+                hostFacade: {}
             },
             {
                 collectFrames: async () => ({ success: true, data: [] })
@@ -42,7 +49,7 @@ describe('runApplyStrategyUpdate', () => {
         const planCalls = [];
         const result = await runApplyStrategyUpdate(
             {
-                bridge: {}
+                hostFacade: {}
             },
             {
                 collectFrames: async () => ({
@@ -78,7 +85,7 @@ describe('runApplyStrategyUpdate', () => {
 
         const result = await runApplyStrategyUpdate(
             {
-                bridge,
+                hostFacade: bridge,
                 packet: { ready: true }
             },
             {

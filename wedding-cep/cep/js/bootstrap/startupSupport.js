@@ -40,7 +40,6 @@ export function createStartupDeps({ appRuntimeState = {}, overrides = {}, defaul
         TabbedPanel: resolveOverride(overrides, 'TabbedPanel', defaults.TabbedPanel),
         CompactFormBuilder: resolveOverride(overrides, 'CompactFormBuilder', defaults.CompactFormBuilder),
         SchemaTabComponents: resolveOverride(overrides, 'SchemaTabComponents', defaults.SchemaTabComponents),
-        initCalendarEngine: resolveOverride(overrides, 'initCalendarEngine', defaults.initCalendarEngine),
         initEthnicNameNormalizer: resolveOverride(overrides, 'initEthnicNameNormalizer', defaults.initEthnicNameNormalizer),
         wireActionButtons: resolveOverride(overrides, 'wireActionButtons', defaults.wireActionButtons),
         wireSchemaActions: resolveOverride(overrides, 'wireSchemaActions', defaults.wireSchemaActions)

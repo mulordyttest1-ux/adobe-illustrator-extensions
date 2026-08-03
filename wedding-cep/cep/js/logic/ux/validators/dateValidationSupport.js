@@ -17,6 +17,9 @@ export function createFieldValidationWarnings(value, type) {
     if (type === 'month' && (num < 1 || num > 12)) {
         warnings.push({ type: 'range', message: 'Tháng 1-12', severity: 'error' });
     }
+    if (type === 'year' && (num < 1800 || num > 2199)) {
+        warnings.push({ type: 'range', message: 'Năm 1800-2199', severity: 'error' });
+    }
 
     return warnings;
 }
@@ -79,16 +82,35 @@ export function pushSequenceWarnings(warnings, data, { tiec, le, nhap }) {
     }
 }
 
-export function pushExperienceWarnings(warnings, { today, currentYear, tiec, le }) {
+export function addCalendarMonths(date, months) {
+    const result = new Date(date);
+    const originalDay = result.getDate();
+
+    result.setDate(1);
+    result.setMonth(result.getMonth() + months);
+    const lastDay = new Date(
+        result.getFullYear(),
+        result.getMonth() + 1,
+        0
+    ).getDate();
+    result.setDate(Math.min(originalDay, lastDay));
+    result.setHours(0, 0, 0, 0);
+    return result;
+}
+
+export function pushExperienceWarnings(warnings, { today, tiec, le }) {
     if (tiec) {
         const tiecTime = new Date(tiec.date).setHours(0, 0, 0, 0);
         if (tiecTime < today.getTime()) {
             warnings.push({ type: 'past', message: 'CẢNH BÁO: Ngày Tiệc đã qua!', severity: 'warning' });
         }
-    }
-
-    if (tiec && tiec.date.getFullYear() > currentYear + 2) {
-        warnings.push({ type: 'far_future', message: `Năm ${tiec.date.getFullYear()} quá xa?`, severity: 'warning' });
+        if (tiecTime > addCalendarMonths(today, 3).getTime()) {
+            warnings.push({
+                type: 'future_over_3_months',
+                message: 'CẢNH BÁO: Ngày Tiệc cách hiện tại hơn 3 tháng. Kiểm tra lại năm?',
+                severity: 'warning'
+            });
+        }
     }
 
     if (tiec && le) {

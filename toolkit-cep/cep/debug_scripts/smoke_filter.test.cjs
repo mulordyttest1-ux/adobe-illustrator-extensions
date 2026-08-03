@@ -128,6 +128,7 @@ test('list helpers expose registry ids for operator hints', () => {
         'rasterize_bitmap_300_transparent',
         'recolor_selection_k100',
         'recolor_selection_red_c0_m100_y100_k0',
+        'place_all_pdf_pages',
         'step_repeat',
         'step_repeat_symbol',
         'add_camera_marks'

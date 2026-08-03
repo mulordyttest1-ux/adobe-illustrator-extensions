@@ -191,6 +191,39 @@ const smokeScenarioRegistry = [
         includeInFull: false
     },
     {
+        id: 'place_all_pdf_pages_basic',
+        moduleId: 'place_all_pdf_pages',
+        scope: 'module',
+        description: 'all PDF pages are placed as linked items with one exact-size artboard per page'
+    },
+    {
+        id: 'place_all_ai_artboards_basic',
+        moduleId: 'place_all_pdf_pages',
+        scope: 'module',
+        description: 'all AI artboards are placed as linked items with one exact-size artboard per source artboard'
+    },
+    {
+        id: 'place_all_ai_pdf_compatibility_fail',
+        moduleId: 'place_all_pdf_pages',
+        scope: 'module',
+        description: 'AI placement without a usable PDF-compatible representation rolls back cleanly',
+        includeInFull: false
+    },
+    {
+        id: 'place_all_pdf_pages_rollback',
+        moduleId: 'place_all_pdf_pages',
+        scope: 'module',
+        description: 'partial multi-page placement rolls back all new items, artboards, and layers',
+        includeInFull: false
+    },
+    {
+        id: 'place_all_pdf_pages_artboard_limit',
+        moduleId: 'place_all_pdf_pages',
+        scope: 'module',
+        description: 'multi-page placement blocks before mutation when Illustrator artboard capacity is exceeded',
+        includeInFull: false
+    },
+    {
         id: 'step_repeat_basic_centered',
         moduleId: 'step_repeat',
         scope: 'module',

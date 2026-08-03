@@ -18,6 +18,10 @@ function writeModule(rootDir, moduleId, manifest) {
     fs.writeFileSync(path.join(moduleDir, 'run.jsx'), '// module');
 }
 
+function writeRequestAdapter(rootDir, moduleId, source = 'export async function prepareRequest() { return { payload: {} }; }') {
+    fs.writeFileSync(path.join(rootDir, 'modules', moduleId, 'request.js'), source);
+}
+
 function createProjectFixture() {
     const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-artifacts-'));
     fs.mkdirSync(path.join(projectRoot, 'modules'), { recursive: true });
@@ -75,6 +79,33 @@ test('rendered artifacts separate panel catalog from host registry and dispatch'
     assert.match(registrySource, /"\.\.\/modules\/test_probe_command\/run\.jsx"/);
     assert.match(dispatchSource, /QUARANTINED_TOOLKIT_COMMAND/);
     assert.doesNotMatch(dispatchSource, /#include/);
+});
+
+test('optional request adapters are generated into a separate panel registry', () => {
+    const projectRoot = createProjectFixture();
+    writeModule(projectRoot, 'place_all_pdf_pages', {
+        id: 'place_all_pdf_pages',
+        title: 'Place All PDF Pages',
+        buttonLabel: 'Place All PDF Pages',
+        category: 'Daily Work',
+        order: 15,
+        aliases: ['pdf'],
+        description: 'Place all PDF pages.',
+        favoriteRank: 0,
+        requiresDocument: true,
+        requiresSelection: false,
+        successMessage: ''
+    });
+    writeRequestAdapter(projectRoot, 'place_all_pdf_pages');
+
+    const definitions = collectModuleDefinitions({ projectRoot });
+    const requestSource = require('./generate_toolkit_artifacts.cjs')
+        .renderRequestRegistrySource(definitions);
+
+    assert.equal(definitions[0].requestRelativePath, '../modules/place_all_pdf_pages/request.js');
+    assert.match(requestSource, /GENERATED_TOOLKIT_REQUEST_ADAPTERS/);
+    assert.match(requestSource, /place_all_pdf_pages/);
+    assert.match(requestSource, /prepareRequest as requestAdapter0/);
 });
 
 test('collectModuleDefinitions rejects duplicate ids', () => {

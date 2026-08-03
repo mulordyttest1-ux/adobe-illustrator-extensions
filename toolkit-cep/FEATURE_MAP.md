@@ -57,6 +57,7 @@ Use for future toolkit action modules.
 - Primary entrypoints:
   - `toolkit-cep/cep/modules/<module-id>/module.json`
   - `toolkit-cep/cep/modules/<module-id>/run.jsx`
+  - optional `toolkit-cep/cep/modules/<module-id>/request.js`
 - `toolkit-cep/cep/scripts/scaffold_toolkit_module.cjs`
 - `toolkit-cep/cep/scripts/templates/module.json.template`
 - `toolkit-cep/cep/scripts/templates/run.jsx.template`
@@ -117,6 +118,12 @@ Use focused smoke by module id for everyday feature work. Module lanes run the s
   - `step_repeat_gap_invalid_fail`
 - `step_repeat_symbol`
   - `step_repeat_symbol_creates_instances`
+- `place_all_pdf_pages`
+  - `place_all_pdf_pages_basic`
+  - `place_all_ai_artboards_basic`
+  - `place_all_ai_pdf_compatibility_fail`
+  - `place_all_pdf_pages_rollback`
+  - `place_all_pdf_pages_artboard_limit`
 
 Scenario-only lanes kept for deeper/manual smoke:
 
@@ -137,6 +144,9 @@ Scenario-only lanes kept for deeper/manual smoke:
 - `step_repeat_auto_rotate_better_fit`
 - `step_repeat_cell_too_large_fail`
 - `step_repeat_gap_invalid_fail`
+- `place_all_pdf_pages_rollback`
+- `place_all_pdf_pages_artboard_limit`
+- `place_all_ai_pdf_compatibility_fail`
 
 Public commands:
 
@@ -160,5 +170,6 @@ Before continuing Batch 1 module work on a machine, install the local guard once
 
 - Do not edit `cep/.generated/*` by hand.
 - Do not let the shell import module folders directly.
+- Optional panel request adapters are registered by the build generator; do not hard-code module ids in `commandRunner`.
 - Do not add module-specific UI code into `bootstrap/` or `infrastructure/`.
 - If work requires `cep/js/**`, `cep/jsx/**`, `cep/build.cjs`, `cep/scripts/**`, or panel shell files, treat it as a frozen-shell change and get approval first.

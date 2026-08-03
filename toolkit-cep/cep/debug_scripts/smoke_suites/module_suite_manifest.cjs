@@ -5,6 +5,7 @@ const { runRecolorSmokeSuite } = require('./recolor_smoke_suite.cjs');
 const { runRasterizeSmokeSuite } = require('./rasterize_smoke_suite.cjs');
 const { runStepRepeatSmokeSuite } = require('./step_repeat_smoke_suite.cjs');
 const { runCameraMarksSmokeSuite } = require('./camera_marks_smoke_suite.cjs');
+const { runPlaceAllPdfPagesSmokeSuite } = require('./place_all_pdf_pages_smoke_suite.cjs');
 
 const toolkitModuleSmokeSuites = [
     { id: 'text', run: runTextSmokeSuite },
@@ -13,7 +14,8 @@ const toolkitModuleSmokeSuites = [
     { id: 'recolor', run: runRecolorSmokeSuite },
     { id: 'rasterize', run: runRasterizeSmokeSuite },
     { id: 'step_repeat', run: runStepRepeatSmokeSuite },
-    { id: 'camera_marks', run: runCameraMarksSmokeSuite }
+    { id: 'camera_marks', run: runCameraMarksSmokeSuite },
+    { id: 'place_all_pdf_pages', run: runPlaceAllPdfPagesSmokeSuite }
 ];
 
 async function runToolkitModuleSmokeSuites(context) {

@@ -15,8 +15,13 @@ function createRowRefs(baseKey) {
             }
         });
     });
+    refs[`${baseKey}.nam`] = createInput({
+        type: 'number',
+        value: '2026',
+        dataset: { key: `${baseKey}.nam`, baseKey, type: 'year' }
+    });
+    refs[`${baseKey}.nam_auto`] = createInput({ type: 'checkbox', checked: true });
     refs[`${baseKey}.thu`] = createComputedRef();
-    refs[`${baseKey}.nam`] = createComputedRef();
     refs[`${baseKey}.namyy`] = { isComputed: true, value: '' };
     refs[`${baseKey}.nam_al`] = createComputedRef();
     return refs;
@@ -57,13 +62,19 @@ describe('DateGridDOM', () => {
         DateGridDOM.updateComputedInfo(refs, 'date.tiec', {
             thu: 'Thu Hai',
             year: 2026,
-            lunar_year_txt: 'Binh Ngo'
+            lunar_year_txt: 'Binh Ngo',
+            lunar_year: 2026,
+            lunar_month: 11,
+            leap: 0
         });
 
         assert.equal(refs['date.tiec.thu'].el.textContent, 'Thu Hai');
-        assert.equal(refs['date.tiec.nam'].el.textContent, '2026');
+        assert.equal(refs['date.tiec.nam'].value, '2026');
         assert.equal(refs['date.tiec.namyy'].value, '26');
         assert.equal(refs['date.tiec.nam_al'].el.textContent, 'Binh Ngo');
+        assert.equal(refs['date.tiec.nam'].dataset.lunarYear, '2026');
+        assert.equal(refs['date.tiec.nam'].dataset.lunarMonth, '11');
+        assert.equal(refs['date.tiec.nam'].dataset.lunarLeap, '0');
 
         DateGridDOM.showLogicFeedback(
             refs,

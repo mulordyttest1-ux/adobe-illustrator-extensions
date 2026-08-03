@@ -6,10 +6,9 @@ import {
     waitForCompactReady
 } from "./tabBootSupport.js";
 
-export function createCompactController({ hostFacade, bridge, schema }, deps = {}) {
-    const resolvedHostFacade = hostFacade || bridge;
+export function createCompactController({ hostFacade, schema }, deps = {}) {
     return {
-        init: () => initCompactTab({ hostFacade: resolvedHostFacade, bridge: resolvedHostFacade, schema }, deps)
+        init: () => initCompactTab({ hostFacade, schema }, deps)
     };
 }
 
@@ -21,7 +20,7 @@ export function createSchemaController({ hostFacade, bridge }, deps = {}) {
 }
 
 export async function bootTabbedShell({ hostFacade, bridge, schema }, deps = {}) {
-    const resolvedHostFacade = hostFacade || bridge;
+    const resolvedSchemaHostFacade = hostFacade || bridge;
     const TabbedPanelImpl = deps.TabbedPanel || TabbedPanel;
     const createCompactControllerImpl = deps.createCompactController || ((args) => createCompactController(args, deps));
     const createSchemaControllerImpl = deps.createSchemaController || ((args) => createSchemaController(args, deps));
@@ -31,8 +30,8 @@ export async function bootTabbedShell({ hostFacade, bridge, schema }, deps = {})
         tabsSelector: ".ds-tab",
         panelsSelector: ".ds-tab-panel",
         controllers: {
-            compact: createCompactControllerImpl({ hostFacade: resolvedHostFacade, bridge: resolvedHostFacade, schema }),
-            schema: createSchemaControllerImpl({ hostFacade: resolvedHostFacade, bridge: resolvedHostFacade }),
+            compact: createCompactControllerImpl({ hostFacade, schema }),
+            schema: createSchemaControllerImpl({ hostFacade: resolvedSchemaHostFacade, bridge: resolvedSchemaHostFacade }),
             settings: { init: () => {} }
         },
         onTabChange: () => {}

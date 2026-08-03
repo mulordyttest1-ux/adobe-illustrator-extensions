@@ -1,10 +1,10 @@
 import {
-    buildLegacyMirrors,
-    buildProcessingOptions,
     getCanonicalSchema,
-    hydratePreset,
     serializeFormState
 } from '../processing_options.js';
+import { normalizeRawValuesForSchema } from '../config_schema_state.js';
+import { buildDraftFromConfigResult } from '../preset_migrator.js';
+import { toRuntimePreset } from '../runtime_preset_adapter.js';
 import { ConfirmService } from '../confirm_service.js';
 import { impositionCopy } from '../imposition_copy.js';
 import { UIFeedback } from '@shared/cep-ui';
@@ -48,17 +48,11 @@ function updateTabState(configTabRef, nextState) {
 }
 
 function createDeps(overrides = {}) {
-    const presetRepository = withDefault(overrides.presetRepository, overrides.dataStore);
     return {
-        presetRepository: presetRepository || {
-            getPresets() { return []; },
-            saveLastActive() {},
-            savePreset() { return { success: false, message: impositionCopy.persistence.saveError }; }
-        },
-        buildLegacyMirrors: withDefault(overrides.buildLegacyMirrors, buildLegacyMirrors),
-        buildProcessingOptions: withDefault(overrides.buildProcessingOptions, buildProcessingOptions),
+        presetRepository: overrides.presetRepository || null,
         getCanonicalSchema: withDefault(overrides.getCanonicalSchema, getCanonicalSchema),
-        hydratePreset: withDefault(overrides.hydratePreset, hydratePreset),
+        toRuntimePreset: withDefault(overrides.toRuntimePreset, toRuntimePreset),
+        buildDraftFromConfigResult: withDefault(overrides.buildDraftFromConfigResult, buildDraftFromConfigResult),
         serializeFormState: withDefault(overrides.serializeFormState, serializeFormState),
         requestConfirm: withDefault(overrides.requestConfirm, (config) => ConfirmService.request(config)),
         showToast: withDefault(overrides.showToast, (message, type) => UIFeedback.showToast(message, type)),
@@ -68,17 +62,26 @@ function createDeps(overrides = {}) {
     };
 }
 
+function hasCanonicalPersistence(repository) {
+    return !!(
+        repository &&
+        typeof repository.getDraftById === 'function' &&
+        typeof repository.saveDraft === 'function'
+    );
+}
+
 async function resolveUpdateConflict(existingId, name, allowUpdate, deps) {
     if (!existingId || !allowUpdate) return existingId;
 
-    const oldPreset = deps.presetRepository.getPresets().find((entry) => entry.id === existingId);
-    if (!oldPreset || oldPreset.label === name) {
+    const existing = deps.presetRepository.getDraftById(existingId);
+    const oldDraft = existing && existing.draft;
+    if (!oldDraft || oldDraft.label === name) {
         return existingId;
     }
 
     const action = await deps.requestConfirm({
         title: impositionCopy.persistence.renameConflict.title,
-        message: impositionCopy.persistence.renameConflict.message(oldPreset.label, name),
+        message: impositionCopy.persistence.renameConflict.message(oldDraft.label, name),
         confirmLabel: impositionCopy.persistence.renameConflict.confirm,
         cancelLabel: impositionCopy.persistence.renameConflict.cancel,
         dismissLabel: impositionCopy.persistence.renameConflict.dismiss,
@@ -93,40 +96,69 @@ async function resolveUpdateConflict(existingId, name, allowUpdate, deps) {
 function buildPreset(request, deps) {
     const { id, name, rawValues, configTabRef } = request;
     const schema = JSON.parse(JSON.stringify(getSchemaForBuild(configTabRef, deps)));
-    const processingOptions = deps.buildProcessingOptions(rawValues, schema);
-    const legacy = deps.buildLegacyMirrors(processingOptions);
+    const normalizedRawValues = normalizeRawValuesForSchema(rawValues, schema);
 
-    const hydratedPreset = deps.hydratePreset({
+    return deps.buildDraftFromConfigResult({
         id,
         label: name,
-        createdAt: deps.nowIso(),
-        schemaId: 'embedded',
         schema,
-        rawValues,
-        geometry: {
-            finish: {
-                w: Number(rawValues.finish_w) || 0,
-                h: Number(rawValues.finish_h) || 0
-            },
-            safe: [
-                Number(rawValues.safe_top) || 0,
-                Number(rawValues.safe_bottom) || 0,
-                Number(rawValues.safe_left) || 0,
-                Number(rawValues.safe_right) || 0
-            ]
-        },
-        processingOptions,
-        options: legacy.options,
-        info_template: legacy.info_template
-    }, schema);
-
-    return hydratedPreset;
+        rawValues: normalizedRawValues,
+        createdAt: deps.nowIso()
+    });
 }
 
 function handleMissingName(name, deps) {
     if (name) return false;
     deps.showToast(impositionCopy.persistence.missingPresetName, 'warning');
     return true;
+}
+
+async function resolveSaveIdentity(rawValues, allowUpdate, deps) {
+    const name = (rawValues.preset_name || '').trim();
+    if (handleMissingName(name, deps)) {
+        return { valid: false };
+    }
+
+    const existingId = await resolveUpdateConflict(
+        rawValues.preset_id || '',
+        name,
+        allowUpdate,
+        deps
+    );
+    if (existingId === null) {
+        return { valid: false };
+    }
+
+    return {
+        valid: true,
+        name,
+        existingId,
+        id: allowUpdate && existingId ? existingId : deps.createPresetId()
+    };
+}
+
+function buildSaveCandidate({ id, name, rawValues, configTabRef }, deps) {
+    const result = buildPreset({ id, name, rawValues, configTabRef }, deps);
+    const invalid = !result ||
+        !result.draft ||
+        result.unsupportedExtensions.length > 0;
+
+    if (invalid) {
+        return {
+            success: false,
+            message: `Preset contains unsupported schema extensions: ${(result && result.unsupportedExtensions || []).join(', ')}.`
+        };
+    }
+
+    return {
+        success: true,
+        draft: result.draft,
+        preset: deps.toRuntimePreset(result.draft)
+    };
+}
+
+function persistSaveCandidate(candidate, deps) {
+    return deps.presetRepository.saveDraft(candidate.draft);
 }
 
 function finalizeSaveFailure({ saveResult, rawValues, name, preset, configTabRef }, deps) {
@@ -144,7 +176,6 @@ function finalizeSaveFailure({ saveResult, rawValues, name, preset, configTabRef
 }
 
 function finalizeSaveSuccess({ allowUpdate, existingId, id, preset }, deps) {
-    deps.presetRepository.saveLastActive(id);
     deps.showToast(
         allowUpdate && existingId
             ? impositionCopy.persistence.saveSuccess.updated(preset.label)
@@ -167,6 +198,17 @@ function syncSavedPreset({ saveResult, id, preset, configTabRef }, deps) {
         schema: preset.schema
     });
 
+    if (configTabRef && typeof configTabRef.markClean === 'function') {
+        configTabRef.markClean({
+            rawValues: preset.rawValues,
+            schema: preset.schema,
+            formMeta: {
+                presetId: id,
+                presetName: preset.label
+            }
+        });
+    }
+
     if (configTabRef && typeof configTabRef.render === 'function') {
         configTabRef.render();
     }
@@ -174,17 +216,21 @@ function syncSavedPreset({ saveResult, id, preset, configTabRef }, deps) {
     return true;
 }
 
+function resolveLoadedRuntimePreset(id, tab, deps) {
+    if (!deps.presetRepository || typeof deps.presetRepository.getDraftById !== 'function') {
+        return null;
+    }
+
+    const result = deps.presetRepository.getDraftById(id);
+    return result && result.draft
+        ? deps.toRuntimePreset(result.draft)
+        : null;
+}
+
 export function loadPresetIntoConfigTab({ id, tab } = {}, overrides = {}) {
     const deps = createDeps(overrides);
-    deps.presetRepository.saveLastActive(id);
-
-    const preset = deps.presetRepository.getPresets().find((entry) => entry.id === id);
-    if (!preset) return;
-
-    const baseSchema = tab && typeof tab.getCanonicalSchema === 'function'
-        ? tab.getCanonicalSchema()
-        : deps.getCanonicalSchema();
-    const hydrated = deps.hydratePreset(preset, baseSchema);
+    const hydrated = resolveLoadedRuntimePreset(id, tab, deps);
+    if (!hydrated) return;
 
     updateTabState(tab, {
         presetId: hydrated.id,
@@ -192,6 +238,17 @@ export function loadPresetIntoConfigTab({ id, tab } = {}, overrides = {}) {
         rawValues: hydrated.rawValues,
         schema: hydrated.schema
     });
+
+    if (tab && typeof tab.markClean === 'function') {
+        tab.markClean({
+            rawValues: hydrated.rawValues,
+            schema: hydrated.schema,
+            formMeta: {
+                presetId: hydrated.id,
+                presetName: hydrated.label
+            }
+        });
+    }
 
     if (tab && typeof tab.render === 'function') {
         tab.render();
@@ -201,28 +258,53 @@ export function loadPresetIntoConfigTab({ id, tab } = {}, overrides = {}) {
 export async function saveConfigPreset({ form, allowUpdate, configTabRef } = {}, overrides = {}) {
     const deps = createDeps(overrides);
     const rawValues = getCollectedValues(form, configTabRef, deps);
-    const name = (rawValues.preset_name || '').trim();
-
-    if (handleMissingName(name, deps)) {
+    if (handleMissingName((rawValues.preset_name || '').trim(), deps)) {
+        return false;
+    }
+    if (!hasCanonicalPersistence(deps.presetRepository)) {
+        deps.showToast(impositionCopy.persistence.saveError, 'error');
+        return false;
+    }
+    const identity = await resolveSaveIdentity(rawValues, allowUpdate, deps);
+    if (!identity.valid) {
         return false;
     }
 
-    let existingId = rawValues.preset_id || '';
-    existingId = await resolveUpdateConflict(existingId, name, allowUpdate, deps);
-    if (existingId === null) {
+    const candidate = buildSaveCandidate({
+        id: identity.id,
+        name: identity.name,
+        rawValues,
+        configTabRef
+    }, deps);
+    if (!candidate.success) {
+        deps.showToast(candidate.message, 'error');
         return false;
     }
 
-    const id = allowUpdate && existingId ? existingId : deps.createPresetId();
-    const preset = buildPreset({ id, name, rawValues, configTabRef }, deps);
-    const saveResult = deps.presetRepository.savePreset(preset);
-
+    const saveResult = persistSaveCandidate(candidate, deps);
     if (!saveResult.success) {
-        return finalizeSaveFailure({ saveResult, rawValues, name, preset, configTabRef }, deps);
+        return finalizeSaveFailure({
+            saveResult,
+            rawValues,
+            name: identity.name,
+            preset: candidate.preset,
+            configTabRef
+        }, deps);
     }
 
-    finalizeSaveSuccess({ allowUpdate, existingId, id, preset }, deps);
-    return syncSavedPreset({ saveResult, id, preset, configTabRef }, deps);
+    const savedPreset = saveResult.preset || candidate.preset;
+    finalizeSaveSuccess({
+        allowUpdate,
+        existingId: identity.existingId,
+        id: identity.id,
+        preset: savedPreset
+    }, deps);
+    return syncSavedPreset({
+        saveResult,
+        id: identity.id,
+        preset: savedPreset,
+        configTabRef
+    }, deps);
 }
 
 export async function dryRunConfigPreset({ form, configTabRef } = {}, overrides = {}) {
@@ -243,6 +325,11 @@ export async function dryRunConfigPreset({ form, configTabRef } = {}, overrides 
         configTabRef
     }, deps);
 
-    await actionTab.runWithPreset(tempPreset);
+    if (!tempPreset || !tempPreset.draft) {
+        deps.showToast(impositionCopy.persistence.saveError, 'error');
+        return false;
+    }
+
+    await actionTab.runWithPreset(deps.toRuntimePreset(tempPreset.draft));
     return true;
 }

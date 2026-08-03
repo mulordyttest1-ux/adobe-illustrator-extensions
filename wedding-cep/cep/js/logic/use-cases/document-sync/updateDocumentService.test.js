@@ -4,21 +4,9 @@ import { runUpdateDocumentService } from './updateDocumentService.js';
 
 function createAssemblerHarness(overrides = {}) {
     const calls = {
-        setDependencies: [],
-        assemble: [],
         assembleWith: []
     };
     const assembler = {
-        setDependencies: (deps) => {
-            calls.setDependencies.push(deps);
-        },
-        assemble: async (rawData, schema) => {
-            calls.assemble.push({ rawData, schema });
-            if (typeof overrides.assemble === 'function') {
-                return overrides.assemble(rawData, schema);
-            }
-            return { normalized: true, ...rawData };
-        },
         assembleWith: async (rawData, schema, deps) => {
             calls.assembleWith.push({ rawData, schema, deps });
             if (typeof overrides.assembleWith === 'function') {
@@ -72,8 +60,6 @@ it('assembles packet data, applies the update callback, and returns update conte
             }
         }, { assembler });
 
-        assert.equal(calls.setDependencies.length, 0);
-        assert.equal(calls.assemble.length, 0);
         assert.equal(calls.assembleWith.length, 1);
         assert.deepEqual(calls.assembleWith[0].rawData, rawData);
         assert.deepEqual(calls.assembleWith[0].schema, schema);
@@ -122,37 +108,18 @@ it('assembles packet data, applies the update callback, and returns update conte
         });
     });
 
-    it('falls back to legacy assembler wiring when assembleWith is unavailable', async () => {
-        const calls = {
-            setDependencies: [],
-            assemble: []
-        };
-        const assembler = {
-            setDependencies: (deps) => {
-                calls.setDependencies.push(deps);
-            },
-            assemble: async (rawData, schema) => {
-                calls.assemble.push({ rawData, schema });
-                return { packet: 'legacy-processed' };
-            }
-        };
-
-        const result = await runUpdateDocumentService({
-            rawData: { 'info.ten_le': 'Tan Hon' },
-            schema: { STRUCTURE: [] },
-            applyUpdate: async () => ({
-                success: true,
-                updated: 1,
-                affected: []
-            })
-        }, { assembler });
-
-        assert.equal(calls.setDependencies.length, 1);
-        assert.deepEqual(calls.assemble, [{
-            rawData: { 'info.ten_le': 'Tan Hon' },
-            schema: { STRUCTURE: [] }
-        }]);
-        assert.equal(result.success, true);
-        assert.equal(result.updated, 1);
+    it('rejects an assembler that does not implement the canonical assembleWith contract', async () => {
+        await assert.rejects(
+            () => runUpdateDocumentService({
+                rawData: { 'info.ten_le': 'Tan Hon' },
+                schema: { STRUCTURE: [] },
+                applyUpdate: async () => ({
+                    success: true,
+                    updated: 1,
+                    affected: []
+                })
+            }, { assembler: { assemble: async () => ({}) } }),
+            { message: 'Document Sync assembler must implement assembleWith' }
+        );
     });
 });

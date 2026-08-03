@@ -8,7 +8,7 @@ import {
     normalizeUsageStorePayload,
     resolveStorageHealth,
     stripUsageMetadata
-} from './data_store.js';
+} from './storage/storageHelpers.js';
 
 test('buildUsageStoreFromPresets extracts only usage metadata', () => {
     const usageById = buildUsageStoreFromPresets([

@@ -37,16 +37,15 @@ async function applyStrategyPlans(hostFacade, plans, templateBindings, applyPlan
     return createApplySuccessResult(result, templateBindings);
 }
 
-export async function runApplyStrategyUpdate({ hostFacade, bridge, packet } = {}, deps = {}) {
-    const resolvedHostFacade = hostFacade || bridge;
-    if (!resolvedHostFacade) {
+export async function runApplyStrategyUpdate({ hostFacade, packet } = {}, deps = {}) {
+    if (!hostFacade) {
         throw new Error('runApplyStrategyUpdate requires a hostFacade');
     }
 
     const resolvedDeps = resolveStrategyDeps(deps);
 
     try {
-        const frameResult = await readFrames(resolvedHostFacade, resolvedDeps.collectFrames);
+        const frameResult = await readFrames(hostFacade, resolvedDeps.collectFrames);
         if (!frameResult.success) {
             return frameResult;
         }
@@ -63,7 +62,7 @@ export async function runApplyStrategyUpdate({ hostFacade, bridge, packet } = {}
             return noPlansResult;
         }
 
-        return await applyStrategyPlans(resolvedHostFacade, plans, templateBindings, resolvedDeps.applyPlan);
+        return await applyStrategyPlans(hostFacade, plans, templateBindings, resolvedDeps.applyPlan);
     } catch (error) {
         return { success: false, error: error.message };
     }

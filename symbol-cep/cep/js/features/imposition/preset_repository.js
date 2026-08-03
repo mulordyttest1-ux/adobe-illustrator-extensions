@@ -2,7 +2,6 @@ import { CepStorageEnvironment } from './storage/CepStorageEnvironment.js';
 import { PresetFileStore } from './storage/PresetFileStore.js';
 import { UsageMetadataStore } from './storage/UsageMetadataStore.js';
 import { StorageHealthService } from './storage/StorageHealthService.js';
-import { LastActiveStore } from './storage/LastActiveStore.js';
 import { CepPresetRepository } from './storage/CepPresetRepository.js';
 
 export function createCepPresetRepository(overrides = {}) {
@@ -18,13 +17,10 @@ export function createCepPresetRepository(overrides = {}) {
         presetFileStore,
         usageMetadataStore
     );
-    const lastActiveStore = overrides.lastActiveStore || new LastActiveStore(environment);
-
     return new CepPresetRepository({
         presetFileStore,
         usageMetadataStore,
         storageHealthService,
-        lastActiveStore,
         hydratePresetFn: overrides.hydratePresetFn
     });
 }

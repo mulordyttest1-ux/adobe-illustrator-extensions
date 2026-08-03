@@ -29,7 +29,7 @@ describe('UpdateAction', () => {
         };
 
         const result = await UpdateAction.execute(
-            { bridge, builder, button },
+            { hostFacade: bridge, builder, button },
             {
                 getSchema: () => ({ STRUCTURE: [] }),
                 runUpdateDocument: async ({ rawData, schema, applyUpdate }) => {
@@ -52,8 +52,8 @@ describe('UpdateAction', () => {
                         templateBindings: ['info.ten_le']
                     };
                 },
-                runApplyStrategyUpdate: async ({ bridge: inputBridge, packet }) => {
-                    calls.runApplyStrategyUpdate.push({ bridge: inputBridge, packet });
+                runApplyStrategyUpdate: async ({ hostFacade: inputHostFacade, packet }) => {
+                    calls.runApplyStrategyUpdate.push({ bridge: inputHostFacade, packet });
                     return {
                         success: true,
                         updated: 2,
@@ -85,7 +85,7 @@ describe('UpdateAction', () => {
 
         const result = await UpdateAction.execute(
             {
-                bridge: { id: 'bridge-2' },
+                hostFacade: { id: 'bridge-2' },
                 builder: {
                     getData() {
                         return {
@@ -107,8 +107,8 @@ describe('UpdateAction', () => {
                         error: applyResult.error
                     };
                 },
-                runApplyStrategyUpdate: async ({ bridge, packet }) => {
-                    calls.runApplyStrategyUpdate.push({ bridge, packet });
+                runApplyStrategyUpdate: async ({ hostFacade, packet }) => {
+                    calls.runApplyStrategyUpdate.push({ bridge: hostFacade, packet });
                     return {
                         success: false,
                         error: 'Strategy failed'
@@ -137,7 +137,7 @@ describe('UpdateAction', () => {
 
         const result = await UpdateAction.execute(
             {
-                bridge: { id: 'bridge-noop' },
+                hostFacade: { id: 'bridge-noop' },
                 builder: {
                     getData() {
                         return {
@@ -191,7 +191,7 @@ describe('UpdateAction', () => {
 
         const result = await UpdateAction.execute(
             {
-                bridge: { id: 'bridge-missing-radio' },
+                hostFacade: { id: 'bridge-missing-radio' },
                 builder: {
                     getData() {
                         return {
@@ -235,7 +235,7 @@ describe('UpdateAction', () => {
 
         const result = await UpdateAction.execute(
             {
-                bridge: { id: 'bridge-3' },
+                hostFacade: { id: 'bridge-3' },
                 builder: {
                     getData() {
                         return {};

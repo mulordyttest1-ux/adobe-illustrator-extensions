@@ -118,6 +118,149 @@ test('createCommandRunner runs healthy host commands directly', async () => {
     assert.equal(feedback.messages[0].type, 'success');
 });
 
+test('createCommandRunner prepares an adapter payload before crossing the host facade', async () => {
+    const feedback = createFeedbackStub();
+    const runtimeState = {};
+    let adapterCalls = 0;
+    let receivedRequest = null;
+    const runner = createCommandRunner({
+        requestAdapters: {
+            place_all_pdf_pages: async ({ services }) => {
+                adapterCalls += 1;
+                assert.equal(services.marker, 'request-services');
+                return {
+                    payload: {
+                        sourcePath: 'C:/source.pdf',
+                        pageCount: 2,
+                        pages: [{ pageNumber: 1 }, { pageNumber: 2 }]
+                    }
+                };
+            }
+        },
+        requestServices: { marker: 'request-services' },
+        hostFacade: {
+            async getExecutionContext() {
+                return { hasActiveDocument: true, selectionCount: 0 };
+            },
+            async runCommand(request) {
+                receivedRequest = request;
+                return { success: true, message: 'placed' };
+            }
+        },
+        UIFeedback: feedback,
+        runtimeState
+    });
+
+    const result = await runner.runManifest({
+        id: 'place_all_pdf_pages',
+        title: 'Place All PDF Pages',
+        enabled: true,
+        status: 'ready',
+        requiresDocument: true,
+        requiresSelection: false,
+        successMessage: ''
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(adapterCalls, 1);
+    assert.deepEqual(receivedRequest, {
+        id: 'place_all_pdf_pages',
+        payload: {
+            sourcePath: 'C:/source.pdf',
+            pageCount: 2,
+            pages: [{ pageNumber: 1 }, { pageNumber: 2 }]
+        }
+    });
+});
+
+test('createCommandRunner does not call the host when request preparation is cancelled', async () => {
+    const feedback = createFeedbackStub();
+    const runtimeState = {};
+    let didRunHost = false;
+    const runner = createCommandRunner({
+        requestAdapters: {
+            place_all_pdf_pages: async () => ({
+                cancelled: true,
+                message: 'Place All PDF Pages cancelled.',
+                errorCode: 'PLACE_ALL_PDF_CANCELLED'
+            })
+        },
+        hostFacade: {
+            async getExecutionContext() {
+                return { hasActiveDocument: true, selectionCount: 0 };
+            },
+            async runCommand() {
+                didRunHost = true;
+                return { success: true };
+            }
+        },
+        UIFeedback: feedback,
+        runtimeState
+    });
+
+    const result = await runner.runManifest({
+        id: 'place_all_pdf_pages',
+        title: 'Place All PDF Pages',
+        enabled: true,
+        status: 'ready',
+        requiresDocument: true,
+        requiresSelection: false,
+        successMessage: ''
+    });
+
+    assert.equal(result.errorCode, 'PLACE_ALL_PDF_CANCELLED');
+    assert.equal(didRunHost, false);
+    assert.equal(feedback.messages[0].type, 'warning');
+});
+
+test('createCommandRunner reuses one prepared payload for runtime sync retry', async () => {
+    const feedback = createFeedbackStub();
+    const runtimeState = {
+        services: {
+            async reloadAndSyncHostRuntime() {}
+        }
+    };
+    let adapterCalls = 0;
+    let hostCalls = 0;
+    const requests = [];
+    const runner = createCommandRunner({
+        requestAdapters: {
+            place_all_pdf_pages: async () => {
+                adapterCalls += 1;
+                return { payload: { sourcePath: 'C:/source.pdf', pageCount: 1, pages: [] } };
+            }
+        },
+        hostFacade: {
+            async getExecutionContext() {
+                return { hasActiveDocument: true, selectionCount: 0 };
+            },
+            async runCommand(request) {
+                hostCalls += 1;
+                requests.push(request);
+                return hostCalls === 1
+                    ? { success: false, errorCode: 'UNKNOWN_TOOLKIT_COMMAND', message: 'stale' }
+                    : { success: true, message: 'placed' };
+            }
+        },
+        UIFeedback: feedback,
+        runtimeState
+    });
+
+    const result = await runner.runManifest({
+        id: 'place_all_pdf_pages',
+        title: 'Place All PDF Pages',
+        enabled: true,
+        status: 'ready',
+        requiresDocument: true,
+        requiresSelection: false,
+        successMessage: ''
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(adapterCalls, 1);
+    assert.deepEqual(requests[0], requests[1]);
+});
+
 test('createCommandRunner shows a warning toast when the host command is cancelled', async () => {
     const feedback = createFeedbackStub();
     const runtimeState = {};

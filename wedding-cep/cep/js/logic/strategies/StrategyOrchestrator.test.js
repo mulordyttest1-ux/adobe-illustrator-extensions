@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { StrategyOrchestrator } from './StrategyOrchestrator.js';
 
 describe('StrategyOrchestrator', () => {
+    it('exposes only frame analysis and planning APIs', () => {
+        const orchestrator = new StrategyOrchestrator();
+
+        assert.equal(typeof orchestrator.analyze, 'function');
+        assert.equal(typeof orchestrator.planFrames, 'function');
+        assert.equal('analyzeBatch' in orchestrator, false);
+        assert.equal('encodeMetadata' in orchestrator, false);
+        assert.equal('decodeMetadata' in orchestrator, false);
+    });
+
     it('builds frame plans from collected frame records and skips SKIP plans', () => {
         const calls = [];
         const orchestrator = new StrategyOrchestrator();

@@ -1,5 +1,6 @@
 import { ToolkitBridge } from './bridge.js';
 import { createCepHost } from './cepHost.js';
+import { createToolkitRequestServices } from './requestServices.js';
 
 function escapeForExtendScript(value) {
     return String(value)
@@ -12,8 +13,16 @@ function normalizeRootPath(rootPath) {
 }
 
 function getNodeRequire() {
+    if (
+        typeof window !== 'undefined' &&
+        window.cep_node &&
+        typeof window.cep_node.require === 'function'
+    ) {
+        return window.cep_node.require.bind(window.cep_node);
+    }
+
     if (typeof window !== 'undefined' && typeof window.require === 'function') {
-        return window.require;
+        return window.require.bind(window);
     }
 
     if (typeof globalThis !== 'undefined' && typeof globalThis.require === 'function') {
@@ -213,11 +222,15 @@ export function createHostFacade(overrides = {}) {
     const rawHost = resolveRawHost(overrides);
     const bridge = resolveBridge(rawHost, overrides);
     const panelMode = resolvePanelMode(rawHost, overrides);
+    const requestServices = overrides.requestServices || createToolkitRequestServices({
+        rawHost
+    });
 
     return {
         hostFacade: createHostFacadeApi(bridge),
         hostRuntime: createHostRuntimeApi(rawHost, bridge, overrides),
         debugHost: createDebugHost(rawHost, overrides),
+        requestServices,
         panelMode
     };
 }

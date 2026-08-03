@@ -1,104 +1,75 @@
-function createFieldDefinition(data) {
-    const id = 'dynamic_' + Date.now();
+const MARGIN_SECTION_ID = 'sec_margins';
+const DYNAMIC_ROW_PREFIX = 'row_dynamic_';
 
-    const field = {
-        id,
-        label: data.label,
-        type: data.type || 'number',
-        default: parseFloat(data.default) || 0
-    };
-
-    if (data.classification) {
-        field.binding = {
-            classification: data.classification,
-            edge: data.edge === 'dynamic' ? null : data.edge,
-            edge_dynamic: data.edge === 'dynamic'
-        };
-    }
-
-    return field;
+function defaultIdFactory() {
+    return Date.now();
 }
 
-function addMatrixRow(section, fieldDef) {
-    if (!section.rows) section.rows = [];
-
-    const rowId = `row_${fieldDef.id}`;
-    const classification = fieldDef.binding ? fieldDef.binding.classification : 'ADDITIVE';
-
-    const newRow = {
+export function createMarginRowDefinition({
+    label,
+    classification = 'ADDITIVE',
+    idFactory = defaultIdFactory
+} = {}) {
+    const dynamicId = `dynamic_${idFactory()}`;
+    const rowId = `${DYNAMIC_ROW_PREFIX}${dynamicId.slice('dynamic_'.length)}`;
+    const row = {
         id: rowId,
-        label: fieldDef.label,
+        label: String(label || '').trim(),
         classification,
         fields: {}
     };
 
     ['left', 'right', 'top', 'bottom'].forEach((edge) => {
-        newRow.fields[edge] = {
-            id: `${fieldDef.id}_${edge}`,
-            type: fieldDef.type,
-            default: fieldDef.default || 0,
-            binding: { classification, edge }
+        row.fields[edge] = {
+            id: `${dynamicId}_${edge}`,
+            type: 'number',
+            default: 0,
+            binding: {
+                classification,
+                edge
+            }
         };
     });
 
-    section.rows.push(newRow);
+    return row;
+}
+
+function findMarginSection(schema) {
+    return (schema && schema.sections || []).find((section) => section.id === MARGIN_SECTION_ID);
+}
+
+export function addMarginRow(schema, row) {
+    const section = findMarginSection(schema);
+    if (!section || !row || !row.id) {
+        return false;
+    }
+
+    section.rows = Array.isArray(section.rows) ? section.rows : [];
+    section.rows.push(row);
     return true;
 }
 
-function addField(schema, sectionId, fieldDef) {
-    const section = schema.sections.find((entry) => entry.id === sectionId);
-    if (!section) return false;
-
-    if (section.layout === 'matrix') {
-        return addMatrixRow(section, fieldDef);
+export function removeMarginRow(schema, rowId) {
+    if (!String(rowId || '').startsWith(DYNAMIC_ROW_PREFIX)) {
+        return false;
     }
 
-    if (!section.fields) section.fields = [];
-    section.fields.push(fieldDef);
+    const section = findMarginSection(schema);
+    if (!section || !Array.isArray(section.rows)) {
+        return false;
+    }
+
+    const nextRows = section.rows.filter((row) => !row || row.id !== rowId);
+    if (nextRows.length === section.rows.length) {
+        return false;
+    }
+
+    section.rows = nextRows;
     return true;
-}
-
-function removeFromFields(section, fieldId) {
-    if (!section.fields) return false;
-    const idx = section.fields.findIndex((field) => field.id === fieldId);
-    if (idx < 0) return false;
-    section.fields.splice(idx, 1);
-    return true;
-}
-
-function findFieldEdge(fields, fieldId) {
-    for (const edge in fields) {
-        if (fields[edge].id === fieldId) return edge;
-    }
-    return null;
-}
-
-function removeFromMatrixRows(section, fieldId) {
-    if (!section.rows) return false;
-
-    for (let index = 0; index < section.rows.length; index += 1) {
-        const edge = findFieldEdge(section.rows[index].fields, fieldId);
-        if (edge) {
-            delete section.rows[index].fields[edge];
-            return true;
-        }
-    }
-
-    return false;
-}
-
-function removeField(schema, fieldId) {
-    for (let index = 0; index < schema.sections.length; index += 1) {
-        const section = schema.sections[index];
-
-        if (removeFromFields(section, fieldId)) return true;
-        if (removeFromMatrixRows(section, fieldId)) return true;
-    }
-    return false;
 }
 
 export const SchemaMutationService = {
-    createFieldDefinition,
-    addField,
-    removeField
+    createMarginRowDefinition,
+    addMarginRow,
+    removeMarginRow
 };

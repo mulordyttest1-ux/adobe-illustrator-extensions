@@ -47,12 +47,18 @@ function buildSuccessResult(rawData, schemaMeta, result) {
     };
 }
 
-export async function runUpdateDocumentService({ rawData = {}, schema = null, applyUpdate } = {}, deps = {}) {
+function resolveAssembler(deps = {}) {
     const assembler = deps.assembler || WeddingAssembler;
+    if (!assembler || typeof assembler.assembleWith !== 'function') {
+        throw new Error('Document Sync assembler must implement assembleWith');
+    }
+    return assembler;
+}
+
+export async function runUpdateDocumentService({ rawData = {}, schema = null, applyUpdate } = {}, deps = {}) {
+    const assembler = resolveAssembler(deps);
     const assemblerDeps = createAssemblerDeps(deps);
-    const processedData = typeof assembler.assembleWith === 'function'
-        ? await assembler.assembleWith(rawData, schema, assemblerDeps)
-        : await runLegacyAssemble(assembler, rawData, schema, assemblerDeps);
+    const processedData = await assembler.assembleWith(rawData, schema, assemblerDeps);
     const result = await applyUpdate(processedData);
     const schemaMeta = extractSchemaMeta(schema);
 
@@ -61,9 +67,4 @@ export async function runUpdateDocumentService({ rawData = {}, schema = null, ap
     }
 
     return buildSuccessResult(rawData, schemaMeta, result);
-}
-
-async function runLegacyAssemble(assembler, rawData, schema, assemblerDeps) {
-    assembler.setDependencies(assemblerDeps);
-    return assembler.assemble(rawData, schema);
 }

@@ -3,7 +3,7 @@ export const DATE_GRID_HEADER_LABELS = Object.freeze([
     'D\u01af\u01a0NG',
     '\u00c2M',
     'GI\u1edc',
-    ''
+    'N\u0102M | TH\u1ee8'
 ]);
 
 export const DATE_GRID_PAIR_CONFIGS = Object.freeze([
@@ -54,18 +54,41 @@ export function createInfoColumn(baseKey, refs) {
     const infoCol = document.createElement('div');
     infoCol.className = 'date-info-col';
 
+    const yearAuto = document.createElement('input');
+    yearAuto.type = 'checkbox';
+    yearAuto.checked = true;
+    yearAuto.className = 'date-year-auto';
+    yearAuto.dataset.role = 'year-auto';
+    yearAuto.dataset.baseKey = baseKey;
+    yearAuto.title = 'T\u1ef1 \u0111\u1ed9ng ch\u1ecdn n\u0103m s\u1eafp t\u1edbi';
+    yearAuto.setAttribute('aria-label', `T\u1ef1 \u0111\u1ed9ng ch\u1ecdn n\u0103m s\u1eafp t\u1edbi cho ${baseKey}`);
+
+    const yearInput = document.createElement('input');
+    yearInput.type = 'number';
+    yearInput.value = String(new Date().getFullYear());
+    yearInput.dataset.yearSource = 'default';
+    yearInput.disabled = true;
+    yearInput.className = 'date-year-input date-input-disabled';
+    yearInput.dataset.key = `${baseKey}.nam`;
+    yearInput.dataset.baseKey = baseKey;
+    yearInput.dataset.type = 'year';
+    yearInput.min = '1800';
+    yearInput.max = '2199';
+    yearInput.title = 'B\u1ecf ch\u1ecdn \u00f4 t\u1ef1 \u0111\u1ed9ng \u0111\u1ec3 s\u1eeda n\u0103m';
+
     const thuSpan = document.createElement('span');
-    const namSpan = document.createElement('span');
     const namAlSpan = document.createElement('span');
 
+    infoCol.appendChild(yearAuto);
+    infoCol.appendChild(yearInput);
+    infoCol.appendChild(document.createTextNode(' | '));
     infoCol.appendChild(thuSpan);
-    infoCol.appendChild(document.createTextNode(', '));
-    infoCol.appendChild(namSpan);
     infoCol.appendChild(document.createTextNode(' | '));
     infoCol.appendChild(namAlSpan);
 
+    refs[`${baseKey}.nam_auto`] = yearAuto;
+    refs[`${baseKey}.nam`] = yearInput;
     refs[`${baseKey}.thu`] = { isComputed: true, el: thuSpan };
-    refs[`${baseKey}.nam`] = { isComputed: true, el: namSpan };
     refs[`${baseKey}.namyy`] = { isComputed: true, value: '' };
     refs[`${baseKey}.nam_al`] = { isComputed: true, el: namAlSpan };
 

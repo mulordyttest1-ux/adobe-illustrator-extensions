@@ -1,155 +1,131 @@
 /**
- * MODULE: ConfigEngine
- * LAYER: Core/Engine (L2)
- * PURPOSE: Compile config schema + user input into Margin Rules
- * DEPENDENCIES: None
- * SIDE EFFECTS: None (pure compilation)
- * EXPORTS: ConfigEngine.compileRules(), .validateSchema()
+ * Compile the config schema into host margin rules.
+ *
+ * This module is intentionally pure. The schema is operator state and must
+ * never be modified just because a preset is being compiled.
  */
+export const ConfigEngine = {
+    compileRules,
+    validateSchema
+};
 
-export const ConfigEngine = {};
+function createValueGetter(formData) {
+    return (key) => {
+        if (formData && typeof formData.get === 'function') {
+            return formData.get(key);
+        }
 
-(function (engine) {
-
-    /**
-     * Compile Rules from a Config Definition and User Data
-     * @param {Object} configDef - The JSON schema defining the tab/fields
-     * @param {FormData|Object} formData - The User's input values
-     * @returns {Array} rules - List of MarginRule objects for JSX
-     */
-    engine.compileRules = function (configDef, formData) {
-        const rules = [];
-        if (!configDef || !configDef.sections) return rules;
-
-        const getValue = _createValueGetter(formData);
-
-        configDef.sections.forEach(function (section) {
-            _compileSectionFields(section, getValue, rules);
-            _compileSectionRows(section, getValue, rules);
-        });
-
-        console.log("Compiled Rules:", rules);
-        return rules;
+        return formData ? formData[key] : undefined;
     };
+}
 
-    /**
-     * Validate a Config Schema
-     */
-    engine.validateSchema = function (config) {
-        if (!config.id || !config.name || !config.sections) {
-            console.error("Invalid Config Schema: Missing root properties");
-            return false;
-        }
-        return true;
-    };
+function resolveCheckbox(value) {
+    return value === true || value === 'true' || value === 'on' || value === 1 || value === '1';
+}
 
-    // --- Private Helpers ---
-
-    /**
-     * Create a value getter function for FormData or plain object
-     * @private
-     */
-    function _createValueGetter(formData) {
-        return function (key) {
-            if (formData && typeof formData.get === 'function') return formData.get(key);
-            return formData[key];
-        };
+function resolveEdge(field, binding, getValue, fallbackEdge) {
+    if (binding && binding.edge_dynamic) {
+        const sourceId = binding.edge_source || `${field.id}_edge`;
+        return getValue(sourceId) || binding.edge || fallbackEdge || null;
     }
 
-    /**
-     * Process standard fields in a section
-     * @private
-     */
-    function _compileSectionFields(section, getValue, rules) {
-        if (!section.fields) return;
-        section.fields.forEach(field => _compileField(field, getValue, rules, null));
+    return (binding && binding.edge) || fallbackEdge || null;
+}
+
+function pushRule(rule, rules) {
+    if (!rule.edge || rule.val <= 0) {
+        return;
     }
 
-    /**
-     * Process matrix rows in a section
-     * @private
-     */
-    function _compileSectionRows(section, getValue, rules) {
-        if (!section.rows) return;
-        section.rows.forEach(row => {
-            if (!row.fields) return;
-            for (const key in row.fields) {
-                if (!Object.prototype.hasOwnProperty.call(row.fields, key)) continue;
-                const f = row.fields[key];
-                if (f.binding === undefined) {
-                    f.binding = { classification: row.classification, edge: key };
-                }
-                _compileField(f, getValue, rules, row);
-            }
-        });
-    }
-
-    /**
-     * Compile a single field into rules
-     * @private
-     */
-    function _compileField(field, getValue, rules, row) {
-        if (!field.binding || !field.binding.classification) return;
-
-        const rawVal = getValue(field.id);
-        let val = parseFloat(rawVal);
-        if (isNaN(val)) val = field.default || 0;
-
-        const rule = {
-            id: field.id,
-            val: val,
-            type: field.binding.classification,
-            edge: _resolveEdge(field, getValue)
-        };
-
-        if (row && row.id) {
-            rule.drawBorder = _resolveCheckbox(getValue(row.id + '_draw_border'));
-            rule.borderStyle = getValue(row.id + '_border_style') || 'dashed';
-        }
-
-        if (rule.val <= 0) {
-            return;
-        }
-
-        if (rule.edge === 'all') {
-            _expandAllEdges(rule, rules);
-        } else if (rule.edge) {
-            rules.push(rule);
-        }
-    }
-
-    /**
-     * Resolve the edge for a field (dynamic or static)
-     * @private
-     */
-    function _resolveEdge(field, getValue) {
-        if (field.binding.edge_dynamic) {
-            const edgeSourceId = field.binding.edge_source || (field.id + '_edge');
-            const edgeVal = getValue(edgeSourceId);
-            return edgeVal || field.binding.edge || null;
-        }
-        return field.binding.edge;
-    }
-
-    /**
-     * Expand an 'all' edge rule into 4 individual rules
-     * @private
-     */
-    function _expandAllEdges(rule, rules) {
-        ['top', 'bottom', 'left', 'right'].forEach(e => {
+    if (rule.edge === 'all') {
+        ['top', 'bottom', 'left', 'right'].forEach((edge) => {
             rules.push({
-                id: rule.id + '_' + e,
-                val: rule.val,
-                type: rule.type,
-                edge: e,
-                drawBorder: rule.drawBorder,
-                borderStyle: rule.borderStyle
+                ...rule,
+                id: `${rule.id}_${edge}`,
+                edge
             });
         });
+        return;
     }
 
-    function _resolveCheckbox(value) {
-        return value === true || value === 'true' || value === 'on' || value === 1 || value === '1';
+    rules.push(rule);
+}
+
+function resolveClassification(field, row) {
+    const binding = field.binding || null;
+    return binding && binding.classification
+        ? binding.classification
+        : (row && row.classification);
+}
+
+function resolveFieldValue(field, getValue) {
+    const parsedValue = Number.parseFloat(getValue(field.id));
+    return Number.isNaN(parsedValue)
+        ? Number.parseFloat(field.default) || 0
+        : parsedValue;
+}
+
+function addRowMetadata(rule, row, getValue) {
+    if (!row || !row.id) {
+        return;
     }
 
-})(ConfigEngine);
+    rule.drawBorder = resolveCheckbox(getValue(`${row.id}_draw_border`));
+    rule.borderStyle = getValue(`${row.id}_border_style`) || 'dashed';
+}
+
+function compileField(field, context) {
+    if (!field || !field.id || field.binding === false) {
+        return;
+    }
+
+    const { getValue, rules, row, fallbackEdge } = context;
+    const classification = resolveClassification(field, row);
+    if (!classification) {
+        return;
+    }
+
+    const rule = {
+        id: field.id,
+        val: resolveFieldValue(field, getValue),
+        type: classification,
+        edge: resolveEdge(field, field.binding || null, getValue, fallbackEdge)
+    };
+    addRowMetadata(rule, row, getValue);
+    pushRule(rule, rules);
+}
+
+function compileRows(section, getValue, rules) {
+    (section.rows || []).forEach((row) => {
+        Object.keys(row.fields || {}).forEach((edge) => {
+            compileField(row.fields[edge], { getValue, rules, row, fallbackEdge: edge });
+        });
+    });
+}
+
+function compileSections(section, getValue, rules) {
+    (section.fields || []).forEach((field) => {
+        compileField(field, { getValue, rules, row: null, fallbackEdge: null });
+    });
+    compileRows(section, getValue, rules);
+}
+
+function compileRules(configDef, formData) {
+    if (!configDef || !Array.isArray(configDef.sections)) {
+        return [];
+    }
+
+    const rules = [];
+    const getValue = createValueGetter(formData);
+    configDef.sections.forEach((section) => compileSections(section, getValue, rules));
+    return rules;
+}
+
+function validateSchema(config) {
+    return !!(
+        config &&
+        config.id &&
+        config.name &&
+        Array.isArray(config.sections)
+    );
+}

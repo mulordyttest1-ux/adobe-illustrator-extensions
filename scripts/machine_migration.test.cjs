@@ -374,6 +374,15 @@ test('live-link installer is idempotent with real temporary junctions on Windows
     const wrapperNames = CEP_APPS.flatMap((app) => app.variants.map((variant) => variant.extensionDir)).sort();
     assert.deepEqual(fs.readdirSync(extensionsRoot).sort(), wrapperNames);
     const toolkitTarget = path.join(fixtureRepo, 'toolkit-cep', 'cep');
-    const toolkitLink = path.join(extensionsRoot, 'com.dinhson.toolkit', 'app');
-    assert.equal(fs.realpathSync.native(toolkitLink).toLowerCase(), fs.realpathSync.native(toolkitTarget).toLowerCase());
+    const toolkitLinks = [
+        path.join(extensionsRoot, 'com.dinhson.toolkit', 'app'),
+        path.join(extensionsRoot, 'com.dinhson.toolkit.panel.dev', 'app')
+    ];
+    toolkitLinks.forEach((toolkitLink) => {
+        assert.equal(fs.lstatSync(toolkitLink).isSymbolicLink(), true);
+        assert.equal(
+            fs.realpathSync.native(toolkitLink).toLowerCase(),
+            fs.realpathSync.native(toolkitTarget).toLowerCase()
+        );
+    });
 });

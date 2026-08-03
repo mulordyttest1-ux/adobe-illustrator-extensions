@@ -7,14 +7,13 @@
  * EXPORTS: createConfigPersistence, ConfigPersistence
  */
 
-import { presetRepository } from './data_store.js';
 import {
     dryRunConfigPreset,
     loadPresetIntoConfigTab,
     saveConfigPreset
 } from './preset-config/configPersistenceService.js';
 
-export function createConfigPersistence({ presetRepository: repository = presetRepository } = {}) {
+export function createConfigPersistence({ presetRepository: repository = null } = {}) {
     return {
         loadPreset(id, tab, deps = {}) {
             return loadPresetIntoConfigTab(
@@ -45,10 +44,6 @@ export function createConfigPersistence({ presetRepository: repository = presetR
                 }
             );
         },
-
-        saveLastActive(id) {
-            return repository.saveLastActive(id);
-        }
     };
 }
 

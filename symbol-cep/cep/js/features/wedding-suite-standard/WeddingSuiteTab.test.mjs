@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { UIFeedback } from '@shared/cep-ui';
 import { WeddingSuiteTab } from './WeddingSuiteTab.js';
+import { createBuildError } from './panelActions.js';
 
 const originalWindow = globalThis.window;
 const originalDocument = globalThis.document;
@@ -673,6 +674,25 @@ test('_runBuild flushes stale toasts before showing the unsaved-open-output warn
             type: 'error'
         }
     ]);
+});
+
+test('PDF export failures surface the opened AI recovery artifact', () => {
+    const error = createBuildError({
+        success: false,
+        code: 'WEDDING_SUITE_PDF_EXPORT_FAILED',
+        error: 'Khong the xuat PDF tam.',
+        recoveryArtifact: {
+            path: 'C:/Temp/wedding-job/artifact.ai',
+            opened: true,
+            openWarning: ''
+        }
+    });
+
+    assert.equal(error.code, 'WEDDING_SUITE_PDF_EXPORT_FAILED');
+    assert.equal(error.recoveryArtifact.opened, true);
+    assert.match(error.message, /Khong the xuat PDF tam/);
+    assert.match(error.message, /Ban AI phuc hoi da duoc mo/);
+    assert.match(error.message, /artifact\.ai/);
 });
 
 test('_runBuild stores the last PDF output path without enabling debug capture', async () => {

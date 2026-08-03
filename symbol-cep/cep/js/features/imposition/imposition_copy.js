@@ -165,10 +165,10 @@ export const impositionCopy = {
         footerHint: 'Chạy nháp không lưu Preset. Chỉ lưu khi bạn muốn giữ lại cấu hình hiện tại.',
         saveFolderButton: 'Chon thu muc',
         modal: {
-            title: 'Thêm hàng mới',
-            helper: 'Chỉ dùng khi bạn đang chỉnh Schema. Hàng mới sẽ xuất hiện ngay trong section đang mở.',
+            title: 'Thêm hàng biên',
+            helper: 'Hàng mới sẽ có đủ bốn cạnh Trái, Phải, Trên và Dưới trong phần Biên.',
             fieldLabel: 'Tên hàng',
-            fieldPlaceholder: 'Ví dụ: Bù xéo',
+            fieldPlaceholder: 'Ví dụ: Cấn xé trên',
             classificationLabel: 'Loại logic',
             classification: {
                 baseline: 'Cơ bản (Baseline - An toàn/Xén)',
@@ -177,15 +177,6 @@ export const impositionCopy = {
             },
             cancel: 'Hủy',
             confirm: 'Thêm hàng'
-        },
-        removeFieldDialog: {
-            title: 'Xóa trường khỏi Schema?',
-            confirm: 'Xóa trường',
-            cancel: 'Hủy',
-            message(label, fieldId) {
-                const target = label || fieldId;
-                return `Trường "${target}" sẽ bị bỏ khỏi Schema đang chỉnh. Bạn có thể thêm lại sau nếu cần.`;
-            }
         },
         removeRowDialog: {
             title: 'Xóa hàng khỏi Schema?',
@@ -197,10 +188,15 @@ export const impositionCopy = {
             }
         },
         error: {
-            removeField: 'Lỗi: không xóa được trường đã chọn.',
             removeRow: 'Lỗi: không xóa được hàng đã chọn.',
             missingFieldName: 'Vui lòng nhập tên.',
-            missingSection: 'Lỗi: không tìm thấy section hợp lệ.'
+            missingSection: 'Lỗi: chỉ có thể thêm hàng trong phần Biên.'
+        },
+        unsavedChanges: {
+            title: 'Bỏ thay đổi chưa lưu?',
+            message: 'Các thay đổi hiện tại chưa được lưu và sẽ bị mất nếu tiếp tục.',
+            discard: 'Bỏ thay đổi',
+            keep: 'Tiếp tục chỉnh'
         }
     },
     pane: {

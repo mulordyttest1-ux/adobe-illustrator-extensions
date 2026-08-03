@@ -31,6 +31,8 @@ All public imports should flow through `src/index.ts`.
 ## What Belongs Here
 
 - date calculations and date-derived wedding rules
+- Vietnamese solar/lunar conversion is calculated offline in the domain; the
+  application calendar CSV is retained only as a regression fixture.
 - name splitting and related pure business helpers
 - venue/business-field derivation that does not need CEP or DOM access
 - string/business rule helpers reused across wedding flows

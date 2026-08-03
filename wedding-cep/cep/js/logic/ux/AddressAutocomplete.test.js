@@ -17,7 +17,7 @@ describe("AddressAutocomplete", () => {
         const calls = [];
 
         await AddressAutocomplete.init({
-            host: {
+            hostFacade: {
                 async readExtensionText(relativePath, options) {
                     calls.push(["readExtensionText", relativePath, options.strategy]);
                     return {
@@ -47,7 +47,7 @@ describe("AddressAutocomplete", () => {
 
         try {
             await AddressAutocomplete.init({
-                host: {
+                hostFacade: {
                     async readExtensionText() {
                         return {
                             absolutePath: "C:/fixture/data/vn_address_custom.json",

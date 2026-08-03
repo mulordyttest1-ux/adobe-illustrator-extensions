@@ -1,22 +1,63 @@
 import { hydratePreset } from '../processing_options.js';
+import { migratePresetToDraft } from '../preset_migrator.js';
+import {
+    getPresetDraftUnsupportedExtensions,
+    serializePresetDraft
+} from '../preset_serializer.js';
+import { toRuntimePreset } from '../runtime_preset_adapter.js';
 import {
     STORAGE_REASON_MESSAGES,
     mergeUsageIntoPresets,
     sanitizeUsageEntry
 } from './storageHelpers.js';
 
+function buildStorageFailure(health) {
+    return {
+        success: false,
+        reason: health.reason,
+        message: health.message
+    };
+}
+
+function buildPersistedDraft(draft, existingEntry, now) {
+    return {
+        ...draft,
+        createdAt: draft.createdAt || (existingEntry && existingEntry.createdAt) || now,
+        updatedAt: now
+    };
+}
+
+function buildExistingUsage(usageById, id, existingRuntime) {
+    return usageById[id] || sanitizeUsageEntry({
+        usageCount: existingRuntime && existingRuntime.usageCount,
+        lastUsedAt: existingRuntime && existingRuntime.lastUsedAt
+    });
+}
+
+function writeUsageMetadata({ health, usageMetadataStore, usageById, refreshHealth }) {
+    if (!health.canWriteUsage) {
+        return STORAGE_REASON_MESSAGES.usage_write_denied;
+    }
+
+    const usageWrite = usageMetadataStore.writeEntries(usageById);
+    if (!usageWrite.success) {
+        refreshHealth();
+        return STORAGE_REASON_MESSAGES.usage_write_denied;
+    }
+
+    return '';
+}
+
 export class CepPresetRepository {
     constructor({
         presetFileStore,
         usageMetadataStore,
         storageHealthService,
-        lastActiveStore,
         hydratePresetFn = hydratePreset
     } = {}) {
         this.presetFileStore = presetFileStore;
         this.usageMetadataStore = usageMetadataStore;
         this.storageHealthService = storageHealthService;
-        this.lastActiveStore = lastActiveStore;
         this.hydratePreset = hydratePresetFn;
     }
 
@@ -44,6 +85,43 @@ export class CepPresetRepository {
         return this.usageMetadataStore.readEntries(presets);
     }
 
+    getDraftById(id) {
+        const health = this.getStorageHealth();
+        if (!health.canReadPresets) {
+            return {
+                success: false,
+                draft: null,
+                sourceVersion: 0,
+                unsupportedExtensions: [],
+                reason: health.reason,
+                message: health.message
+            };
+        }
+
+        const entry = this.getRawPresetById(id);
+        if (!entry) {
+            return {
+                success: false,
+                draft: null,
+                sourceVersion: 0,
+                unsupportedExtensions: [],
+                reason: 'missing_target',
+                message: 'Preset not found.'
+            };
+        }
+
+        const migration = migratePresetToDraft(entry);
+        if (!migration.success) {
+            return {
+                ...migration,
+                reason: 'unsupported_extension',
+                message: `Preset contains unsupported schema extensions: ${migration.unsupportedExtensions.join(', ')}.`
+            };
+        }
+
+        return migration;
+    }
+
     getRawPresetById(id) {
         const entries = this.readPresetEntries();
         return entries.presets.find((entry) => entry && entry.id === id) || null;
@@ -66,13 +144,22 @@ export class CepPresetRepository {
         return this.getPresets().find((entry) => entry && entry.id === id) || null;
     }
 
-    savePreset(preset) {
+    saveDraft(draft) {
         const health = this.getStorageHealth();
         if (!health.canWritePresets) {
+            return buildStorageFailure(health);
+        }
+
+        const serializedDraft = serializePresetDraft(draft);
+        if (!serializedDraft) {
             return {
                 success: false,
-                reason: health.reason,
-                message: health.message
+                reason: getPresetDraftUnsupportedExtensions(draft).length
+                    ? 'unsupported_extension'
+                    : 'invalid_draft',
+                message: getPresetDraftUnsupportedExtensions(draft).length
+                    ? `Preset contains unsupported schema extensions: ${getPresetDraftUnsupportedExtensions(draft).join(', ')}.`
+                    : 'Preset draft is invalid.'
             };
         }
 
@@ -80,22 +167,17 @@ export class CepPresetRepository {
         const usageEntries = this.readUsageEntries(presetEntries.presets);
         const presets = presetEntries.presets.slice();
         const usageById = { ...usageEntries.usageById };
-        const normalizedPreset = this.hydratePreset(preset);
-        const idx = presets.findIndex((entry) => entry.id === normalizedPreset.id);
+        const idx = presets.findIndex((entry) => entry && entry.id === serializedDraft.id);
         const now = new Date().toISOString();
-        const existingUsage = usageById[normalizedPreset.id] || sanitizeUsageEntry({
-            usageCount: normalizedPreset.usageCount,
-            lastUsedAt: normalizedPreset.lastUsedAt
-        });
+        const existingEntry = idx > -1 ? presets[idx] : null;
+        const persistedDraft = buildPersistedDraft(serializedDraft, existingEntry, now);
+        const existingRuntime = existingEntry ? this.hydratePreset(existingEntry) : null;
+        const existingUsage = buildExistingUsage(usageById, persistedDraft.id, existingRuntime);
 
         if (idx > -1) {
-            normalizedPreset.createdAt = presets[idx].createdAt || now;
-            normalizedPreset.updatedAt = now;
-            presets[idx] = normalizedPreset;
+            presets[idx] = persistedDraft;
         } else {
-            normalizedPreset.createdAt = now;
-            normalizedPreset.updatedAt = now;
-            presets.push(normalizedPreset);
+            presets.push(persistedDraft);
         }
 
         const presetWrite = this.presetFileStore.writeEntries(presets);
@@ -108,23 +190,35 @@ export class CepPresetRepository {
             };
         }
 
-        usageById[normalizedPreset.id] = sanitizeUsageEntry(existingUsage);
+        usageById[persistedDraft.id] = sanitizeUsageEntry(existingUsage);
 
-        let warning = '';
-        if (health.canWriteUsage) {
-            const usageWrite = this.usageMetadataStore.writeEntries(usageById);
-            if (!usageWrite.success) {
-                warning = STORAGE_REASON_MESSAGES.usage_write_denied;
-            }
-        } else {
-            warning = STORAGE_REASON_MESSAGES.usage_write_denied;
-        }
+        const warning = writeUsageMetadata({
+            health,
+            usageMetadataStore: this.usageMetadataStore,
+            usageById,
+            refreshHealth: () => this.getStorageHealth(true)
+        });
 
         this.getStorageHealth(true);
         return {
             success: true,
-            warning
+            warning,
+            draft: persistedDraft,
+            preset: toRuntimePreset(persistedDraft)
         };
+    }
+
+    savePreset(preset) {
+        const migration = migratePresetToDraft(preset);
+        if (!migration.success) {
+            return {
+                success: false,
+                reason: 'unsupported_extension',
+                message: `Preset contains unsupported schema extensions: ${migration.unsupportedExtensions.join(', ')}.`
+            };
+        }
+
+        return this.saveDraft(migration.draft);
     }
 
     incrementUsage(id) {
@@ -206,11 +300,4 @@ export class CepPresetRepository {
         };
     }
 
-    saveLastActive(id) {
-        this.lastActiveStore.save(id);
-    }
-
-    getLastActive() {
-        return this.lastActiveStore.get();
-    }
 }

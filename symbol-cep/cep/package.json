@@ -6,7 +6,8 @@
     "type": "module",
     "scripts": {
     "build": "node build.cjs",
-    "test": "node --test js/**/*.test.mjs debug_scripts/**/*.test.cjs",
+    "test": "node --test js/**/*.test.mjs scripts/**/*.test.cjs debug_scripts/**/*.test.cjs",
+    "check:architecture": "node scripts/check_architecture.cjs",
     "test:smoke": "npm run test:smoke:2026",
     "test:smoke:2026": "node debug_scripts/test_smoke_2026.cjs",
     "test:e2e": "npm run test:smoke",

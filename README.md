@@ -65,11 +65,19 @@ See `RECOVERY_RELEASE.md` for the immutable last-known-good runtime artifact, of
 - `.agents/skills/`: official Spec Kit integration for Codex.
 - `.specify/`: Spec Kit constitution, templates, and integration state.
 
-Read root `AGENTS.md` and the nearest nested `AGENTS.md` before changing code.
+Read root `AGENTS.md`, `AGENT_CONTEXT.md`, `LEGACY_MAP.md` when relevant, and
+the nearest nested `AGENTS.md` before changing code.
 
 ## Verification lanes
 
-- `npm run verify`: encoding, hygiene, lint, build, and CI-safe tests.
+- `npm run check:agent-ready`: agent context, command, spec, and
+  reproducibility readiness.
+- `npm run check:agent-ready:strict`: also rejects untracked source/context/test
+  files.
+- `npm run audit:agent-ready`: JSON ownership report for agent-readiness
+  warnings.
+- `npm run verify`: agent readiness, encoding, hygiene, architecture, lint,
+  build, and CI-safe tests.
 - `npm run verify:smoke`: host-dependent CEP smoke tests.
 - `npm run verify:full`: both lanes.
 - Symbol debug port: `9198`.

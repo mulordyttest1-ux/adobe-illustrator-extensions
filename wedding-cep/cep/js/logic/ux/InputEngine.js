@@ -1,7 +1,3 @@
-/**
- * InputEngine.js - Central Orchestrator for UX Automation
- */
-
 import { NameNormalizer } from "./normalizers/NameNormalizer.js";
 import { AddressNormalizer } from "./normalizers/AddressNormalizer.js";
 import { DateNormalizer } from "./normalizers/DateNormalizer.js";
@@ -10,79 +6,152 @@ import { AddressValidator } from "./validators/AddressValidator.js";
 import { DateValidator } from "./validators/DateValidator.js";
 import { FieldTypeResolver } from "./input/FieldTypeResolver.js";
 
-export const InputEngine = {
-    fieldTypeResolver: FieldTypeResolver,
-    normalizers: {
-        date: DateNormalizer,
-        name: NameNormalizer,
-        address: AddressNormalizer
-    },
-    validators: {
-        date: DateValidator,
-        name: NameValidator,
-        address: AddressValidator
-    },
+const DATE_FIELD_TYPES = Object.freeze({
+    date_day: "day",
+    date_month: "month",
+    date_year: "year",
+    date_hour: "hour",
+    date_minute: "minute"
+});
 
-    process(value, fieldKey, options = {}, schema = null) {
-        const fieldType = this.fieldTypeResolver.detect(fieldKey, schema);
+const DEFAULT_NORMALIZERS = Object.freeze({
+    date: DateNormalizer,
+    name: NameNormalizer,
+    address: AddressNormalizer
+});
 
-        // Step 1: Normalize (AUTO tier)
-        const normalizeResult = this._normalize(value, fieldType, options, fieldKey);
+const DEFAULT_VALIDATORS = Object.freeze({
+    date: DateValidator,
+    name: NameValidator,
+    address: AddressValidator
+});
 
-        // Step 2: Validate (WARNING tier)
-        const validateResult = this._validate(normalizeResult.value, fieldType, options, fieldKey);
+function resolveNormalizers(overrides = {}) {
+    return {
+        ...DEFAULT_NORMALIZERS,
+        ...overrides
+    };
+}
 
-        return {
-            value: normalizeResult.value,
-            original: value,
-            fieldType,
-            applied: normalizeResult.applied,
-            warnings: validateResult.warnings,
-            valid: validateResult.valid
-        };
-    },
+function resolveValidators(overrides = {}) {
+    return {
+        ...DEFAULT_VALIDATORS,
+        ...overrides
+    };
+}
 
-    _normalize(value, fieldType, options, fieldKey) {
-        const { date, name, address } = this.normalizers;
+function validResult() {
+    return { valid: true, warnings: [] };
+}
 
-        if (["date_day", "date_month", "date_year", "date_hour", "date_minute"].includes(fieldType)) {
-            const type = fieldType.replace("date_", "");
-            return date.normalize(value, { ...options, type });
+function createDateHandler(dateType, normalizers, validators) {
+    return {
+        normalize({ value, options }) {
+            return normalizers.date.normalize(value, { ...options, type: dateType });
+        },
+        validate({ value }) {
+            if (dateType === "day" || dateType === "month" || dateType === "year") {
+                return validators.date.validate(value, dateType);
+            }
+            return validResult();
         }
+    };
+}
 
-        switch (fieldType) {
-            case "name":
-            case "person_name":
-                return name.normalize(value, { ...options, fieldKey, allowSaintName: true });
-            case "venue_name":
-                return name.normalize(value, { ...options, fieldKey, allowSaintName: false });
-            case "address":
-                return address.normalize(value, { ...options, fieldKey });
-            default:
-                return { value: value?.trim() || "", applied: [] };
+function createNameHandler(fieldType, allowSaintName, normalizers, validators) {
+    return {
+        normalize({ value, options, fieldKey }) {
+            return normalizers.name.normalize(value, {
+                ...options,
+                fieldKey,
+                allowSaintName
+            });
+        },
+        validate({ value, options, fieldKey }) {
+            return validators.name.validate(value, fieldType, {
+                ...options,
+                fieldKey
+            });
         }
-    },
+    };
+}
 
-    _validate(value, fieldType, options, fieldKey) {
-        const { date, name, address } = this.validators;
-
-        if (["date_day", "date_month"].includes(fieldType)) {
-            return date.validate(value, fieldType.replace("date_", ""));
+function createAddressHandler(normalizers, validators) {
+    return {
+        normalize({ value, options, fieldKey }) {
+            return normalizers.address.normalize(value, {
+                ...options,
+                fieldKey
+            });
+        },
+        validate({ value, options, fieldKey }) {
+            return validators.address.validate(value, {
+                ...options,
+                fieldKey
+            });
         }
+    };
+}
 
-        switch (fieldType) {
-            case "name":
-            case "person_name":
-            case "venue_name":
-                return name.validate(value, fieldType, { ...options, fieldKey });
-            case "address":
-                return address.validate(value, { ...options, fieldKey });
-            default:
-                return { valid: true, warnings: [] };
+function createFieldHandlers(normalizers, validators) {
+    const handlers = {
+        name: createNameHandler("name", true, normalizers, validators),
+        person_name: createNameHandler("person_name", true, normalizers, validators),
+        venue_name: createNameHandler("venue_name", false, normalizers, validators),
+        address: createAddressHandler(normalizers, validators),
+        text: {
+            normalize({ value }) {
+                return {
+                    value: typeof value === "string" ? value.trim() : "",
+                    applied: []
+                };
+            },
+            validate: validResult
         }
-    },
+    };
 
-    validateDateLogic(data) {
-        return this.validators.date.validateDateLogic(data);
-    }
-};
+    Object.keys(DATE_FIELD_TYPES).forEach((fieldType) => {
+        handlers[fieldType] = createDateHandler(
+            DATE_FIELD_TYPES[fieldType],
+            normalizers,
+            validators
+        );
+    });
+
+    return Object.freeze(handlers);
+}
+
+export function createInputEngine(deps = {}) {
+    const fieldTypeResolver = deps.fieldTypeResolver || FieldTypeResolver;
+    const normalizers = resolveNormalizers(deps.normalizers);
+    const validators = resolveValidators(deps.validators);
+    const handlers = createFieldHandlers(normalizers, validators);
+
+    return Object.freeze({
+        process(value, fieldKey, options = {}, schema = null) {
+            const fieldType = fieldTypeResolver.detect(fieldKey, schema);
+            const handler = handlers[fieldType] || handlers.text;
+            const context = { value, options, fieldKey };
+            const normalizeResult = handler.normalize(context);
+            const validateResult = handler.validate({
+                ...context,
+                value: normalizeResult.value
+            });
+
+            return {
+                value: normalizeResult.value,
+                original: value,
+                fieldType,
+                applied: normalizeResult.applied,
+                warnings: validateResult.warnings,
+                valid: validateResult.valid
+            };
+        },
+
+        validateDateLogic(data) {
+            return validators.date.validateDateLogic(data);
+        }
+    });
+}
+
+export const InputEngine = createInputEngine();

@@ -10,6 +10,8 @@ import { ConfigPaneRenderer } from './config_pane_renderer.js';
 import { ConfigEvents } from './config_events.js';
 import { ConfigPersistence } from './config_persistence.js';
 import { impositionCopy } from './imposition_copy.js';
+import { normalizeRawValuesForSchema } from './config_schema_state.js';
+import { ConfigDraftStore } from './config_draft_store.js';
 import { getCanonicalSchema } from './processing_options.js';
 import {
     buildNormalizedConfigState,
@@ -22,10 +24,10 @@ import {
 import {
     confirmConfigTabModal,
     openConfigTabAddFieldModal,
-    requestRemoveFieldFromConfigTab,
     requestRemoveRowFromConfigTab
 } from './preset-config/configSchemaEditService.js';
 import { UIFeedback } from '@shared/cep-ui';
+import { ConfirmService } from './confirm_service.js';
 
 function clone(value) {
     return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -47,31 +49,6 @@ function createDefaultNotifier() {
     };
 }
 
-function flushToastBacklog() {
-    const toastContainer = typeof document !== 'undefined'
-        ? document.getElementById('toast-container')
-        : null;
-
-    if (toastContainer) {
-        toastContainer.innerHTML = '';
-    }
-
-    if (Array.isArray(UIFeedback._toastQueue)) {
-        UIFeedback._toastQueue.length = 0;
-    }
-
-    if (typeof UIFeedback._isShowingToast === 'boolean') {
-        UIFeedback._isShowingToast = false;
-    }
-}
-
-function buildSaveOutputDirectoryPresetPatch(rawPreset, nextPath) {
-    const safePreset = clone(rawPreset) || {};
-    safePreset.rawValues = clone(safePreset.rawValues) || {};
-    safePreset.rawValues.save_output_dir = nextPath;
-    return safePreset;
-}
-
 function getSaveDirectoryPresetMeta(tab) {
     return {
         presetId: String((tab && tab.formMeta && tab.formMeta.presetId) || '').trim(),
@@ -79,91 +56,89 @@ function getSaveDirectoryPresetMeta(tab) {
     };
 }
 
-function getRepositoryPresetForSaveDirectory(repository, presetId) {
-    if (!repository || !presetId) {
+function getRepositoryDraftForSaveDirectory(repository, presetId) {
+    if (!repository || !presetId || typeof repository.getDraftById !== 'function') {
         return null;
     }
 
-    if (typeof repository.getRawPresetById === 'function') {
-        const rawPreset = repository.getRawPresetById(presetId);
-        if (rawPreset) {
-            return rawPreset;
-        }
-    }
-
-    if (typeof repository.getById === 'function') {
-        return repository.getById(presetId);
-    }
-
-    return null;
+    const result = repository.getDraftById(presetId);
+    return result && result.draft ? result.draft : null;
 }
 
 function resolveLoadedPresetForSaveDirectory(tab) {
     const meta = getSaveDirectoryPresetMeta(tab);
     const repository = tab && tab.presetRepository;
 
-    if (!meta.presetId || !repository || typeof repository.savePreset !== 'function') {
-        return { presetId: '', fallbackLabel: meta.fallbackLabel, rawPreset: null };
+    if (
+        !meta.presetId ||
+        !repository ||
+        typeof repository.getDraftById !== 'function' ||
+        typeof repository.saveDraft !== 'function'
+    ) {
+        return { presetId: '', fallbackLabel: meta.fallbackLabel, draft: null };
     }
 
     return {
         presetId: meta.presetId,
         fallbackLabel: meta.fallbackLabel,
-        rawPreset: getRepositoryPresetForSaveDirectory(repository, meta.presetId)
+        draft: getRepositoryDraftForSaveDirectory(repository, meta.presetId)
+    };
+}
+
+function patchSaveOutputDirectory(draft, nextPath) {
+    const patched = clone(draft) || {};
+    const values = patched.values || {};
+    values.save_output_dir = nextPath;
+    patched.values = values;
+    return patched;
+}
+
+function saveDirectoryDraft(repository, draft) {
+    return repository.saveDraft(draft);
+}
+
+function buildSaveDirectoryFailure(saveResult) {
+    return {
+        status: 'failed',
+        error: saveResult && saveResult.message
+            ? saveResult.message
+            : impositionCopy.persistence.saveError
     };
 }
 
 function persistPickedSaveOutputDirectory(tab, nextPath) {
     const resolved = resolveLoadedPresetForSaveDirectory(tab);
 
-    if (!resolved.presetId || !resolved.rawPreset) {
+    if (!resolved.presetId || !resolved.draft) {
         return { status: 'draft' };
     }
 
-    const patchedPreset = buildSaveOutputDirectoryPresetPatch(resolved.rawPreset, nextPath);
-    const saveResult = tab.presetRepository.savePreset(patchedPreset);
+    const draft = patchSaveOutputDirectory(resolved.draft, nextPath);
+    const saveResult = saveDirectoryDraft(tab.presetRepository, draft);
     if (!saveResult || !saveResult.success) {
-        return {
-            status: 'failed',
-            error: saveResult && saveResult.message ? saveResult.message : impositionCopy.persistence.saveError
-        };
-    }
-
-    if (tab.persistence && typeof tab.persistence.saveLastActive === 'function') {
-        tab.persistence.saveLastActive(resolved.presetId);
+        return buildSaveDirectoryFailure(saveResult);
     }
 
     return {
         status: 'saved',
-        label: patchedPreset.label || resolved.fallbackLabel || resolved.presetId,
+        label: (saveResult.preset && saveResult.preset.label) ||
+            draft.label ||
+            resolved.fallbackLabel ||
+            resolved.presetId,
         warning: saveResult.warning || ''
     };
 }
 
 export class ConfigTab {
-    // eslint-disable-next-line complexity
-    constructor(configOrBridge = {}) {
-        const deps = configOrBridge && typeof configOrBridge === 'object' && (
-            Object.prototype.hasOwnProperty.call(configOrBridge, 'bridge') ||
-            Object.prototype.hasOwnProperty.call(configOrBridge, 'persistence') ||
-            Object.prototype.hasOwnProperty.call(configOrBridge, 'pickDirectory') ||
-            Object.prototype.hasOwnProperty.call(configOrBridge, 'notifier') ||
-            Object.prototype.hasOwnProperty.call(configOrBridge, 'presetRepository') ||
-            Object.prototype.hasOwnProperty.call(configOrBridge, 'schemaMutationService')
-        )
-            ? configOrBridge
-            : { bridge: configOrBridge };
-        const {
-            bridge = null,
-            notifier = null,
-            pickDirectory = null,
-            persistence = ConfigPersistence,
-            presetRepository = null,
-            schemaMutationService = null
-        } = deps;
+    constructor({
+        notifier = null,
+        pickDirectory = null,
+        persistence = ConfigPersistence,
+        presetRepository = null,
+        schemaMutationService = null
+    } = {}) {
         this.container = null;
         this.isEditMode = false;
-        this.bridge = bridge || null;
         this.notifier = notifier || createDefaultNotifier();
         this.pickDirectory = typeof pickDirectory === 'function' ? pickDirectory : null;
         this.persistence = persistence;
@@ -178,6 +153,9 @@ export class ConfigTab {
         };
         this.selectedPresetId = '';
         this.skipCaptureOnNextRender = false;
+        this.draftBaseline = null;
+        this.draftStore = new ConfigDraftStore();
+        this.operation = null;
         this.paneRenderer = new ConfigPaneRenderer(this);
     }
 
@@ -187,6 +165,7 @@ export class ConfigTab {
 
         this.resetActiveSchema();
         this.formState = this._buildNormalizedState({});
+        this.markClean();
         this.render();
         ConfigEvents.bindEvents(this);
     }
@@ -253,9 +232,11 @@ export class ConfigTab {
 
         if (snapshot.formState) {
             this.formState = snapshot.formState;
+            this.draftStore.setValues(this.formState);
         }
         this.formMeta = snapshot.formMeta;
         this.selectedPresetId = snapshot.selectedPresetId;
+        this.draftStore.setMeta(this.formMeta);
     }
 
     _restoreUiState() {
@@ -287,6 +268,8 @@ export class ConfigTab {
             ? JSON.parse(JSON.stringify(schema))
             : this.getCanonicalSchema();
         this.formState = this._buildNormalizedState(this.formState || {});
+        this.draftStore.setSchema(this.activeSchema);
+        this.draftStore.setValues(this.formState);
         this.skipCaptureOnNextRender = true;
 
         return this.activeSchema;
@@ -296,13 +279,123 @@ export class ConfigTab {
         this.canonicalSchema = this._buildCanonicalSchema();
         this.activeSchema = this.getCanonicalSchema();
         this.formState = null;
+        this.draftStore.setSchema(this.activeSchema);
+        this.draftStore.setValues({});
         this.skipCaptureOnNextRender = true;
         return this.activeSchema;
     }
 
     setFormState(rawValues) {
         this.formState = this._buildNormalizedState(rawValues || {});
+        this.draftStore.setSchema(this.getActiveSchema());
+        this.draftStore.setValues(this.formState);
         this.skipCaptureOnNextRender = true;
+    }
+
+    markClean({ rawValues, schema, formMeta } = {}) {
+        const nextSchema = schema || this.getActiveSchema();
+        const nextRawValues = this._buildNormalizedState(rawValues || this.formState || {});
+        const nextMeta = clone(formMeta || this.formMeta) || { presetId: '', presetName: '' };
+
+        this.draftBaseline = {
+            schema: clone(nextSchema),
+            rawValues: clone(nextRawValues),
+            formMeta: nextMeta
+        };
+        this.draftStore.setSnapshot({
+            schema: nextSchema,
+            values: nextRawValues,
+            meta: nextMeta
+        });
+        this.draftStore.markClean();
+
+        return this.draftBaseline;
+    }
+
+    isDirty() {
+        this._captureUiState();
+        this.draftStore.setSnapshot({
+            schema: this.getActiveSchema(),
+            values: this._buildNormalizedState(this.formState || {}),
+            meta: this.formMeta
+        });
+        return this.draftStore.isDirty();
+    }
+
+    async requestDiscardChanges() {
+        if (!this.isDirty()) {
+            return true;
+        }
+
+        const action = await ConfirmService.request({
+            title: impositionCopy.config.unsavedChanges.title,
+            message: impositionCopy.config.unsavedChanges.message,
+            confirmLabel: impositionCopy.config.unsavedChanges.discard,
+            cancelLabel: impositionCopy.config.unsavedChanges.keep,
+            leastDestructive: 'cancel',
+            tone: 'danger'
+        });
+
+        return action === 'confirm';
+    }
+
+    markFieldPersisted(fieldId, value) {
+        if (!this.draftBaseline) {
+            this.markClean();
+        }
+
+        this.draftBaseline.rawValues[fieldId] = value;
+        this.draftStore.markClean({
+            schema: this.draftBaseline.schema,
+            values: this.draftBaseline.rawValues,
+            meta: this.draftBaseline.formMeta
+        });
+    }
+
+    pruneRemovedRowState(rowId) {
+        const rowKey = String(rowId || '').replace(/^row_/, '');
+        const prefix = `${rowKey}_`;
+        const nextValues = this.readRawValues();
+
+        Object.keys(nextValues).forEach((key) => {
+            if (
+                key.indexOf(prefix) === 0 ||
+                key === `${rowId}_draw_border` ||
+                key === `${rowId}_border_style`
+            ) {
+                delete nextValues[key];
+            }
+        });
+
+        this.setFormState(normalizeRawValuesForSchema(nextValues, this.getActiveSchema()));
+    }
+
+    async runExclusive(name, task) {
+        if (this.operation) {
+            return false;
+        }
+
+        this.operation = name;
+        this._setOperationBusy(true);
+        try {
+            return await task();
+        } finally {
+            this.operation = null;
+            this._setOperationBusy(false);
+        }
+    }
+
+    _setOperationBusy(isBusy) {
+        if (!this.container) {
+            return;
+        }
+
+        this.container.dataset.configBusy = isBusy ? 'true' : 'false';
+        this.container
+            .querySelectorAll('#btn-save, #btn-dry-run, #load-preset-select, #btn-toggle-edit, [data-config-action="pick-save-output-dir"]')
+            .forEach((element) => {
+                element.disabled = isBusy;
+            });
     }
 
     setFieldValue(fieldId, value) {
@@ -320,6 +413,7 @@ export class ConfigTab {
             presetId: id || '',
             presetName: label || ''
         };
+        this.draftStore.setMeta(this.formMeta);
         this.selectedPresetId = id || '';
         this.skipCaptureOnNextRender = true;
     }
@@ -431,11 +525,11 @@ export class ConfigTab {
 
     resetDraft() {
         this.isEditMode = false;
-        this.persistence.saveLastActive('');
         this.selectedPresetId = '';
         this.formMeta = { presetId: '', presetName: '' };
         this.resetActiveSchema();
         this.formState = this._buildNormalizedState({});
+        this.markClean();
         this.skipCaptureOnNextRender = true;
         this.render();
 
@@ -446,14 +540,10 @@ export class ConfigTab {
         }
     }
 
-    async requestRemoveField(fieldId, label) {
-        return requestRemoveFieldFromConfigTab(this, fieldId, label, {
+    async requestRemoveRow(rowId, label) {
+        return requestRemoveRowFromConfigTab(this, rowId, label, {
             schemaMutationService: this.schemaMutationService
         });
-    }
-
-    async requestRemoveRow(rowId, label) {
-        return requestRemoveRowFromConfigTab(this, rowId, label);
     }
 
     handleModalConfirm() {
@@ -489,9 +579,9 @@ export class ConfigTab {
         }
 
         this.setFieldValue('save_output_dir', nextPath);
-        flushToastBacklog();
         const appliedPreset = this._applyPickedSaveOutputDirectory(nextPath);
         if (appliedPreset.status === 'saved') {
+            this.markFieldPersisted('save_output_dir', nextPath);
             this.notifier.showToast(impositionCopy.action.saveAfterRun.pickerAppliedToPreset(appliedPreset.label), 'success');
             if (appliedPreset.warning) {
                 this.notifier.showToast(appliedPreset.warning, 'warning');

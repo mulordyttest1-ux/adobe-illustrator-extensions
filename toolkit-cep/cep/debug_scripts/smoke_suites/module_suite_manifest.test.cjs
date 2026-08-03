@@ -25,7 +25,8 @@ test('Toolkit module smoke manifest preserves every registered module scenario',
 
     const expected = smokeScenarioRegistry.filter((scenario) => scenario.scope === 'module').map((scenario) => scenario.id);
     assert.deepEqual(toolkitModuleSmokeSuites.map((suite) => suite.id), [
-        'text', 'cut_workflow', 'swap', 'recolor', 'rasterize', 'step_repeat', 'camera_marks'
+        'text', 'cut_workflow', 'swap', 'recolor', 'rasterize', 'step_repeat', 'camera_marks',
+        'place_all_pdf_pages'
     ]);
     assert.deepEqual(calls.sort(), expected.sort());
 });

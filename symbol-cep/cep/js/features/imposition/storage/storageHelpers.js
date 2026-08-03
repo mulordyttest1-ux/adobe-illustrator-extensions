@@ -1,6 +1,6 @@
 import { impositionCopy } from '../imposition_copy.js';
 
-export const CURRENT_VERSION = 4;
+export const CURRENT_VERSION = 5;
 export const USAGE_STORE_VERSION = 1;
 export const LEGACY_LOCALSTORAGE_KEY = 'cep_imposition_presets';
 

@@ -117,14 +117,19 @@ function createModuleDefinition(normalizedManifest, options = {}) {
     const jsxRoot = options.jsxRoot || '';
     const manifestPath = options.manifestPath || '';
     const runPath = options.runPath || '';
+    const requestPath = options.requestPath || '';
 
     return {
         ...normalizedManifest,
         handler: normalizedManifest.id,
         manifestPath,
         runPath,
+        requestPath,
         jsxRelativeRunPath: runPath && jsxRoot
             ? path.relative(jsxRoot, runPath).replace(/\\/g, '/')
+            : '',
+        requestRelativePath: requestPath && jsxRoot
+            ? path.relative(jsxRoot, requestPath).replace(/\\/g, '/')
             : ''
     };
 }

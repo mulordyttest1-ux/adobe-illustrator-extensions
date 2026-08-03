@@ -23,6 +23,9 @@
 - Detailed folder rules, boundary rules, retired surfaces, and next phases live in `wedding-cep/ARCHITECTURE.md`.
 - Feature-level navigation lives in `wedding-cep/FEATURE_MAP.md`.
 - `Document Sync` and `Template Authoring` are now facade-ready bounded contexts.
+- Document Sync now uses one canonical `HostFacade` dependency path, a stateless assembler, and a reduced strategy-planning surface.
+- `Input Assistance` now uses an isolated `createInputEngine(deps)` factory,
+  a stable default facade, and a hostFacade-only autocomplete contract.
 - `Template Authoring` now routes through one context root at `template-authoring/templateAuthoringService.js`; `SchemaInjector` remains trigger-based core policy.
 - Operator runtime no longer includes a postflight report surface; update/inject flows stay toast-driven.
 - `HostFacade` is now the only app-facing platform seam; raw `bridge.js` and `cepHost.js` are internal-only adapters behind it.

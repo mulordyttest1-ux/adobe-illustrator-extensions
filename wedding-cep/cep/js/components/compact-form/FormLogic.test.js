@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { VenueAutomation } from '@wedding/domain';
-import { InputEngine } from '../../logic/ux/InputEngine.js';
 import { FormLogic } from './FormLogic.js';
 
 class FakeControl {
@@ -158,28 +157,24 @@ describe('FormLogic', () => {
 
     it('re-runs ceremony address shaping when auto venue sync updates the source address', () => {
         const builder = createBuilder();
-        const logic = new FormLogic(builder);
-        const sourceAddr = builder.refs['pos1.diachi'];
-        const originalProcess = InputEngine.process;
         const calls = [];
-
-        InputEngine.process = (...args) => {
-            calls.push(args);
-            return { value: args[0], warnings: [], valid: true, applied: [] };
+        const inputEngine = {
+            process(...args) {
+                calls.push(args);
+                return { value: args[0], warnings: [], valid: true, applied: [] };
+            }
         };
+        const logic = new FormLogic(builder, { inputEngine });
+        const sourceAddr = builder.refs['pos1.diachi'];
 
-        try {
-            logic.setupAutoVenue();
-            calls.length = 0;
+        logic.setupAutoVenue();
+        calls.length = 0;
 
-            sourceAddr.value = '456 Nguyen Hue';
-            sourceAddr.dispatchEvent({ type: 'input', isTrusted: true });
+        sourceAddr.value = '456 Nguyen Hue';
+        sourceAddr.dispatchEvent({ type: 'input', isTrusted: true });
 
-            assert.equal(builder.refs['ceremony.diachi'].value, '456 Nguyen Hue');
-            assert.equal(calls.length, 1);
-            assert.deepEqual(calls[0], ['456 Nguyen Hue', 'ceremony.diachi', {}, builder.schema]);
-        } finally {
-            InputEngine.process = originalProcess;
-        }
+        assert.equal(builder.refs['ceremony.diachi'].value, '456 Nguyen Hue');
+        assert.equal(calls.length, 1);
+        assert.deepEqual(calls[0], ['456 Nguyen Hue', 'ceremony.diachi', {}, builder.schema]);
     });
 });

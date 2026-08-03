@@ -4,7 +4,7 @@ import { TabbedPanel } from "../components/TabbedPanel.js";
 import { SchemaTabComponents } from "../components/schema-tab/SchemaTabComponents.js";
 import { SchemaLoader } from "../infrastructure/schemaLoader.js";
 import { AddressAutocomplete } from "../logic/ux/AddressAutocomplete.js";
-import { initCalendarEngine, initEthnicNameNormalizer } from "./loadCepData.js";
+import { initEthnicNameNormalizer } from "./loadCepData.js";
 import { resetReadyState, updateReadyState, waitForReadyState } from "./readyState.js";
 import { loadStartupResources } from "./startupResources.js";
 import {
@@ -24,7 +24,6 @@ export async function initApp({ hostFacade, appRuntimeState = {} }, overrides = 
             TabbedPanel,
             CompactFormBuilder,
             SchemaTabComponents,
-            initCalendarEngine,
             initEthnicNameNormalizer,
             wireActionButtons,
             wireSchemaActions,

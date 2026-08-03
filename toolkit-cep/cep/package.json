@@ -8,14 +8,18 @@
     "build": "node build.cjs",
     "new-module": "node scripts/scaffold_toolkit_module.cjs",
     "test": "node --test js/**/*.test.js scripts/**/*.test.cjs debug_scripts/**/*.test.cjs",
+    "check:architecture": "node scripts/check_architecture.cjs",
     "test:smoke:raw": "node debug_scripts/test_smoke.cjs",
     "test:smoke:full": "npm run build && node debug_scripts/test_smoke.cjs",
     "test:smoke:module": "npm run build && node debug_scripts/test_smoke.cjs --",
     "test:smoke:scenario": "npm run build && node debug_scripts/test_smoke.cjs --",
     "test:smoke": "npm run test:smoke:full",
     "test:e2e": "npm run test:smoke",
-    "lint:raw": "eslint js/ --config eslint.config.mjs --ignore-pattern bundle.js --max-warnings 0",
+    "lint:raw": "eslint js/ modules/**/*.js --config eslint.config.mjs --ignore-pattern bundle.js --max-warnings 0",
     "lint": "node ../../scripts/ensure_nx_project_graph.cjs && npm run lint:raw"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
   },
   "nx": {
     "tags": [

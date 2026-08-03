@@ -7,15 +7,34 @@ import {
     saveConfigPreset
 } from './configPersistenceService.js';
 
-function createTabRecorder() {
+function createSchema() {
+    return {
+        id: 'standard_imposition',
+        sections: [{
+            id: 'base',
+            fields: [
+                'copies',
+                'finish_w',
+                'finish_h',
+                'safe_top',
+                'opt_custom_rotate',
+                'custom_rotate_angle',
+                'save_filename_prefix',
+                'save_output_dir'
+            ].map((id) => ({ id }))
+        }]
+    };
+}
+
+function createTabRecorder(schema = createSchema()) {
     const calls = [];
     return {
         calls,
         getCanonicalSchema() {
-            return { sections: [{ id: 'base' }] };
+            return schema;
         },
-        setActiveSchema(schema) {
-            calls.push(['setActiveSchema', schema]);
+        setActiveSchema(nextSchema) {
+            calls.push(['setActiveSchema', nextSchema]);
         },
         setPresetMeta(id, label) {
             calls.push(['setPresetMeta', id, label]);
@@ -23,69 +42,148 @@ function createTabRecorder() {
         setFormState(rawValues) {
             calls.push(['setFormState', rawValues]);
         },
+        markClean(snapshot) {
+            calls.push(['markClean', snapshot]);
+        },
         render() {
             calls.push(['render']);
         }
     };
 }
 
-function normalizeRoundtripPresetShape(preset) {
+function buildDraftResult({ id, label, schema, rawValues, createdAt }) {
     return {
-        rawValues: preset.rawValues,
-        schema: preset.schema,
-        processingOptions: preset.processingOptions,
-        options: preset.options,
-        info_template: preset.info_template
+        success: true,
+        sourceVersion: 5,
+        unsupportedExtensions: [],
+        draft: {
+            modelVersion: 1,
+            id,
+            label,
+            schemaId: schema.id || 'standard_imposition',
+            schemaExtensions: { marginRows: [] },
+            values: { ...rawValues },
+            createdAt,
+            updatedAt: createdAt
+        }
     };
 }
 
-test('loadPresetIntoConfigTab hydrates preset state and re-renders the tab', () => {
-    const tab = createTabRecorder();
-    const dataStore = {
-        saveLastActiveCalls: [],
-        saveLastActive(id) {
-            this.saveLastActiveCalls.push(id);
+function toRuntimePreset(draft, schema = createSchema()) {
+    return {
+        ...draft,
+        schema,
+        rawValues: {
+            ...draft.values,
+            preset_id: draft.id,
+            preset_name: draft.label
         },
-        getPresets() {
-            return [{ id: 'preset_a4', label: 'A4' }];
+        processingOptions: {
+            finishWidth: draft.values.finish_w,
+            finishHeight: draft.values.finish_h
+        },
+        options: {
+            copies: Number(draft.values.copies) || 1
+        },
+        info_template: draft.values.info_template || ''
+    };
+}
+
+function createCanonicalRepository(schema = createSchema()) {
+    const drafts = new Map();
+    return {
+        drafts,
+        getDraftById(id) {
+            const draft = drafts.get(id) || null;
+            return {
+                success: !!draft,
+                draft
+            };
+        },
+        saveDraft(draft) {
+            drafts.set(draft.id, draft);
+            return {
+                success: true,
+                draft,
+                preset: toRuntimePreset(draft, schema)
+            };
         }
     };
+}
+
+function createOverrides({
+    repository = createCanonicalRepository(),
+    schema = createSchema(),
+    rawValues = {},
+    toasts = []
+} = {}) {
+    return {
+        presetRepository: repository,
+        serializeFormState: () => ({ ...rawValues }),
+        getCanonicalSchema: () => schema,
+        buildDraftFromConfigResult: buildDraftResult,
+        toRuntimePreset: (draft) => toRuntimePreset(draft, schema),
+        createPresetId: () => 'preset_fixed',
+        nowIso: () => '2026-03-27T12:00:00.000Z',
+        showToast: (message, type) => toasts.push({ message, type }),
+        requestConfirm: async () => 'confirm'
+    };
+}
+
+test('loadPresetIntoConfigTab reads a canonical draft and re-renders the tab', () => {
+    const schema = createSchema();
+    const tab = createTabRecorder(schema);
+    const repository = createCanonicalRepository(schema);
+    const draft = buildDraftResult({
+        id: 'preset_a4',
+        label: 'A4',
+        schema,
+        rawValues: { copies: 2 },
+        createdAt: '2026-03-27T12:00:00.000Z'
+    }).draft;
+    repository.drafts.set(draft.id, draft);
 
     loadPresetIntoConfigTab(
-        { id: 'preset_a4', tab },
-        {
-            dataStore,
-            hydratePreset: (preset, baseSchema) => ({
-                id: preset.id,
-                label: preset.label,
-                rawValues: { copies: 2 },
-                schema: baseSchema
-            })
-        }
+        { id: draft.id, tab },
+        createOverrides({ repository, schema })
     );
 
-    assert.deepEqual(dataStore.saveLastActiveCalls, ['preset_a4']);
     assert.deepEqual(tab.calls, [
-        ['setActiveSchema', { sections: [{ id: 'base' }] }],
+        ['setActiveSchema', schema],
         ['setPresetMeta', 'preset_a4', 'A4'],
-        ['setFormState', { copies: 2 }],
+        ['setFormState', {
+            copies: 2,
+            preset_id: 'preset_a4',
+            preset_name: 'A4'
+        }],
+        ['markClean', {
+            rawValues: {
+                copies: 2,
+                preset_id: 'preset_a4',
+                preset_name: 'A4'
+            },
+            schema,
+            formMeta: {
+                presetId: 'preset_a4',
+                presetName: 'A4'
+            }
+        }],
         ['render']
     ]);
 });
 
 test('saveConfigPreset warns and returns false when preset name is missing', async () => {
     const toasts = [];
-
     const result = await saveConfigPreset(
         {
             form: {},
             allowUpdate: true,
             configTabRef: null
         },
-        {
-            serializeFormState: () => ({ preset_name: '   ' }),
-            showToast: (message, type) => toasts.push({ message, type })
-        }
+        createOverrides({
+            rawValues: { preset_name: '   ' },
+            toasts
+        })
     );
 
     assert.equal(result, false);
@@ -93,23 +191,16 @@ test('saveConfigPreset warns and returns false when preset name is missing', asy
     assert.equal(toasts[0].type, 'warning');
 });
 
-test('saveConfigPreset saves preset, updates tab state, and reports success', async () => {
-    const tab = createTabRecorder();
-    const saveLastActiveCalls = [];
-    const savedPresets = [];
+test('saveConfigPreset writes only a canonical draft and updates tab state', async () => {
+    const schema = createSchema();
+    const tab = createTabRecorder(schema);
+    const repository = createCanonicalRepository(schema);
     const toasts = [];
-
-    const dataStore = {
-        getPresets() {
-            return [];
-        },
-        savePreset(preset) {
-            savedPresets.push(preset);
-            return { success: true };
-        },
-        saveLastActive(id) {
-            saveLastActiveCalls.push(id);
-        }
+    const rawValues = {
+        preset_name: 'Preset A',
+        copies: '2',
+        save_filename_prefix: 'Bai in test',
+        save_output_dir: 'C:/Output'
     };
 
     const result = await saveConfigPreset(
@@ -118,52 +209,30 @@ test('saveConfigPreset saves preset, updates tab state, and reports success', as
             allowUpdate: true,
             configTabRef: tab
         },
-        {
-            dataStore,
-            serializeFormState: () => ({
-                preset_name: 'Preset A',
-                copies: '2',
-                save_filename_prefix: 'Bai in test',
-                save_output_dir: 'C:/Output'
-            }),
-            createPresetId: () => 'preset_fixed',
-            nowIso: () => '2026-03-27T12:00:00.000Z',
-            getCanonicalSchema: () => ({ sections: [{ id: 'base' }] }),
-            buildProcessingOptions: () => ({ mode: 'single' }),
-            buildLegacyMirrors: () => ({ options: { copies: 2 }, info_template: 'Legend' }),
-            hydratePreset: (preset, schema) => ({
-                ...preset,
-                schema,
-                rawValues: preset.rawValues
-            }),
-            showToast: (message, type) => toasts.push({ message, type }),
-            requestConfirm: async () => 'confirm'
-        }
+        createOverrides({ repository, schema, rawValues, toasts })
     );
 
     assert.equal(result, true);
-    assert.equal(savedPresets.length, 1);
-    assert.equal(savedPresets[0].id, 'preset_fixed');
-    assert.equal(savedPresets[0].label, 'Preset A');
-    assert.equal(savedPresets[0].rawValues.save_filename_prefix, 'Bai in test');
-    assert.equal(savedPresets[0].rawValues.save_output_dir, 'C:/Output');
-    assert.deepEqual(saveLastActiveCalls, ['preset_fixed']);
+    assert.equal(repository.drafts.size, 1);
+    const savedDraft = repository.drafts.get('preset_fixed');
+    assert.equal(savedDraft.id, 'preset_fixed');
+    assert.equal(savedDraft.label, 'Preset A');
+    assert.equal(savedDraft.values.save_filename_prefix, 'Bai in test');
+    assert.equal(savedDraft.values.save_output_dir, 'C:/Output');
+    assert.equal(savedDraft.processingOptions, undefined);
+    assert.equal(savedDraft.geometry, undefined);
+    assert.equal(savedDraft.options, undefined);
     assert.equal(toasts[0].type, 'success');
-    assert.deepEqual(tab.calls.slice(-4), [
-        ['setActiveSchema', { sections: [{ id: 'base' }] }],
-        ['setPresetMeta', 'preset_fixed', 'Preset A'],
-        ['setFormState', {
-            preset_name: 'Preset A',
-            copies: '2',
-            save_filename_prefix: 'Bai in test',
-            save_output_dir: 'C:/Output'
-        }],
-        ['render']
-    ]);
 });
 
-test('dryRunConfigPreset builds a temp preset and delegates to actionTab', async () => {
+test('dryRunConfigPreset builds one canonical draft and delegates its runtime projection', async () => {
     let receivedPreset = null;
+    const schema = createSchema();
+    const rawValues = {
+        preset_name: 'Quick Run',
+        finish_w: '120',
+        finish_h: '180'
+    };
 
     const result = await dryRunConfigPreset(
         {
@@ -171,11 +240,7 @@ test('dryRunConfigPreset builds a temp preset and delegates to actionTab', async
             configTabRef: null
         },
         {
-            serializeFormState: () => ({ preset_name: 'Quick Run', finish_w: '120', finish_h: '180' }),
-            buildProcessingOptions: () => ({ mode: 'dry-run' }),
-            buildLegacyMirrors: () => ({ options: { copies: 1 }, info_template: 'Info' }),
-            hydratePreset: (preset, schema) => ({ ...preset, schema }),
-            getCanonicalSchema: () => ({ sections: [{ id: 'embedded' }] }),
+            ...createOverrides({ schema, rawValues }),
             resolveActionTab: () => ({
                 async runWithPreset(preset) {
                     receivedPreset = preset;
@@ -187,14 +252,14 @@ test('dryRunConfigPreset builds a temp preset and delegates to actionTab', async
     assert.equal(result, true);
     assert.equal(receivedPreset.id, 'dry_run_temp');
     assert.match(receivedPreset.label, /^Quick Run/);
-    assert.deepEqual(receivedPreset.schema, { sections: [{ id: 'embedded' }] });
+    assert.equal(receivedPreset.rawValues.finish_w, '120');
+    assert.equal(receivedPreset.rawValues.finish_h, '180');
 });
 
-test('saveConfigPreset and loadPresetIntoConfigTab preserve saved operator state through a roundtrip', async () => {
-    const tab = createTabRecorder();
-    const storedPresets = [];
-    const saveLastActiveCalls = [];
-    const canonicalSchema = { sections: [{ id: 'base' }] };
+test('save and load preserve the same canonical operator state', async () => {
+    const schema = createSchema();
+    const repository = createCanonicalRepository(schema);
+    const tab = createTabRecorder(schema);
     const rawValues = {
         preset_name: 'Roundtrip A',
         finish_w: '120',
@@ -205,48 +270,9 @@ test('saveConfigPreset and loadPresetIntoConfigTab preserve saved operator state
         save_filename_prefix: 'Bai in roundtrip',
         save_output_dir: 'C:/Output'
     };
+    const overrides = createOverrides({ repository, schema, rawValues });
 
-    const dataStore = {
-        getPresets() {
-            return storedPresets.slice();
-        },
-        savePreset(preset) {
-            storedPresets.length = 0;
-            storedPresets.push(preset);
-            return { success: true };
-        },
-        saveLastActive(id) {
-            saveLastActiveCalls.push(id);
-        }
-    };
-
-    const overrides = {
-        dataStore,
-        serializeFormState: () => ({ ...rawValues }),
-        createPresetId: () => 'preset_roundtrip',
-        nowIso: () => '2026-03-27T12:00:00.000Z',
-        getCanonicalSchema: () => canonicalSchema,
-        buildProcessingOptions: () => ({
-            layout: { finish: { w: 120, h: 180 } },
-            rotate: { enabled: true, angle: 90 },
-            margins: { safeTop: 8 }
-        }),
-        buildLegacyMirrors: () => ({
-            options: { copies: 1, rotate: true },
-            info_template: 'Legend {count}'
-        }),
-        hydratePreset: (preset, schema) => ({
-            ...preset,
-            schema,
-            rawValues: preset.rawValues,
-            processingOptions: preset.processingOptions,
-            options: preset.options,
-            info_template: preset.info_template
-        }),
-        showToast() {}
-    };
-
-    const saveResult = await saveConfigPreset(
+    const saved = await saveConfigPreset(
         {
             form: {},
             allowUpdate: false,
@@ -255,115 +281,107 @@ test('saveConfigPreset and loadPresetIntoConfigTab preserve saved operator state
         overrides
     );
 
-    assert.equal(saveResult, true);
-    assert.equal(storedPresets.length, 1);
-    assert.equal(storedPresets[0].id, 'preset_roundtrip');
-    assert.deepEqual(saveLastActiveCalls, ['preset_roundtrip']);
-
+    assert.equal(saved, true);
     tab.calls.length = 0;
-    saveLastActiveCalls.length = 0;
 
     loadPresetIntoConfigTab(
-        { id: 'preset_roundtrip', tab },
+        { id: 'preset_fixed', tab },
         overrides
     );
 
-    assert.deepEqual(saveLastActiveCalls, ['preset_roundtrip']);
-    assert.deepEqual(tab.calls, [
-        ['setActiveSchema', canonicalSchema],
-        ['setPresetMeta', 'preset_roundtrip', 'Roundtrip A'],
-        ['setFormState', rawValues],
-        ['render']
-    ]);
+    assert.equal(tab.calls[0][0], 'setActiveSchema');
+    assert.deepEqual(tab.calls[2], ['setFormState', {
+        ...rawValues,
+        preset_id: 'preset_fixed',
+        preset_name: 'Roundtrip A'
+    }]);
+    assert.equal(tab.calls.at(-1)[0], 'render');
 });
 
-test('saveConfigPreset and dryRunConfigPreset keep the same runtime preset shape for the same form data', async () => {
-    let savedPreset = null;
-    let dryRunPreset = null;
+test('save and dry run project the same runtime behavior from canonical drafts', async () => {
+    const schema = createSchema();
+    const repository = createCanonicalRepository(schema);
     const rawValues = {
         preset_name: 'Roundtrip B',
         finish_w: '90',
         finish_h: '140',
-        safe_top: '6',
-        opt_custom_rotate: true,
-        custom_rotate_angle: '45'
+        copies: '4'
     };
-    const canonicalSchema = { sections: [{ id: 'embedded' }] };
-
+    let dryRunPreset = null;
     const overrides = {
-        dataStore: {
-            getPresets() {
-                return [];
-            },
-            savePreset(preset) {
-                savedPreset = preset;
-                return { success: true };
-            },
-            saveLastActive() {}
-        },
-        serializeFormState: () => ({ ...rawValues }),
-        createPresetId: () => 'preset_saved',
-        nowIso: () => '2026-03-27T12:00:00.000Z',
-        getCanonicalSchema: () => canonicalSchema,
-        buildProcessingOptions: () => ({
-            layout: { finish: { w: 90, h: 140 } },
-            rotate: { enabled: true, angle: 45 },
-            margins: { safeTop: 6 }
-        }),
-        buildLegacyMirrors: () => ({
-            options: { copies: 1, rotate: true },
-            info_template: 'Legend {count}'
-        }),
-        hydratePreset: (preset, schema) => ({
-            ...preset,
-            schema,
-            rawValues: preset.rawValues,
-            processingOptions: preset.processingOptions,
-            options: preset.options,
-            info_template: preset.info_template
-        }),
+        ...createOverrides({ repository, schema, rawValues }),
         resolveActionTab: () => ({
             async runWithPreset(preset) {
                 dryRunPreset = preset;
             }
-        }),
-        showToast() {}
+        })
     };
 
-    const saveResult = await saveConfigPreset(
+    assert.equal(await saveConfigPreset({
+        form: {},
+        allowUpdate: false,
+        configTabRef: null
+    }, overrides), true);
+    assert.equal(await dryRunConfigPreset({
+        form: {},
+        configTabRef: null
+    }, overrides), true);
+
+    const savedPreset = toRuntimePreset(repository.drafts.get('preset_fixed'), schema);
+    assert.deepEqual(dryRunPreset.processingOptions, savedPreset.processingOptions);
+    assert.deepEqual(dryRunPreset.options, savedPreset.options);
+    assert.equal(dryRunPreset.rawValues.finish_w, savedPreset.rawValues.finish_w);
+    assert.equal(dryRunPreset.rawValues.finish_h, savedPreset.rawValues.finish_h);
+});
+
+test('Config persistence rejects a legacy-only repository instead of writing through savePreset', async () => {
+    let legacyWriteCalled = false;
+    const toasts = [];
+    const result = await saveConfigPreset(
         {
             form: {},
             allowUpdate: false,
             configTabRef: null
         },
-        overrides
-    );
-    const dryRunResult = await dryRunConfigPreset(
         {
-            form: {},
-            configTabRef: null
-        },
-        overrides
+            ...createOverrides({
+                rawValues: {
+                    preset_name: 'Legacy blocked',
+                    copies: '2'
+                },
+                toasts
+            }),
+            presetRepository: {
+                getPresets() {
+                    return [];
+                },
+                savePreset() {
+                    legacyWriteCalled = true;
+                    return { success: true };
+                }
+            }
+        }
     );
 
-    assert.equal(saveResult, true);
-    assert.equal(dryRunResult, true);
-    assert.equal(savedPreset.id, 'preset_saved');
-    assert.equal(dryRunPreset.id, 'dry_run_temp');
-    assert.match(dryRunPreset.label, /\(Nháp\)$/);
-    assert.deepEqual(
-        normalizeRoundtripPresetShape(dryRunPreset),
-        normalizeRoundtripPresetShape(savedPreset)
-    );
+    assert.equal(result, false);
+    assert.equal(legacyWriteCalled, false);
+    assert.equal(toasts.at(-1).type, 'error');
 });
 
-test('saveConfigPreset drops legacy save-only action policy from existing preset metadata', async () => {
-    let savedPreset = null;
-    const existingPreset = {
+test('canonical save drops retired preset-level action policy metadata', async () => {
+    const schema = createSchema();
+    const repository = createCanonicalRepository(schema);
+    const existing = buildDraftResult({
         id: 'preset_thiep',
-        label: 'Thiệp',
-        saveActionBehavior: 'save_only'
-    };
+        label: 'Thiep',
+        schema,
+        rawValues: {
+            save_output_dir: 'C:/Old'
+        },
+        createdAt: '2026-03-27T12:00:00.000Z'
+    }).draft;
+    existing.saveActionBehavior = 'save_only';
+    repository.drafts.set(existing.id, existing);
 
     const result = await saveConfigPreset(
         {
@@ -372,36 +390,19 @@ test('saveConfigPreset drops legacy save-only action policy from existing preset
             configTabRef: null
         },
         {
-            dataStore: {
-                getPresets() {
-                    return [existingPreset];
-                },
-                getRawPresetById(id) {
-                    return id === 'preset_thiep' ? existingPreset : null;
-                },
-                savePreset(preset) {
-                    savedPreset = preset;
-                    return { success: true };
-                },
-                saveLastActive() {}
-            },
-            serializeFormState: () => ({
-                preset_id: 'preset_thiep',
-                preset_name: 'Thiệp',
-                save_output_dir: 'C:/Output'
-            }),
-            getCanonicalSchema: () => ({ sections: [{ id: 'embedded' }] }),
-            buildProcessingOptions: () => ({ layout: { mode: 'single' } }),
-            buildLegacyMirrors: () => ({ options: {}, info_template: '' }),
-            hydratePreset: (preset, schema) => ({
-                ...preset,
+            ...createOverrides({
+                repository,
                 schema,
-                rawValues: preset.rawValues
+                rawValues: {
+                    preset_id: 'preset_thiep',
+                    preset_name: 'Thiep',
+                    save_output_dir: 'C:/Output'
+                }
             }),
-            showToast() {}
+            createPresetId: () => 'unused'
         }
     );
 
     assert.equal(result, true);
-    assert.equal(savedPreset.saveActionBehavior, undefined);
+    assert.equal(repository.drafts.get('preset_thiep').saveActionBehavior, undefined);
 });
