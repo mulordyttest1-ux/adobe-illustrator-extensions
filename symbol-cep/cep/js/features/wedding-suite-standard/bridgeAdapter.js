@@ -124,9 +124,6 @@ export function createWeddingSuiteBridgeAdapter(bridge) {
         },
 
         async buildJob(request) {
-            if (typeof bridge.reloadHostScripts === 'function') {
-                await bridge.reloadHostScripts();
-            }
             return invokeWeddingSuiteBridge(bridge, buildHostCall('buildJob', JSON.stringify(request || {})));
         },
 

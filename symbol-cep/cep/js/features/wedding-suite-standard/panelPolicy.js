@@ -225,6 +225,7 @@ export function buildEmptyState(preferences = {}, paperStockCatalog = null) {
 
 export const OUTPUT_FILE_UNSAVED_OPEN_CODE = 'OUTPUT_FILE_UNSAVED_OPEN';
 export const OUTPUT_FILE_UNSAVED_OPEN_MESSAGE = 'File bai in hien dang mo va chua luu. Hay luu hoac dong file do roi chay Binh Bo Thiep lai.';
+export const PDF_EXPORT_FAILED_CODE = 'WEDDING_SUITE_PDF_EXPORT_FAILED';
 export const ACTIVE_SOURCE_NO_DOCUMENT_MESSAGE = 'Khong co file dang mo trong Illustrator.';
 export const ACTIVE_SOURCE_UNSAVED_MESSAGE = 'File PDF dang mo chua luu. Hay luu file roi bam lai.';
 export const ACTIVE_SOURCE_NOT_PDF_MESSAGE = 'File dang mo khong phai PDF nguon cho Bo Thiep.';

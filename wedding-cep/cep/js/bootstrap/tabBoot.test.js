@@ -36,7 +36,7 @@ describe("tabBoot", () => {
         }
 
         const controller = createCompactController(
-            { bridge, schema },
+            { hostFacade: bridge, schema },
             {
                 window: fakeWindow,
                 document: fakeDocument,
@@ -57,7 +57,6 @@ describe("tabBoot", () => {
         assert.equal(builderOptions.schema, schema);
         assert.deepEqual(wireCalls, [{
             hostFacade: bridge,
-            bridge,
             compactBuilder: builtBuilder
         }]);
         assert.equal(fakeWindow.__WEDDING_APP_READY__.phase, "compact");
@@ -114,11 +113,11 @@ describe("tabBoot", () => {
         const schema = { id: "schema-mock" };
 
         await bootTabbedShell(
-            { bridge, schema },
+            { hostFacade: bridge, bridge, schema },
             {
                 updateReadyState: (patch) => events.push(["updateReadyState", patch.phase]),
-                createCompactController: ({ bridge: currentBridge, schema: currentSchema }) => {
-                    events.push(["createCompactController", currentBridge, currentSchema]);
+                createCompactController: ({ hostFacade: currentHostFacade, schema: currentSchema }) => {
+                    events.push(["createCompactController", currentHostFacade, currentSchema]);
                     return {
                         init() {
                             events.push("compact.init");

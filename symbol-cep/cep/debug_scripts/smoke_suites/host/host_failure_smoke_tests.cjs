@@ -13,7 +13,7 @@ function registerHostFailureSmokeTests(context) {
         makeHostScenarioExpression('missing_group'),
         async (payload) => {
             const result = decodeBase64Json(payload);
-    
+
             if (!result.success) {
                 throw new Error(`Host scenario failed: ${JSON.stringify(result)}`);
             }

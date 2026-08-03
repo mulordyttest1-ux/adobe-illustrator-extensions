@@ -21,6 +21,10 @@ function createControllerRecorder() {
         },
         handleCheckboxChange(ref, baseKey) {
             this.checkboxCalls.push({ ref, baseKey });
+        },
+        handleYearAutoChange(ref, baseKey) {
+            this.yearCheckboxCalls = this.yearCheckboxCalls || [];
+            this.yearCheckboxCalls.push({ ref, baseKey });
         }
     };
 }
@@ -61,7 +65,11 @@ describe('dateGridWidgetSupport', () => {
     it('binds widget events against the latest controller from the getter', () => {
         const refs = {
             'date.tiec.ngay': createInput({ type: 'number' }),
-            'date.le_auto': createInput({ type: 'checkbox' })
+            'date.le_auto': createInput({ type: 'checkbox' }),
+            'date.tiec.nam_auto': createInput({
+                type: 'checkbox',
+                dataset: { role: 'year-auto', baseKey: 'date.tiec' }
+            })
         };
         const firstController = createControllerRecorder();
         const secondController = createControllerRecorder();
@@ -76,6 +84,7 @@ describe('dateGridWidgetSupport', () => {
         refs['date.tiec.ngay'].dispatchEvent({ type: 'blur' });
         refs['date.tiec.ngay'].dispatchEvent({ type: 'input' });
         refs['date.le_auto'].dispatchEvent({ type: 'change' });
+        refs['date.tiec.nam_auto'].dispatchEvent({ type: 'change' });
 
         assert.deepEqual(firstController.blurCalls, []);
         assert.deepEqual(secondController.blurCalls, [refs['date.tiec.ngay']]);
@@ -83,6 +92,10 @@ describe('dateGridWidgetSupport', () => {
         assert.deepEqual(secondController.checkboxCalls, [{
             ref: refs['date.le_auto'],
             baseKey: 'date.le'
+        }]);
+        assert.deepEqual(secondController.yearCheckboxCalls, [{
+            ref: refs['date.tiec.nam_auto'],
+            baseKey: 'date.tiec'
         }]);
     });
 

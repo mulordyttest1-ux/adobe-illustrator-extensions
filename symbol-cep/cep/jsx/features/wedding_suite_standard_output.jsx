@@ -241,6 +241,7 @@ $.global.WeddingSuiteStandard._createTempJobContext = function (payload) {
 
 $.global.WeddingSuiteStandard._cleanupTempJob = function (jobContext, keepArtifact) {
     var workingFile;
+    var stagedPdfFile;
 
     if (!jobContext || !jobContext.folder) {
         return "";
@@ -255,6 +256,11 @@ $.global.WeddingSuiteStandard._cleanupTempJob = function (jobContext, keepArtifa
     workingFile = new File(jobContext.workingPath || "");
     if (!$.global.WeddingSuiteStandard._removeFileIfExists(workingFile)) {
         return "Khong xoa duoc file working AI tam: " + workingFile.fsName;
+    }
+
+    stagedPdfFile = new File(jobContext.stagedPdfPath || "");
+    if (!$.global.WeddingSuiteStandard._removeFileIfExists(stagedPdfFile)) {
+        return "Khong xoa duoc file PDF tam: " + stagedPdfFile.fsName;
     }
 
     return "";
@@ -445,23 +451,44 @@ $.global.WeddingSuiteStandard._createWorkingDocument = function (payload, workin
     };
 };
 
+$.global.WeddingSuiteStandard._createPdfExportError = function (message, cause) {
+    var detail = cause && cause.message ? cause.message : cause;
+    var error = new Error(
+        String(message || "Khong the xuat PDF tam.") +
+        (detail ? " Illustrator bao: " + String(detail) : "")
+    );
+
+    error.code = "WEDDING_SUITE_PDF_EXPORT_FAILED";
+    error.stage = "pdf_export";
+    return error;
+};
+
 $.global.WeddingSuiteStandard._stagePdfDocument = function (doc, outputPath, stagedPdfPath) {
     var outputFile = new File(outputPath);
     var outputFolder = outputFile.parent;
     var tempPath = String(stagedPdfPath || "");
     var tempFile = new File(tempPath);
     var options = null;
+    var firstError = null;
+    var fallbackError = null;
+    var preserveEditability = true;
 
     if (!$.global.WeddingSuiteStandard._ensureFolderExists(outputFolder)) {
-        throw new Error("Khong the tao thu muc luu PDF: " + outputFolder.fsName);
+        throw $.global.WeddingSuiteStandard._createPdfExportError(
+            "Khong the tao thu muc luu PDF: " + outputFolder.fsName
+        );
     }
 
     if (!tempPath || !$.global.WeddingSuiteStandard._ensureFolderExists(tempFile.parent)) {
-        throw new Error("Khong the tao workspace PDF tam.");
+        throw $.global.WeddingSuiteStandard._createPdfExportError(
+            "Khong the tao workspace PDF tam."
+        );
     }
 
     if (!$.global.WeddingSuiteStandard._removeFileIfExists(tempFile)) {
-        throw new Error("Khong the chuan bi file PDF tam: " + tempFile.fsName);
+        throw $.global.WeddingSuiteStandard._createPdfExportError(
+            "Khong the chuan bi file PDF tam: " + tempFile.fsName
+        );
     }
 
     options = new PDFSaveOptions();
@@ -470,16 +497,51 @@ $.global.WeddingSuiteStandard._stagePdfDocument = function (doc, outputPath, sta
     // We intentionally leave pDFPreset unset so Illustrator applies its default
     // Adobe PDF preset/options on the current workstation.
     options.preserveEditability = true;
-    doc.saveAs(tempFile, options);
+    try {
+        $.global.WeddingSuiteStandard._withAlertsSuppressed(function () {
+            doc.saveAs(tempFile, options);
+        });
+    } catch (saveErr) {
+        firstError = saveErr;
+    }
+
+    // A failed save can still leave a partial PDF behind. Treat the thrown
+    // error as authoritative and never commit that partial artifact.
+    if (firstError || !tempFile.exists) {
+        if (!$.global.WeddingSuiteStandard._removeFileIfExists(tempFile)) {
+            throw $.global.WeddingSuiteStandard._createPdfExportError(
+                "Khong the don file PDF tam sau lan xuat dau tien: " + tempFile.fsName,
+                firstError
+            );
+        }
+
+        options = new PDFSaveOptions();
+        options.preserveEditability = false;
+        preserveEditability = false;
+        try {
+            $.global.WeddingSuiteStandard._withAlertsSuppressed(function () {
+                doc.saveAs(tempFile, options);
+            });
+        } catch (fallbackSaveErr) {
+            fallbackError = fallbackSaveErr;
+        }
+    }
 
     if (!tempFile.exists) {
-        throw new Error("Illustrator khong tao duoc file PDF tam: " + tempFile.fsName);
+        throw $.global.WeddingSuiteStandard._createPdfExportError(
+            "Khong the xuat PDF tam.",
+            fallbackError || firstError
+        );
     }
 
     return {
         tempFile: tempFile,
         outputFile: outputFile,
-        outputPath: String(outputFile.fsName || "").replace(/\\/g, "/")
+        outputPath: String(outputFile.fsName || "").replace(/\\/g, "/"),
+        preserveEditability: preserveEditability,
+        exportWarning: preserveEditability
+            ? ""
+            : "PDF nay duoc xuat o che do in thuong vi Illustrator khong giu duoc editability cua artwork."
     };
 };
 

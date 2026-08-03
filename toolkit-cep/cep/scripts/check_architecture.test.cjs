@@ -78,4 +78,14 @@ test('Toolkit architecture checker rejects composition, global, and layer drift'
         }).join('\n'),
         /module must not depend/
     );
+
+    assert.match(
+        collectToolkitArchitectureViolations({
+            panelFiles: createValidPanelFiles(),
+            moduleFiles: {
+                'modules/test_probe/request.js': "import { shell } from '../../js/features/shell/toolkitShell.js';"
+            }
+        }).join('\n'),
+        /module must not depend/
+    );
 });

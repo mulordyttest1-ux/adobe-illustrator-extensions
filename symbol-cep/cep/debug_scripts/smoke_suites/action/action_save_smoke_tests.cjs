@@ -16,7 +16,7 @@ function registerActionSaveSmokeTests(context) {
                 if (!actionTab || !actionTab.hostGateway || !actionTab.csInterface) {
                     return { reason: 'missing_save_after_run_surface' };
                 }
-    
+
                 const originalPreflight = actionTab.preflightOrchestrator.runAll;
                 const originalPostflight = actionTab.postflightOrchestrator.runAll;
                 const originalEvalScript = actionTab.csInterface.evalScript;
@@ -28,7 +28,7 @@ function registerActionSaveSmokeTests(context) {
                 const toastContainer = document.getElementById('toast-container');
                 const capturedPayloads = [];
                 let rememberedTarget = null;
-    
+
                 actionTab.preflightOrchestrator.runAll = async function() {
                     return { safe: true, context: {} };
                 };
@@ -70,11 +70,11 @@ function registerActionSaveSmokeTests(context) {
                         return entry;
                     };
                 }
-    
+
                 if (toastContainer) {
                     toastContainer.innerHTML = '';
                 }
-    
+
                 try {
                     const preset = {
                         id: 'preset_save_after_run',
@@ -91,7 +91,7 @@ function registerActionSaveSmokeTests(context) {
                             targetPath: 'C:/Output/sample.ai'
                         }
                     }, 'overwrite');
-    
+
                     return {
                         saveAsStatus: saveAsResult && saveAsResult.saveResult ? saveAsResult.saveResult.status : null,
                         overwriteStatus: overwriteResult && overwriteResult.saveResult ? overwriteResult.saveResult.status : null,
@@ -147,7 +147,7 @@ function registerActionSaveSmokeTests(context) {
                 if (!actionTab || !actionTab.hostGateway || !actionTab.presetRepository) {
                     return { reason: 'missing_smart_save_surface' };
                 }
-    
+
                 const originalGetById = actionTab.presetRepository.getById;
                 const originalIncrementUsage = actionTab.presetRepository.incrementUsage;
                 const originalRenderList = actionTab.renderList;
@@ -156,7 +156,7 @@ function registerActionSaveSmokeTests(context) {
                 const originalSave = actionTab.hostGateway.saveActiveDocumentAfterImposition;
                 const calls = [];
                 let capturedPayload = null;
-    
+
                 actionTab.presetRepository.getById = function(id) {
                     calls.push(['getById', id]);
                     return {
@@ -198,7 +198,7 @@ function registerActionSaveSmokeTests(context) {
                         previousFileDeleted: true
                     }));
                 };
-    
+
                 try {
                     await actionTab.handleTrigger('smart_save_preset', null, 'save_as_new');
                     return {

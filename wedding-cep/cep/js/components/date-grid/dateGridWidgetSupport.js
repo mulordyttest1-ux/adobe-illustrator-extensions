@@ -8,6 +8,9 @@ export function ensureWidgetController({ controller, controllerClass, refs, warn
 }
 
 export function resolveCheckboxBaseKey(refs, ref) {
+    if (ref.dataset?.baseKey) {
+        return ref.dataset.baseKey;
+    }
     const key = Object.keys(refs).find((candidate) => refs[candidate] === ref);
     return key ? key.replace('_auto', '') : null;
 }
@@ -24,7 +27,11 @@ export function bindDateGridWidgetEvents({ refs, getController }) {
             ref.addEventListener('change', () => {
                 const baseKey = resolveCheckboxBaseKey(refs, ref);
                 if (baseKey) {
-                    getController().handleCheckboxChange(ref, baseKey);
+                    if (ref.dataset.role === 'year-auto') {
+                        getController().handleYearAutoChange(ref, baseKey);
+                    } else {
+                        getController().handleCheckboxChange(ref, baseKey);
+                    }
                 }
             });
         }

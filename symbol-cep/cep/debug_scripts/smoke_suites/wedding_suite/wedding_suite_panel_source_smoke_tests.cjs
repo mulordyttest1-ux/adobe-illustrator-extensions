@@ -16,13 +16,13 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                 if (typeof window.switchTab === 'function') {
                     window.switchTab('suite');
                 }
-    
+
                 const suiteTab = document.getElementById('tab-suite-btn');
                 const suitePanel = document.getElementById('tab-suite');
                 const suiteContainer = document.getElementById('suite-container');
                 const workspace = window.Imposition && window.Imposition.weddingSuiteTab;
                 const title = suiteContainer ? suiteContainer.textContent.replace(/\\s+/g, ' ').trim() : null;
-    
+
                 return {
                     hasButton: !!suiteTab,
                     hasPanel: !!suitePanel,
@@ -51,12 +51,12 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
         `
             (async function() {
                 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    
+
                 window.localStorage.removeItem('wedding_suite_standard_prefs_v1');
                 if (typeof window.switchTab === 'function') {
                     window.switchTab('suite');
                 }
-    
+
                 const suiteTab = window.Imposition && window.Imposition.weddingSuiteTab;
                 if (!suiteTab) {
                     return { reason: 'missing_suite_tab' };
@@ -67,7 +67,7 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                 const originalHostAdapter = suiteTab.deps.hostAdapter;
                 const originalPdfScanner = suiteTab.deps.pdfScanner;
                 const originalPickSourceFile = suiteTab.deps.pickSourceFile;
-    
+
                 suiteTab.preferences = {
                     lastSaveDirectory: '',
                     lastSourceDirectory: ''
@@ -86,21 +86,21 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                         };
                     }
                 });
-    
+
                 suiteTab.setPickersForTest({
                     pickSourceFile() {
                         return '__PICKER_ERROR__';
                     }
                 });
-    
+
                 const button = document.querySelector('#tab-suite [data-action="pick-source-file"]');
                 if (!button) {
                     return { reason: 'missing_pick_button' };
                 }
-    
+
                 button.click();
                 await wait(180);
-    
+
                 return {
                     sourcePath: suiteTab.state.sourcePath,
                     hasManifest: !!suiteTab.state.manifest,
@@ -126,7 +126,7 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
         `
             (async function() {
                 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    
+
                 function normalizePath(value) {
                     let normalized = String(value || '').replace(/\\\\/g, '/');
                     if (normalized.indexOf('file:///') === 0) {
@@ -139,24 +139,24 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                     }
                     return normalized;
                 }
-    
+
                 function dirname(path) {
                     const normalized = normalizePath(path);
                     const lastSlash = normalized.lastIndexOf('/');
                     return lastSlash > 0 ? normalized.slice(0, lastSlash) : normalized;
                 }
-    
+
                 function fileExists(path) {
                     return !!(window.cep && window.cep.fs && typeof window.cep.fs.stat === 'function' && window.cep.fs.stat(path).err === 0);
                 }
-    
+
                 function getFileSize(path) {
                     if (typeof window !== 'undefined' && window.cep_node && typeof window.cep_node.require === 'function') {
                         try {
                             return window.cep_node.require('node:fs').statSync(path).size || 0;
                         } catch (nodeErr) { }
                     }
-    
+
                     if (window.cep && window.cep.fs && typeof window.cep.fs.readFile === 'function' && fileExists(path)) {
                         try {
                             const result = window.cep.fs.readFile(path);
@@ -165,33 +165,33 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                             }
                         } catch (readErr) { }
                     }
-    
+
                     return 0;
                 }
-    
+
                 if (typeof CSInterface === 'undefined') {
                     return { reason: 'missing_csinterface' };
                 }
-    
+
                 const cs = new CSInterface();
                 const extensionRoot = normalizePath(cs.getSystemPath(CSInterface.EXTENSION));
                 const fixtureCandidates = [
                     extensionRoot + '/debug_scripts/fixtures/wedding_suite/runtime_probe_ascii.pdf'
                 ];
                 const fixturePath = fixtureCandidates.find((path) => fileExists(path));
-    
+
                 if (!fixturePath) {
                     return {
                         reason: 'missing_fixture_pdf',
                         fixtureCandidates
                     };
                 }
-    
+
                 window.localStorage.removeItem('wedding_suite_standard_prefs_v1');
                 if (typeof window.switchTab === 'function') {
                     window.switchTab('suite');
                 }
-    
+
                 const suiteTab = window.Imposition && window.Imposition.weddingSuiteTab;
                 if (!suiteTab) {
                     return { reason: 'missing_suite_tab' };
@@ -202,7 +202,7 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                 const originalHostAdapter = suiteTab.deps.hostAdapter;
                 const originalPdfScanner = suiteTab.deps.pdfScanner;
                 const originalPickSourceFile = suiteTab.deps.pickSourceFile;
-    
+
                 try {
                     suiteTab.preferences = {
                         lastSaveDirectory: '',
@@ -214,7 +214,7 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                     if (toastContainer) {
                         toastContainer.innerHTML = '';
                     }
-    
+
                     let hostInspectCalls = 0;
                     suiteTab.setHostAdapterForTest({
                         async getActiveDocumentDirectory() {
@@ -236,15 +236,15 @@ function registerWeddingSuitePanelSourceSmokeTests(context) {
                             return fixturePath;
                         }
                     });
-    
+
                     const button = document.querySelector('#tab-suite [data-action="pick-source-file"]');
                     if (!button) {
                         return { reason: 'missing_pick_button' };
                     }
-    
+
                     button.click();
                     await wait(220);
-    
+
                     return {
                         fixturePath,
                         hostInspectCalls,

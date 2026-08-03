@@ -15,11 +15,11 @@ import {
 } from './addressAutocompleteRuntimeSupport.js';
 
 export class AddressAutocomplete {
-    static async init({ hostFacade, host, FuseCtor, createIndex } = {}) {
+    static async init({ hostFacade, FuseCtor, createIndex } = {}) {
         if (this.isReady) return;
 
         try {
-            this.data = await loadAddressAutocompleteData(hostFacade || host);
+            this.data = await loadAddressAutocompleteData(hostFacade);
             const buildIndex = createAddressIndexBuilder(createIndex, FuseCtor);
             this.fuse = buildIndex(this.data);
             this.isReady = true;

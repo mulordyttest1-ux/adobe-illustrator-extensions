@@ -44,7 +44,9 @@ describe('DateGridRenderer', () => {
             assert.equal(refs['date.tiec.phut'].value, '00');
 
             assert.equal(refs['date.tiec.thu'].isComputed, true);
-            assert.equal(refs['date.tiec.nam'].isComputed, true);
+            assert.equal(refs['date.tiec.nam'].type, 'number');
+            assert.equal(refs['date.tiec.nam'].disabled, true);
+            assert.equal(refs['date.tiec.nam_auto'].checked, true);
             assert.equal(refs['date.tiec.namyy'].isComputed, true);
             assert.equal(refs['date.tiec.namyy'].value, '');
             assert.equal(refs['date.tiec.nam_al'].isComputed, true);

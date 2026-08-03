@@ -1,6 +1,6 @@
 import { SchemaLoader } from "../infrastructure/schemaLoader.js";
 import { AddressAutocomplete } from "../logic/ux/AddressAutocomplete.js";
-import { initCalendarEngine, initEthnicNameNormalizer } from "./loadCepData.js";
+import { initEthnicNameNormalizer } from "./loadCepData.js";
 import {
     loadAutocompleteResources,
     runBestEffortHostPing,
@@ -13,10 +13,7 @@ export async function loadStartupResources({ hostFacade }, deps = {}) {
     const consoleImpl = deps.console || console;
     const AddressAutocompleteImpl = deps.AddressAutocomplete || AddressAutocomplete;
     const SchemaLoaderImpl = deps.SchemaLoader || SchemaLoader;
-    const initCalendarEngineImpl = deps.initCalendarEngine || initCalendarEngine;
     const initEthnicNameNormalizerImpl = deps.initEthnicNameNormalizer || initEthnicNameNormalizer;
-
-    await runStartupPhase(updateReadyState, "calendar", () => initCalendarEngineImpl({ hostFacade: resolvedHostFacade }));
 
     await runStartupPhase(updateReadyState, "bridge", () => runBestEffortHostPing(resolvedHostFacade, consoleImpl));
 

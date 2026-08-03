@@ -33,7 +33,7 @@ describe('ScanAction', () => {
 
         const result = await ScanAction.execute(
             {
-                bridge: {
+                hostFacade: {
                     scanDocument: async () => ({
                         success: true,
                         data: [{ id: 'frame-1' }]
@@ -88,7 +88,7 @@ describe('ScanAction', () => {
 
         const result = await ScanAction.execute(
             {
-                bridge: {
+                hostFacade: {
                     scanDocument: async () => ({
                         success: false,
                         error: 'Bridge offline'
@@ -126,7 +126,7 @@ describe('ScanAction', () => {
 
         const result = await ScanAction.execute(
             {
-                bridge: {
+                hostFacade: {
                     scanDocument: async () => {
                         throw new Error('Unexpected failure');
                     }

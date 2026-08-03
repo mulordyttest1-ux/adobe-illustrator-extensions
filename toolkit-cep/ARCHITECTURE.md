@@ -58,6 +58,8 @@ Generated catalog consumption and search.
 Command execution orchestration.
 
 - Owns metadata precheck, host execution, and feedback shaping.
+- Loads optional generated request adapters and prepares their payload once before host execution.
+- Reuses the same prepared payload if the host runtime must reload and retry.
 - Blocks quarantined modules before the host bridge is called.
 - Must not render dashboard layout directly.
 
@@ -83,6 +85,11 @@ Illustrator host layer.
 Future plug-in style action units.
 
 - Each module owns `module.json` and `run.jsx`.
+- A module may also own an optional panel-side `request.js` exporting
+  `prepareRequest({ manifest, services })` when automatic file inspection is
+  required before its one-click host action.
+- Request adapters receive only narrow injected services; they must not import
+  shell or CEP infrastructure.
 - Modules are discovered at build time only.
 - The shell promise in this app applies only to this module class.
 - Text-break family note:
@@ -112,6 +119,10 @@ The shell is considered stable only for:
 
 Anything richer than that, such as mini-forms, custom views, or hidden/background helpers, is a new shell capability and must go through planning again.
 
+An optional non-visual request adapter remains inside the one-click contract:
+it may select/read a source file and return a payload, but it must not add
+module-specific shell DOM or retain mutable runtime state.
+
 ## Frozen Shell Zone
 
 The V1 shell is intentionally frozen so normal feature work stays plug-and-play.
@@ -135,6 +146,8 @@ The V1 shell is intentionally frozen so normal feature work stays plug-and-play.
 
 - `ToolkitHostFacade.runCommand({ id, payload })`
 - `ToolkitHostFacade.getExecutionContext()`
+- `ToolkitRequestServices.pickArtworkFile({ title })`
+- `ToolkitRequestServices.readFileBytes(filePath)`
 - `ToolkitHostRuntime.reload()`
 - `ToolkitHostRuntime.inspect()`
 - `ToolkitBridge.runCommand(payloadJson)`
@@ -164,6 +177,7 @@ This keeps JSX edits testable without turning the host layer into one monolithic
 `cep/.generated/` is build output only and must stay untracked.
 
 - `module_catalog.js` is the only catalog surface the panel imports.
+- `module_request_registry.js` is the generated optional request-adapter map.
 - `module_registry.jsx` is the only generated host registry surface.
 - `module_dispatch.jsx` is the only generated host dispatch surface.
 
@@ -177,6 +191,19 @@ Do not import modules directly from the shell.
 - Disabled/quarantined modules must not cross the host bridge from panel execution flow.
 
 ## Validation Contract
+
+### Architecture Guards
+
+- `cep/scripts/check_architecture.cjs` is a developer-only static guard for
+  the app composition root, shell/infrastructure boundary, build-time catalog
+  contract, module isolation, and app-global writes.
+- The guard does not scan `modules/**` at runtime and does not modify source.
+- Generated files, vendor files, and test fixtures are excluded from the
+  production-boundary checks to avoid false positives.
+- The root `npm run check:architecture` command runs the Toolkit guard together
+  with the Symbol guard and the existing Wedding dependency check.
+- The frozen shell/runtime zone remains frozen; a guard failure must be fixed
+  at the boundary or explicitly allowlisted with a filename and reason.
 
 ### Everyday Module Verification
 

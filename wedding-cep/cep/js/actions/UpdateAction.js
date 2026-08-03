@@ -12,10 +12,9 @@ function resolveDeps(deps = {}) {
     };
 }
 
-function createApplyUpdate(bridge, deps) {
+function createApplyUpdate(hostFacade, deps) {
     return (processedData) => deps.runApplyStrategyUpdate({
-        hostFacade: bridge,
-        bridge,
+        hostFacade,
         packet: processedData
     });
 }
@@ -46,7 +45,7 @@ function createMissingSelectionsMessage(missingSelections) {
 }
 
 async function executeUpdateFlow(ctx, deps) {
-    const hostFacade = ctx.hostFacade || ctx.bridge;
+    const hostFacade = ctx.hostFacade;
     const { builder } = ctx;
     const rawData = builder.getData();
     const schema = deps.getSchema();

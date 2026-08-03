@@ -6,6 +6,7 @@ import {
     ACTIVE_SOURCE_SUCCESS_MESSAGE,
     OUTPUT_FILE_UNSAVED_OPEN_CODE,
     OUTPUT_FILE_UNSAVED_OPEN_MESSAGE,
+    PDF_EXPORT_FAILED_CODE,
     buildDefaultFilenameStem,
     buildInviteRows,
     canUseDraftCard,
@@ -187,11 +188,20 @@ export async function useActiveDocumentAsSource(tab) {
 
 export function createBuildError(result) {
     const code = result && result.code ? result.code : '';
-    const message = code === OUTPUT_FILE_UNSAVED_OPEN_CODE
+    const baseMessage = code === OUTPUT_FILE_UNSAVED_OPEN_CODE
         ? OUTPUT_FILE_UNSAVED_OPEN_MESSAGE
         : (result && result.error ? result.error : 'Build job that bai');
+    const recoveryArtifact = result && result.recoveryArtifact
+        ? result.recoveryArtifact
+        : null;
+    const recoveryMessage = recoveryArtifact && recoveryArtifact.path
+        ? ` Ban AI phuc hoi ${recoveryArtifact.opened ? 'da duoc mo' : 'duoc giu tai'}: ${recoveryArtifact.path}` +
+            (recoveryArtifact.openWarning ? ` (${recoveryArtifact.openWarning})` : '')
+        : '';
+    const message = `${baseMessage}${recoveryMessage}`;
     const buildError = new Error(message);
     buildError.code = code;
+    buildError.recoveryArtifact = recoveryArtifact;
     return buildError;
 }
 
@@ -212,7 +222,13 @@ export function flushToastState() {
 }
 
 export function handleBuildError(error) {
-    if (error && error.code === OUTPUT_FILE_UNSAVED_OPEN_CODE) {
+    if (
+        error &&
+        (
+            error.code === OUTPUT_FILE_UNSAVED_OPEN_CODE ||
+            error.code === PDF_EXPORT_FAILED_CODE
+        )
+    ) {
         flushToastState();
     }
 
@@ -232,6 +248,9 @@ export function showBuildSuccess(result, request) {
     }
     if (result.tempCleanupWarning) {
         UIFeedback.showToast(`PDF da luu nhung con file tam can don: ${result.tempCleanupWarning}`, 'warning');
+    }
+    if (result.pdfExportWarning) {
+        UIFeedback.showToast(result.pdfExportWarning, 'warning');
     }
     if (result.previousOutputDeleteError) {
         UIFeedback.showToast(`Da build ban moi, nhung chua xoa duoc file cu: ${result.previousOutputDeleteError}`, 'warning');

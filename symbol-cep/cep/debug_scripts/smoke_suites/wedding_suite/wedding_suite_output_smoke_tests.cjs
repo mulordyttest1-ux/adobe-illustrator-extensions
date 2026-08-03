@@ -13,7 +13,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
         `
             (async function() {
                 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    
+
                 function normalizePath(value) {
                     let normalized = String(value || '').replace(/\\\\/g, '/');
                     if (normalized.indexOf('file:///') === 0) {
@@ -26,24 +26,24 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                     }
                     return normalized;
                 }
-    
+
                 function dirname(path) {
                     const normalized = normalizePath(path);
                     const lastSlash = normalized.lastIndexOf('/');
                     return lastSlash > 0 ? normalized.slice(0, lastSlash) : normalized;
                 }
-    
+
                 function fileExists(path) {
                     return !!(window.cep && window.cep.fs && typeof window.cep.fs.stat === 'function' && window.cep.fs.stat(path).err === 0);
                 }
-    
+
                 function getFileSize(path) {
                     if (typeof window !== 'undefined' && window.cep_node && typeof window.cep_node.require === 'function') {
                         try {
                             return window.cep_node.require('node:fs').statSync(path).size || 0;
                         } catch (nodeErr) { }
                     }
-    
+
                     if (window.cep && window.cep.fs && typeof window.cep.fs.readFile === 'function' && fileExists(path)) {
                         try {
                             const result = window.cep.fs.readFile(path);
@@ -52,10 +52,10 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                             }
                         } catch (readErr) { }
                     }
-    
+
                     return 0;
                 }
-    
+
                 function deleteIfExists(path) {
                     if (!window.cep || !window.cep.fs || typeof window.cep.fs.deleteFile !== 'function') {
                         return;
@@ -64,11 +64,11 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                         window.cep.fs.deleteFile(path);
                     }
                 }
-    
+
                 function collectToasts() {
                     return Array.from(document.querySelectorAll('#toast-container .toast')).map((toast) => toast.textContent.replace(/\\s+/g, ' ').trim());
                 }
-    
+
                 function decodeBridgeJson(raw) {
                     if (!raw) {
                         throw new Error('Empty host payload');
@@ -76,10 +76,10 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                     if (raw.indexOf('EvalScript') === 0 || raw.indexOf('ReferenceError') === 0) {
                         throw new Error(raw);
                     }
-    
+
                     function decodeBinary(binary) {
                         let decoded = '';
-    
+
                         if (typeof TextDecoder === 'function') {
                             const bytes = new Uint8Array(binary.length);
                             for (let index = 0; index < binary.length; index += 1) {
@@ -94,44 +94,44 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                             }
                             decoded = decodeURIComponent(encoded);
                         }
-    
+
                         return decoded.replace(/^\\uFEFF/, '').trim();
                     }
-    
+
                     function tryParse(value) {
                         return JSON.parse(String(value || '').replace(/^\\uFEFF/, '').trim());
                     }
-    
+
                     try {
                         return tryParse(raw);
                     } catch (rawJsonErr) { }
-    
+
                     try {
                         return tryParse(decodeURIComponent(raw));
                     } catch (rawEncodedErr) { }
-    
+
                     const binary = window.atob(raw);
                     const decoded = decodeBinary(binary);
-    
+
                     try {
                         return tryParse(decoded);
                     } catch (base64JsonErr) { }
-    
+
                     return tryParse(decodeURIComponent(decoded));
                 }
-    
+
                 async function inspectAiOutput(aiPath) {
                     const bridge = window.Imposition && window.Imposition.actionTab && window.Imposition.actionTab.bridgeInst;
                     if (!bridge || typeof bridge.eval !== 'function') {
                         return { success: false, error: 'missing_bridge' };
                     }
-    
+
                     const escapedPath = String(aiPath || '')
                         .replace(/\\\\/g, '/')
                         .replace(/'/g, "\\\\'");
-    
+
                     const script = "(function(){ var file = new File('" + escapedPath + "'); var doc = null; var result = { success:false }; try { if (!file.exists) { return $.global.WeddingSuiteStandard._encodeResult({ success:false, error:'missing_output' }); } doc = app.open(file); var artboards = []; var i; var j; for (i = 0; i < doc.artboards.length; i++) { var ab = doc.artboards[i]; var rect = ab.artboardRect; var info = { index:i, name:ab.name, rectMm:[$.global.WeddingSuiteStandard._ptToMm(rect[0]), $.global.WeddingSuiteStandard._ptToMm(rect[1]), $.global.WeddingSuiteStandard._ptToMm(rect[2]), $.global.WeddingSuiteStandard._ptToMm(rect[3])], textCount:0, placedCount:0, pathCount:0, guideCount:0, placedBoundsMm:[], placedMatrices:[], guideBoundsMm:[], guideMatrices:[] }; for (j = 0; j < doc.textFrames.length; j++) { var tf = doc.textFrames[j]; try { if ($.global.WeddingSuiteStandard._intersects(rect, tf.visibleBounds)) { info.textCount++; } } catch (tfErr) {} } for (j = 0; j < doc.pathItems.length; j++) { var path = doc.pathItems[j]; try { var pathBounds = path.visibleBounds; if ($.global.WeddingSuiteStandard._intersects(rect, pathBounds)) { if (path.guides) { info.guideCount++; info.guideBoundsMm.push([$.global.WeddingSuiteStandard._ptToMm(pathBounds[0]), $.global.WeddingSuiteStandard._ptToMm(pathBounds[1]), $.global.WeddingSuiteStandard._ptToMm(pathBounds[2]), $.global.WeddingSuiteStandard._ptToMm(pathBounds[3])]); info.guideMatrices.push({ mValueA:path.matrix.mValueA, mValueB:path.matrix.mValueB, mValueC:path.matrix.mValueC, mValueD:path.matrix.mValueD, mValueTX:path.matrix.mValueTX, mValueTY:path.matrix.mValueTY }); } else { info.pathCount++; } } } catch (pathErr) {} } for (j = 0; j < doc.placedItems.length; j++) { var pi = doc.placedItems[j]; try { var bounds = $.global.WeddingSuiteStandard._getItemBounds(pi); if (bounds && $.global.WeddingSuiteStandard._intersects(rect, bounds)) { info.placedCount++; info.placedBoundsMm.push([$.global.WeddingSuiteStandard._ptToMm(bounds[0]), $.global.WeddingSuiteStandard._ptToMm(bounds[1]), $.global.WeddingSuiteStandard._ptToMm(bounds[2]), $.global.WeddingSuiteStandard._ptToMm(bounds[3])]); info.placedMatrices.push({ mValueA:pi.matrix.mValueA, mValueB:pi.matrix.mValueB, mValueC:pi.matrix.mValueC, mValueD:pi.matrix.mValueD, mValueTX:pi.matrix.mValueTX, mValueTY:pi.matrix.mValueTY }); } } catch (piErr) {} } artboards.push(info); } result = { success:true, artboards:artboards }; } catch (e) { result = { success:false, error:e.message }; } finally { try { if (doc) { doc.close(SaveOptions.DONOTSAVECHANGES); } } catch (closeErr) {} } return $.global.WeddingSuiteStandard._encodeResult(result); })()";
-    
+
                     try {
                         const raw = await bridge.eval(script);
                         return decodeBridgeJson(raw);
@@ -142,15 +142,15 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                         };
                     }
                 }
-    
+
                 async function inspectOpenOutput(aiPath) {
                     const bridge = window.Imposition && window.Imposition.actionTab && window.Imposition.actionTab.bridgeInst;
                     if (!bridge || typeof bridge.eval !== 'function') {
                         return { success: false, error: 'missing_bridge' };
                     }
-    
+
                     const payload = window.btoa(encodeURIComponent(String(aiPath || '')));
-    
+
                     try {
                         const raw = await bridge.eval('$.global.WeddingSuiteStandard.inspectOpenOutput("' + payload + '")');
                         return decodeBridgeJson(raw);
@@ -161,15 +161,15 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                         };
                     }
                 }
-    
+
                 async function markOpenOutputDirty(aiPath) {
                     const bridge = window.Imposition && window.Imposition.actionTab && window.Imposition.actionTab.bridgeInst;
                     if (!bridge || typeof bridge.eval !== 'function') {
                         return { success: false, error: 'missing_bridge' };
                     }
-    
+
                     const payload = window.btoa(encodeURIComponent(String(aiPath || '')));
-    
+
                     try {
                         const raw = await bridge.eval('$.global.WeddingSuiteStandard.markOpenOutputDirty("' + payload + '")');
                         return decodeBridgeJson(raw);
@@ -180,15 +180,15 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                         };
                     }
                 }
-    
+
                 async function ensureOutputOpen(outputPath) {
                     const bridge = window.Imposition && window.Imposition.actionTab && window.Imposition.actionTab.bridgeInst;
                     if (!bridge || typeof bridge.eval !== 'function') {
                         return { success: false, error: 'missing_bridge' };
                     }
-    
+
                     const payload = window.btoa(encodeURIComponent(String(outputPath || '')));
-    
+
                     try {
                         const raw = await bridge.eval('$.global.WeddingSuiteStandard.ensureOutputOpen("' + payload + '")');
                         return decodeBridgeJson(raw);
@@ -199,29 +199,29 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                         };
                     }
                 }
-    
+
                 if (typeof CSInterface === 'undefined') {
                     return { reason: 'missing_csinterface' };
                 }
-    
+
                 const cs = new CSInterface();
                 const extensionRoot = normalizePath(cs.getSystemPath(CSInterface.EXTENSION));
                 const fixtureCandidates = [
                     extensionRoot + '/debug_scripts/fixtures/wedding_suite/runtime_probe_ascii.pdf'
                 ];
                 const fixturePath = fixtureCandidates.find((path) => fileExists(path));
-    
+
                 if (!fixturePath) {
                     return {
                         reason: 'missing_fixture_pdf',
                         fixtureCandidates
                     };
                 }
-    
+
                 if (typeof window.switchTab === 'function') {
                     window.switchTab('suite');
                 }
-    
+
                 const suiteTab = window.Imposition && window.Imposition.weddingSuiteTab;
                 if (!suiteTab) {
                     return { reason: 'missing_suite_tab' };
@@ -229,7 +229,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                 if (typeof suiteTab.resetDepsForTest === 'function') {
                     suiteTab.resetDepsForTest();
                 }
-    
+
                 const originalHostAdapter = suiteTab.deps.hostAdapter;
                 const originalPdfScanner = suiteTab.deps.pdfScanner;
                 const originalPickSourceFile = suiteTab.deps.pickSourceFile;
@@ -251,7 +251,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                 const legacyOutputPath = outputDirectory + '/' + outputStem + '.pdf';
                 const expectedOutputPath = outputDirectory + '/' + outputStem + "_16'05 3 6.pdf";
                 const buildResults = [];
-    
+
                 try {
                     window.localStorage.removeItem('wedding_suite_standard_prefs_v1');
                     suiteTab.preferences = {
@@ -264,14 +264,14 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                     if (toastContainer) {
                         toastContainer.innerHTML = '';
                     }
-    
+
                     suiteTab.deps.now = function() {
                         return new Date(2026, 5, 3, 16, 5, 0, 0);
                     };
-    
+
                     deleteIfExists(legacyOutputPath);
                     deleteIfExists(expectedOutputPath);
-    
+
                     suiteTab.setHostAdapterForTest({
                         ...originalHostAdapter,
                         async buildJob(request) {
@@ -306,21 +306,21 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                             return fixturePath;
                         }
                     });
-    
+
                     const pickButton = document.querySelector('#tab-suite [data-action="pick-source-file"]');
                     if (!pickButton) {
                         return { reason: 'missing_pick_button' };
                     }
-    
+
                     pickButton.click();
                     await wait(250);
-    
+
                     suiteTab.state.jobQuantity = 1;
                     suiteTab.state.paperStock = 'f180_480x330';
                     suiteTab.state.outputDirectory = outputDirectory;
                     suiteTab.state.filenameStem = outputStem;
                     suiteTab.render();
-    
+
                     let buildButton = null;
                     for (let attempt = 0; attempt < 20; attempt += 1) {
                         buildButton = document.querySelector('#tab-suite [data-action="build-pdf"]');
@@ -332,10 +332,10 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                     if (!buildButton) {
                         return { reason: 'missing_build_button' };
                     }
-    
+
                     const buildStart = Date.now();
                     buildButton.click();
-    
+
                     let buildCompleted = false;
                     for (let attempt = 0; attempt < 180; attempt += 1) {
                         if (
@@ -353,7 +353,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                         }
                         await wait(250);
                     }
-    
+
                     if (buildCompleted) {
                         await wait(500);
                         for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -363,7 +363,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                             await wait(100);
                         }
                     }
-    
+
                     const outputPath = buildCompleted && buildResults[0] ? buildResults[0].outputPath : '';
                     const debugArtifactPath = buildCompleted && buildResults[0] && buildResults[0].debugArtifact
                         ? buildResults[0].debugArtifact.path
@@ -373,14 +373,14 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                     const openState = buildCompleted ? await inspectOpenOutput(outputPath) : null;
                     const dirtyState = buildCompleted ? await markOpenOutputDirty(outputPath) : null;
                     const outputBytesBeforeBlockedBuild = buildCompleted ? getFileSize(outputPath) : 0;
-    
+
                     if (buildCompleted && dirtyState && dirtyState.success) {
                         const toastContainer = document.getElementById('toast-container');
                         const retryBuildButton = document.querySelector('#tab-suite [data-action="build-pdf"]');
                         if (toastContainer) {
                             toastContainer.innerHTML = '';
                         }
-    
+
                         if (retryBuildButton) {
                             retryBuildButton.click();
                         }
@@ -394,7 +394,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                             await wait(100);
                         }
                     }
-    
+
                     return {
                         fixturePath,
                         buildCompleted,
@@ -439,7 +439,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
                     }
                     return (a?.[0] ?? 0) - (b?.[0] ?? 0);
                 });
-    
+
             if (result.reason) {
                 throw new Error(`Wedding Suite linked-build smoke setup failed: ${JSON.stringify(result)}`);
             }
@@ -693,7 +693,7 @@ function registerWeddingSuiteOutputSmokeTests(context) {
             if (topInset > 0.3) {
                 throw new Error(`Wedding Suite production cells no longer keep the outer 5mm top paper margin: ${JSON.stringify(result)}`);
             }
-    
+
             cleanupSmokeArtifact(result.debugArtifactPath);
             cleanupSmokeOutput(result.outputPath);
         }

@@ -1,5 +1,6 @@
 import { UIFeedback } from '@shared/cep-ui';
 import { loadGeneratedToolkitCatalog } from '../features/catalog/generatedCatalogLoader.js';
+import { loadGeneratedToolkitRequestAdapters } from '../features/run/generatedRequestAdapters.js';
 import { createCommandRunner } from '../features/run/commandRunner.js';
 import { createToolkitShell } from '../features/shell/toolkitShell.js';
 import { resetReadyState, updateReadyState } from './readyState.js';
@@ -138,13 +139,17 @@ async function createStartupRuntime({
     windowRef,
     UIFeedbackRef,
     loadCatalog,
+    requestAdapters,
+    requestServices,
     createCommandRunnerFn,
     createToolkitShellFn
 }) {
     const commandRunner = createCommandRunnerFn({
         hostFacade,
         UIFeedback: UIFeedbackRef,
-        runtimeState
+        runtimeState,
+        requestAdapters,
+        requestServices
     });
     const inspectAndSyncHostRuntime = createHostRuntimeInspectService({
         hostRuntime,
@@ -249,6 +254,8 @@ export async function initToolkitApp({
     windowRef = window,
     UIFeedbackRef = UIFeedback,
     loadCatalog = loadGeneratedToolkitCatalog,
+    loadRequestAdapters = loadGeneratedToolkitRequestAdapters,
+    requestServices = {},
     createCommandRunnerFn = createCommandRunner,
     createToolkitShellFn = createToolkitShell
 } = {}) {
@@ -267,6 +274,8 @@ export async function initToolkitApp({
             windowRef,
             UIFeedbackRef,
             loadCatalog,
+            requestAdapters: loadRequestAdapters(),
+            requestServices,
             createCommandRunnerFn,
             createToolkitShellFn
         });

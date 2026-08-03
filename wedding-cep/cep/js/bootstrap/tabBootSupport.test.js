@@ -49,7 +49,7 @@ describe("tabBootSupport", () => {
         }
 
         initCompactTab(
-            { bridge, schema },
+            { hostFacade: bridge, schema },
             {
                 document: fakeDocument,
                 appRuntimeState,
@@ -64,7 +64,7 @@ describe("tabBootSupport", () => {
         assert.deepEqual(calls, [
             ["ready", { phase: "compact", compactReady: false }],
             ["builder", compactContainer, schema],
-            ["wire", { hostFacade: bridge, bridge, compactBuilder: builtBuilder }],
+            ["wire", { hostFacade: bridge, compactBuilder: builtBuilder }],
             ["ready", { phase: "compact", compactReady: true }]
         ]);
     });

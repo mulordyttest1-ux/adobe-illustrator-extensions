@@ -13,12 +13,12 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
         `
             (async function() {
                 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    
+
                 window.localStorage.removeItem('wedding_suite_standard_prefs_v1');
                 if (typeof window.switchTab === 'function') {
                     window.switchTab('suite');
                 }
-    
+
                 const suiteTab = window.Imposition && window.Imposition.weddingSuiteTab;
                 if (!suiteTab) {
                     return { reason: 'missing_suite_tab' };
@@ -26,14 +26,14 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
                 if (typeof suiteTab.resetDepsForTest === 'function') {
                     suiteTab.resetDepsForTest();
                 }
-    
+
                 const originalHostAdapter = suiteTab.deps.hostAdapter;
                 const originalPdfScanner = suiteTab.deps.pdfScanner;
                 const originalPickSourceFile = suiteTab.deps.pickSourceFile;
                 const originalPickDirectory = suiteTab.deps.pickDirectory;
-    
+
                 try {
-    
+
                 suiteTab.preferences = {
                     lastSaveDirectory: '',
                     lastSourceDirectory: ''
@@ -44,7 +44,7 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
                 if (toastContainer) {
                     toastContainer.innerHTML = '';
                 }
-    
+
                 const captured = [];
                 const sourcePickInitialPaths = [];
                 let hostInspectCalls = 0;
@@ -93,7 +93,7 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
                         return 'C:/Exports/Wedding';
                     }
                 });
-    
+
                 const clickAction = async (actionName) => {
                     const button = document.querySelector('#tab-suite [data-action="' + actionName + '"]');
                     if (!button) {
@@ -102,28 +102,28 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
                     button.click();
                     await wait(80);
                 };
-    
+
                 await clickAction('pick-source-file');
                 await clickAction('pick-output-directory');
                 await wait(80);
-    
+
                 const sourceModeControl = document.querySelector('#tab-suite select[name="sourceMode"]');
                 const bindingControl = document.querySelector('#tab-suite select[name="binding:envelope"]');
                 const recipeSave = document.querySelector('#tab-suite [data-action="recipe-save"]');
                 const dryRun = document.querySelector('#tab-suite [data-action="dry-run"]');
                 const jobQuantityControl = document.querySelector('#tab-suite input[name="jobQuantity"]');
                 const summaryGrid = document.querySelector('#tab-suite .wss-summary-grid');
-    
+
                 suiteTab.state.invitePages[0].label = 'Thiệp ABC';
                 suiteTab.state.invitePages[1].label = 'Thiệp XYZ';
                 suiteTab.render();
-    
+
                 const manifestAfterPick = suiteTab.state.manifest && suiteTab.state.manifest.pages ? suiteTab.state.manifest.pages.length : 0;
                 const inviteRowCount = document.querySelectorAll('#tab-suite input[name^="invite:"]').length / 2;
                 const firstErrorBox = document.querySelector('#tab-suite .wss-error-box');
                 await clickAction('build-pdf');
                 await wait(80);
-    
+
                 suiteTab.setHostAdapterForTest({
                     async getActiveDocumentDirectory() {
                         return {
@@ -160,7 +160,7 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
                 }));
                 await clickAction('pick-source-file');
                 await wait(80);
-    
+
                 suiteTab.preferences.lastSourceDirectory = '';
                 suiteTab.setPickersForTest({
                     pickSourceFile(initialPath) {
@@ -172,7 +172,7 @@ function registerWeddingSuiteQuickBuildSmokeTests(context) {
                     }
                 });
                 await clickAction('pick-source-file');
-    
+
                 const savedPrefs = JSON.parse(window.localStorage.getItem('wedding_suite_standard_prefs_v1') || '{}');
                 suiteTab._resetState(false);
                 suiteTab.render();

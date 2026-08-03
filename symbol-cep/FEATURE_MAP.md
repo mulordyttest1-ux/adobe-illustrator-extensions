@@ -33,18 +33,29 @@ Use for preset loading, config schema rendering, config pane behavior, form pers
   - `symbol-cep/cep/js/features/imposition/config_events.js`
   - `symbol-cep/cep/js/features/imposition/config_persistence.js`
   - `symbol-cep/cep/js/features/imposition/config_engine.js`
-  - `symbol-cep/cep/js/features/imposition/config_renderer.js`
   - `symbol-cep/cep/js/features/imposition/config_pane_renderer.js`
+  - `symbol-cep/cep/js/features/imposition/config_pane_control_adapter.js`
+  - `symbol-cep/cep/js/features/imposition/config_pane_special_sections.js`
+  - `symbol-cep/cep/js/features/imposition/config_schema_state.js`
+  - `symbol-cep/cep/js/features/imposition/config_draft_store.js`
+  - `symbol-cep/cep/js/features/imposition/config_section_registry.js`
+  - `symbol-cep/cep/js/features/imposition/preset_draft_model.js`
+  - `symbol-cep/cep/js/features/imposition/preset_migrator.js`
+  - `symbol-cep/cep/js/features/imposition/preset_serializer.js`
+  - `symbol-cep/cep/js/features/imposition/runtime_preset_adapter.js`
+  - `symbol-cep/cep/js/features/imposition/preset_schema_policy.js`
+  - `symbol-cep/cep/js/features/imposition/processing_option_mapper.js`
 - Also touches:
   - `symbol-cep/cep/js/features/imposition/preset-config/`
   - `symbol-cep/cep/js/features/imposition/builtin_presets.js`
-  - `symbol-cep/cep/js/features/imposition/schema_editor.js`
   - `symbol-cep/cep/data/presets.json`
 
 Notes:
 
 - Start from `config_tab.js`, `config_events.js`, or `config_persistence.js` first.
 - Open `preset-config/` after the public entrypoint is identified; it is the internal service/support island for persistence, tab-state, event, and schema-edit workflow.
+- Preset storage is mixed-version by design during migration. Use `getDraftById()`/`saveDraft()` for Config work; use `hydratePreset()` only at the runtime compatibility facade.
+- Config renderer work starts from the registry and main renderer; standard controls and special sections are internal adapters and do not own persistence.
 
 ## Preflight
 
@@ -101,7 +112,7 @@ Use for CEP transport, host loading, JSX bridge, and Illustrator DOM execution.
 Use for stored presets, usage data, storage health, and local persistence health checks.
 
 - Primary entrypoints:
-  - `symbol-cep/cep/js/features/imposition/data_store.js`
+  - `symbol-cep/cep/js/features/imposition/preset_repository.js`
   - `symbol-cep/cep/js/features/imposition/config_persistence.js`
 - Also touches:
   - `symbol-cep/cep/data/presets.json`

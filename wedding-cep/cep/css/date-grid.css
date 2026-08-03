@@ -73,10 +73,30 @@
 
 /* Info Column */
 .date-info-col {
+    display: flex;
+    align-items: center;
+    gap: 2px;
     font-size: 10px;
     color: #000;
     padding-left: 4px;
     white-space: nowrap;
+}
+
+.date-year-auto {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+}
+
+.date-year-input {
+    box-sizing: border-box;
+    width: 38px;
+    height: 20px;
+    padding: 0 2px;
+    border: 1px solid #d1d5db;
+    border-radius: 2px;
+    font-size: 10px;
+    text-align: center;
 }
 
 /* State Classes */

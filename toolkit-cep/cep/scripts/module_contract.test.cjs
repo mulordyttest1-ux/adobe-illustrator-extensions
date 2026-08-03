@@ -72,9 +72,11 @@ test('createModuleDefinition derives handler and jsx-relative path', () => {
     }, {
         manifestPath: 'C:/toolkit-cep/cep/modules/test_probe_command/module.json',
         runPath: 'C:/toolkit-cep/cep/modules/test_probe_command/run.jsx',
+        requestPath: 'C:/toolkit-cep/cep/modules/test_probe_command/request.js',
         jsxRoot: 'C:/toolkit-cep/cep/jsx'
     });
 
     assert.equal(definition.handler, 'test_probe_command');
     assert.equal(definition.jsxRelativeRunPath, '../modules/test_probe_command/run.jsx');
+    assert.equal(definition.requestRelativePath, '../modules/test_probe_command/request.js');
 });

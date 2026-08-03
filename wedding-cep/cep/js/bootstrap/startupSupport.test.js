@@ -99,7 +99,6 @@ describe('startupSupport', () => {
                 TabbedPanel: { id: 'tabs' },
                 CompactFormBuilder: { id: 'builder' },
                 SchemaTabComponents: { id: 'schema-tab' },
-                initCalendarEngine: { id: 'calendar' },
                 initEthnicNameNormalizer: { id: 'ethnic' },
                 wireActionButtons: { id: 'wire-actions' },
                 wireSchemaActions: { id: 'wire-schema' },

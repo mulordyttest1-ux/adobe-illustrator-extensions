@@ -99,4 +99,25 @@ describe('CompactFormState', () => {
         assert.equal(state.data['plain.field'], 'Updated');
         assert.equal(state.data.skipped, undefined);
     });
+
+    it('marks scanned years explicit and resets missing automatic years for inference', () => {
+        const state = new CompactFormState();
+        const yearInput = Object.assign(
+            new FakeControl({ value: '2027' }),
+            { dataset: { yearSource: 'explicit' } }
+        );
+        const yearAuto = Object.assign(
+            new FakeControl({ type: 'checkbox', checked: true }),
+            { type: 'checkbox' }
+        );
+
+        state.registerRef('date.tiec.nam', yearInput);
+        state.registerRef('date.tiec.nam_auto', yearAuto);
+
+        state.setData({ 'date.tiec.nam': '2026' });
+        assert.equal(yearInput.dataset.yearSource, 'explicit');
+
+        state.setData({});
+        assert.equal(yearInput.dataset.yearSource, 'default');
+    });
 });

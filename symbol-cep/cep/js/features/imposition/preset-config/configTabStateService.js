@@ -1,4 +1,4 @@
-import { hydratePreset } from '../processing_options.js';
+import { normalizeConfigValuesForSchema } from '../config_schema_state.js';
 
 function clone(value) {
     return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -20,6 +20,15 @@ function readElementValue(element, fallback) {
     return element.value || fallback;
 }
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 export function resolveFormMetaValues(formRef, fallbackMeta) {
     const meta = fallbackMeta || {};
     if (formRef && formRef.elements) {
@@ -36,17 +45,18 @@ export function resolveFormMetaValues(formRef, fallbackMeta) {
 }
 
 export function buildNormalizedConfigState({ rawValues = {}, formMeta = {}, activeSchema } = {}, overrides = {}) {
-    const hydrate = overrides.hydratePreset || hydratePreset;
-    const schema = overrides.schema || activeSchema;
-    const hydrated = hydrate({
-        id: formMeta.presetId || 'draft',
-        label: formMeta.presetName || '',
-        schemaId: 'embedded',
-        schema,
-        rawValues: rawValues || {}
-    }, schema);
+    if (overrides.hydratePreset) {
+        const hydrated = overrides.hydratePreset({
+            id: formMeta.presetId || 'draft',
+            label: formMeta.presetName || '',
+            schemaId: 'embedded',
+            schema: overrides.schema || activeSchema,
+            rawValues: rawValues || {}
+        }, overrides.schema || activeSchema);
+        return hydrated.rawValues;
+    }
 
-    return hydrated.rawValues;
+    return normalizeConfigValuesForSchema(rawValues, overrides.schema || activeSchema, formMeta);
 }
 
 export function captureConfigTabUiState({ paneRenderer, formMeta, selectedPresetId } = {}, overrides = {}) {
@@ -93,5 +103,9 @@ export function buildStorageWarningMarkup(overrides = {}) {
 
 export function buildPresetOptionsMarkup(overrides = {}) {
     const listPresets = overrides.listPresets || (() => []);
-    return listPresets().map((preset) => `<option value="${preset.id}">${preset.label}</option>`).join('');
+    return listPresets()
+        .map((preset) => (
+            `<option value="${escapeHtml(preset.id)}">${escapeHtml(preset.label)}</option>`
+        ))
+        .join('');
 }

@@ -15,7 +15,7 @@ export function markTabsBooting(deps = {}) {
     getReadyStateUpdater(deps)({ phase: "tabs" });
 }
 
-export function initCompactTab({ hostFacade, bridge, schema }, deps = {}) {
+export function initCompactTab({ hostFacade, schema }, deps = {}) {
     const targetDocument = getDocumentRef(deps);
     const targetAppRuntimeState = deps.appRuntimeState || {};
     const updateReadyStateImpl = getReadyStateUpdater(deps);
@@ -42,8 +42,7 @@ export function initCompactTab({ hostFacade, bridge, schema }, deps = {}) {
     targetAppRuntimeState.compactBuilder = compactBuilder;
 
     wireActionButtonsImpl({
-        hostFacade: hostFacade || bridge,
-        bridge: hostFacade || bridge,
+        hostFacade,
         compactBuilder
     });
 

@@ -14,8 +14,6 @@ import {
 
 export const ConfigEvents = {
     bindEvents(tab) {
-        this._tab = tab;
-
         tab.container.addEventListener('click', async (event) => {
             await handleConfigClick(event, tab);
         });
@@ -27,9 +25,5 @@ export const ConfigEvents = {
         tab.container.addEventListener('change', (event) => {
             handleConfigChange(event, tab);
         });
-    },
-
-    evaluateConditionals() {
-        // Tweakpane renderer manages its own visibility and state.
     }
 };

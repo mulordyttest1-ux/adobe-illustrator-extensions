@@ -4,21 +4,9 @@ import { runUpdateDocument } from './updateDocument.js';
 
 function createAssemblerHarness(overrides = {}) {
     const calls = {
-        setDependencies: [],
-        assemble: [],
         assembleWith: []
     };
     const assembler = {
-        setDependencies: (deps) => {
-            calls.setDependencies.push(deps);
-        },
-        assemble: async (rawData, schema) => {
-            calls.assemble.push({ rawData, schema });
-            if (typeof overrides.assemble === 'function') {
-                return overrides.assemble(rawData, schema);
-            }
-            return { normalized: true, ...rawData };
-        },
         assembleWith: async (rawData, schema, deps) => {
             calls.assembleWith.push({ rawData, schema, deps });
             if (typeof overrides.assembleWith === 'function') {
@@ -72,8 +60,6 @@ it('assembles data, applies the update callback, and returns update context', as
             }
         }, { assembler });
 
-        assert.equal(calls.setDependencies.length, 0);
-        assert.equal(calls.assemble.length, 0);
         assert.equal(calls.assembleWith.length, 1);
         assert.deepEqual(calls.assembleWith[0].rawData, rawData);
         assert.deepEqual(calls.assembleWith[0].schema, schema);

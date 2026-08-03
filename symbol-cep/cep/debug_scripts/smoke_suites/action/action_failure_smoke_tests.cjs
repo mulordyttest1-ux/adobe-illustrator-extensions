@@ -19,43 +19,43 @@ function registerActionFailureSmokeTests(context) {
                         resolve({ reason: 'missing_live_run_surface' });
                         return;
                     }
-    
+
                     if (typeof switchTab === 'function') {
                         switchTab('action');
                     }
-    
+
                     setTimeout(() => {
                         const runMode = document.getElementById('btn-mode-run');
                         if (runMode && runMode.getAttribute('aria-pressed') !== 'true') {
                             runMode.click();
                         }
-    
+
                         setTimeout(() => {
                             const input = document.getElementById('action-search');
                             if (!input) {
                                 resolve({ reason: 'missing_action_search' });
                                 return;
                             }
-    
+
                             input.value = '';
                             input.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
                             setTimeout(() => {
                                 const item = document.querySelector('.dropdown-item');
                                 if (!item) {
                                     resolve({ reason: 'missing_dropdown_item' });
                                     return;
                                 }
-    
+
                                 const originalPreflight = actionTab.preflightOrchestrator.runAll;
                                 const originalEvalScript = actionTab.csInterface.evalScript;
                                 const originalBridgeEval = actionTab.bridgeInst ? actionTab.bridgeInst.eval : null;
                                 let engineCalls = 0;
                                 const restoreScripts = [];
-    
+
                                 actionTab.lastPostflightSummary = { successCount: 99 };
                                 toastContainer.innerHTML = '';
-    
+
                                 actionTab.preflightOrchestrator.runAll = async function() {
                                     return {
                                         safe: true,
@@ -78,9 +78,9 @@ function registerActionFailureSmokeTests(context) {
                                         return window.btoa(JSON.stringify({ success: true }));
                                     };
                                 }
-    
+
                                 item.click();
-    
+
                                 setTimeout(() => {
                                     const promptInput = document.getElementById('save-filename-prompt-input');
                                     const promptConfirm = document.querySelector('[data-save-filename-action="confirm"]');
@@ -90,17 +90,17 @@ function registerActionFailureSmokeTests(context) {
                                         promptConfirm.click();
                                     }
                                 }, 40);
-    
+
                                 setTimeout(() => {
                                     const toastTexts = Array.from(toastContainer.querySelectorAll('.toast'))
                                         .map((toast) => toast.textContent.replace(/\\s+/g, ' ').trim());
-    
+
                                     actionTab.preflightOrchestrator.runAll = originalPreflight;
                                     actionTab.csInterface.evalScript = originalEvalScript;
                                     if (actionTab.bridgeInst) {
                                         actionTab.bridgeInst.eval = originalBridgeEval;
                                     }
-    
+
                                     resolve({
                                         engineCalls,
                                         restoreCalls: restoreScripts.length,

@@ -1,0 +1,23 @@
+{
+  "id": "place_all_pdf_pages",
+  "title": "Place All Pages",
+  "buttonLabel": "Place All Pages",
+  "category": "Daily Work",
+  "order": 15,
+  "aliases": [
+    "place all pdf",
+    "place pdf pages",
+    "multipage pdf",
+    "import all pdf",
+    "pdf pages",
+    "place multipage",
+    "place all ai",
+    "place ai artboards",
+    "multi artboard ai"
+  ],
+  "description": "Place every PDF page or AI artboard as a linked item with one matching artboard.",
+  "favoriteRank": 0,
+  "requiresDocument": true,
+  "requiresSelection": false,
+  "successMessage": ""
+}

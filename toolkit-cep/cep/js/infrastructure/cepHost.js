@@ -28,8 +28,12 @@ function getNodeRequire(overrides = {}) {
     }
 
     const windowRef = getWindowRef(overrides);
+    if (windowRef.cep_node && typeof windowRef.cep_node.require === 'function') {
+        return windowRef.cep_node.require.bind(windowRef.cep_node);
+    }
+
     if (typeof windowRef.require === 'function') {
-        return windowRef.require;
+        return windowRef.require.bind(windowRef);
     }
 
     const globalRef = getGlobalRef(overrides);
@@ -184,6 +188,19 @@ function createRunNodeScript(overrides = {}) {
     };
 }
 
+function createReadFileBytes(overrides = {}) {
+    return async function readFileBytes(filePath) {
+        const nodeRequire = getNodeRequire(overrides);
+        if (!nodeRequire) {
+            throw new Error('Node file access unavailable');
+        }
+
+        const fs = nodeRequire('fs');
+        const buffer = fs.readFileSync(String(filePath));
+        return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    };
+}
+
 export function createCepHost(overrides = {}) {
     const getCsInterfaceInstance = createCsInterfaceGetter(overrides);
     const evalScript = createEvalScript(getCsInterfaceInstance);
@@ -198,6 +215,8 @@ export function createCepHost(overrides = {}) {
         getExtensionRootPath: createGetExtensionRootPath(overrides, getCsInterfaceInstance),
 
         evalScript,
+
+        readFileBytes: createReadFileBytes(overrides),
 
         runNodeScript: createRunNodeScript(overrides)
     };

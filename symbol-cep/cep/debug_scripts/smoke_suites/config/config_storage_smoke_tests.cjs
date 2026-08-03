@@ -16,7 +16,7 @@ function registerConfigStorageSmokeTests(context) {
                 if (!debug || typeof debug.simulatePostflightSuccess !== 'function' || typeof debug.getLastPostflightSummary !== 'function') {
                     return { reason: 'missing_postflight_summary_debug' };
                 }
-    
+
                 const hostCalls = [];
                 const fakeHostGateway = {
                     drawPasteboardLegend: async (payloadBase64) => {
@@ -24,7 +24,7 @@ function registerConfigStorageSmokeTests(context) {
                         return btoa(JSON.stringify({ success: true, cleared: true }));
                     }
                 };
-    
+
                 const summary = await debug.simulatePostflightSuccess(
                     {
                         itemsProcessed: 2,
@@ -39,7 +39,7 @@ function registerConfigStorageSmokeTests(context) {
                     },
                     fakeHostGateway
                 );
-    
+
                 return {
                     summary,
                     latest: debug.getLastPostflightSummary(),
@@ -71,17 +71,17 @@ function registerConfigStorageSmokeTests(context) {
                     const debug = window.Imposition && (window.Imposition.debug || (typeof window.Imposition.enableDebug === 'function' && window.Imposition.enableDebug()));
                     const actionContainer = document.getElementById('action-container');
                     const configContainer = document.getElementById('config-container');
-    
+
                     if (!debug || typeof debug.setStorageHealthOverride !== 'function' || typeof debug.clearStorageHealthOverride !== 'function') {
                         resolve({ reason: 'missing_storage_debug' });
                         return;
                     }
-    
+
                     if (!actionContainer || !configContainer) {
                         resolve({ reason: 'missing_storage_containers' });
                         return;
                     }
-    
+
                     debug.setStorageHealthOverride({
                         reason: 'usage_write_denied',
                         canReadPresets: true,
@@ -89,12 +89,12 @@ function registerConfigStorageSmokeTests(context) {
                         canWriteUsage: false,
                         message: 'Mock usage warning'
                     });
-    
+
                     setTimeout(() => {
                         const actionWarning = actionContainer.querySelector('[data-storage-warning]');
                         const configWarning = configContainer.querySelector('[data-storage-warning]');
                         debug.clearStorageHealthOverride();
-    
+
                         resolve({
                             actionWarning: actionWarning ? actionWarning.textContent.replace(/\\s+/g, ' ').trim() : null,
                             configWarning: configWarning ? configWarning.textContent.replace(/\\s+/g, ' ').trim() : null
@@ -124,24 +124,24 @@ function registerConfigStorageSmokeTests(context) {
                     const debug = window.Imposition && (window.Imposition.debug || (typeof window.Imposition.enableDebug === 'function' && window.Imposition.enableDebug()));
                     const actionTab = window.Imposition && window.Imposition.actionTab;
                     const configContainer = document.getElementById('config-container');
-    
+
                     if (!debug || typeof debug.setStorageHealthOverride !== 'function' || typeof debug.clearStorageHealthOverride !== 'function') {
                         resolve({ reason: 'missing_storage_debug' });
                         return;
                     }
-    
+
                     if (!actionTab || !configContainer) {
                         resolve({ reason: 'missing_dry_run_controls' });
                         return;
                     }
-    
+
                     const originalRun = actionTab.runWithPreset;
                     let captured = null;
                     actionTab.runWithPreset = async function(preset) {
                         captured = preset;
                         return { success: true };
                     };
-    
+
                     debug.setStorageHealthOverride({
                         reason: 'write_denied',
                         canReadPresets: true,
@@ -149,7 +149,7 @@ function registerConfigStorageSmokeTests(context) {
                         canWriteUsage: false,
                         message: 'Mock main warning'
                     });
-    
+
                     const nameInput = document.getElementById('preset_name');
                     const dryRun = document.getElementById('btn-dry-run');
                     if (!nameInput || !dryRun) {
@@ -158,15 +158,15 @@ function registerConfigStorageSmokeTests(context) {
                         resolve({ reason: 'missing_dry_run_controls_after_render' });
                         return;
                     }
-    
+
                     nameInput.value = 'Dry Run Degraded';
                     dryRun.click();
-    
+
                     setTimeout(() => {
                         const warning = configContainer.querySelector('[data-storage-warning]');
                         actionTab.runWithPreset = originalRun;
                         debug.clearStorageHealthOverride();
-    
+
                         resolve({
                             called: !!captured,
                             label: captured ? captured.label : null,

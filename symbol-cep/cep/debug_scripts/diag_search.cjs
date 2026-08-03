@@ -21,9 +21,9 @@ async function diagnose() {
         const dumpResult = await Runtime.evaluate({
             expression: `
                 (function() {
-                    const store = window.Imposition && window.Imposition.dataStore;
-                    if (!store) return { error: 'DataStore not loaded' };
-                    const presets = store.getPresets();
+                    const actionTab = window.Imposition && window.Imposition.actionTab;
+                    if (!actionTab) return { error: 'ActionTab not loaded' };
+                    const presets = actionTab.filteredPresets || [];
                     return presets.map(p => ({
                         id: p.id,
                         label: p.label,
@@ -51,9 +51,9 @@ async function diagnose() {
         const searchResult = await Runtime.evaluate({
             expression: `
                 (function() {
-                    const store = window.Imposition && window.Imposition.dataStore;
-                    if (!store) return { error: 'DataStore not loaded' };
-                    const presets = store.getPresets();
+                    const actionTab = window.Imposition && window.Imposition.actionTab;
+                    if (!actionTab) return { error: 'ActionTab not loaded' };
+                    const presets = actionTab.filteredPresets || [];
                     
                     if (!window.Fuse) return { error: 'Fuse not loaded' };
                     

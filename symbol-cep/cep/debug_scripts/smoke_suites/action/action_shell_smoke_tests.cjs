@@ -16,7 +16,7 @@ function registerActionShellSmokeTests(context) {
                 const list = document.getElementById('action-list');
                 const runMode = document.getElementById('btn-mode-run');
                 const manageMode = document.getElementById('btn-mode-manage');
-    
+
                 return {
                     hasInput: input !== null,
                     hasList: list !== null,
@@ -55,10 +55,10 @@ function registerActionShellSmokeTests(context) {
                         resolve({ reason: 'missing_tabs' });
                         return;
                     }
-    
+
                     actionTab.focus();
                     actionTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    
+
                     setTimeout(() => {
                         resolve({
                             actionRole: actionTab.getAttribute('role'),
@@ -108,25 +108,25 @@ function registerActionShellSmokeTests(context) {
                         resolve({ reason: 'missing_controls' });
                         return;
                     }
-    
+
                     input.value = '___codex_no_match___';
                     input.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
                     setTimeout(() => {
                         const emptyText = (document.getElementById('action-list') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim();
-    
+
                         manageMode.click();
-    
+
                         setTimeout(() => {
                             const deleteBtn = document.querySelector('.btn-delete');
                             if (!deleteBtn) {
                                 resolve({ reason: 'missing_delete_button', emptyText });
                                 return;
                             }
-    
+
                             const beforeCount = document.querySelectorAll('.manager-card').length;
                             deleteBtn.click();
-    
+
                             setTimeout(() => {
                                 const overlay = document.getElementById('confirm-service-overlay');
                                 const title = document.getElementById('confirm-service-title');
@@ -141,26 +141,26 @@ function registerActionShellSmokeTests(context) {
                                     cancelText: cancelBtn ? cancelBtn.textContent.replace(/\\s+/g, ' ').trim() : null,
                                     hasCloseButton: !!closeBtn
                                 };
-    
+
                                 if (closeBtn) {
                                     closeBtn.click();
                                 }
-    
+
                                 setTimeout(() => {
                                     const overlayAfterClose = document.getElementById('confirm-service-overlay');
                                     payload.closedByClose = !!(overlayAfterClose && overlayAfterClose.hidden);
                                     payload.closeDisplay = overlayAfterClose ? overlayAfterClose.style.display : null;
-    
+
                                     deleteBtn.click();
-    
+
                                     setTimeout(() => {
                                         const overlaySecondPass = document.getElementById('confirm-service-overlay');
                                         const cancelBtnSecondPass = overlaySecondPass ? overlaySecondPass.querySelector('[data-confirm-action="cancel"]') : null;
-    
+
                                         if (cancelBtnSecondPass) {
                                             cancelBtnSecondPass.click();
                                         }
-    
+
                                         setTimeout(() => {
                                             const overlayAfterCancel = document.getElementById('confirm-service-overlay');
                                             payload.closedByCancel = !!(overlayAfterCancel && overlayAfterCancel.hidden);
@@ -222,22 +222,22 @@ function registerActionShellSmokeTests(context) {
                 if (!actionTab || typeof actionTab._handleEngineFailure !== 'function' || !toastContainer) {
                     return { reason: 'missing_runtime_surface' };
                 }
-    
+
                 toastContainer.innerHTML = '';
                 await actionTab._handleEngineFailure({
                     error: 'Layout Error: Không đủ chỗ trên khổ giấy để xếp.'
                 }, {});
-    
+
                 return new Promise((resolve) => {
                     setTimeout(() => {
                         const toast = toastContainer.querySelector('.toast span');
                         const closeBtn = toastContainer.querySelector('.toast-close');
                         const toastText = toast ? toast.textContent.replace(/\\s+/g, ' ').trim() : null;
-    
+
                         if (closeBtn) {
                             closeBtn.click();
                         }
-    
+
                         setTimeout(() => resolve({ toastText }), 360);
                     }, 80);
                 });
@@ -265,23 +265,23 @@ function registerActionShellSmokeTests(context) {
                 if (!actionTab || typeof actionTab._restoreAutoGrouping !== 'function' || !toastContainer) {
                     return { reason: 'missing_warning_surface' };
                 }
-    
+
                 toastContainer.innerHTML = '';
                 await actionTab._restoreAutoGrouping({
                     autoGrouped: true,
                     autoGroupName: null
                 });
-    
+
                 return new Promise((resolve) => {
                     setTimeout(() => {
                         const toast = toastContainer.querySelector('.toast span');
                         const closeBtn = toastContainer.querySelector('.toast-close');
                         const toastText = toast ? toast.textContent.replace(/\\s+/g, ' ').trim() : null;
-    
+
                         if (closeBtn) {
                             closeBtn.click();
                         }
-    
+
                         setTimeout(() => resolve({ toastText }), 360);
                     }, 80);
                 });
@@ -309,20 +309,20 @@ function registerActionShellSmokeTests(context) {
                 if (!debug || typeof debug.simulatePreflightGroupCheckFailure !== 'function' || !toastContainer) {
                     return { reason: 'missing_preflight_failure_debug' };
                 }
-    
+
                 toastContainer.innerHTML = '';
                 await debug.simulatePreflightGroupCheckFailure('parse_failure');
-    
+
                 return new Promise((resolve) => {
                     setTimeout(() => {
                         const toast = toastContainer.querySelector('.toast span');
                         const closeBtn = toastContainer.querySelector('.toast-close');
                         const toastText = toast ? toast.textContent.replace(/\\s+/g, ' ').trim() : null;
-    
+
                         if (closeBtn) {
                             closeBtn.click();
                         }
-    
+
                         setTimeout(() => {
                             if (window.Imposition && typeof window.Imposition.disableDebug === 'function') {
                                 window.Imposition.disableDebug();
@@ -353,7 +353,7 @@ function registerActionShellSmokeTests(context) {
                 const app = window.Imposition;
                 const hasDefaultDebug = !!(app && app.debug);
                 const enabled = app && typeof app.enableDebug === 'function' ? app.enableDebug() : null;
-    
+
                 return {
                     hasDefaultDebug,
                     enabledKeys: enabled ? Object.keys(enabled).length : 0,
@@ -379,7 +379,7 @@ function registerActionShellSmokeTests(context) {
                     const input = document.getElementById('action-search');
                     input.value = 'a4';
                     input.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
                     setTimeout(() => {
                         const items = document.querySelectorAll('.dropdown-item');
                         resolve(items.length > 0);
@@ -398,18 +398,18 @@ function registerActionShellSmokeTests(context) {
             (function() {
                 return new Promise((resolve) => {
                     const input = document.getElementById('action-search');
-    
+
                     input.value = '';
                     input.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
                     setTimeout(() => {
                         const eDown = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true });
                         input.dispatchEvent(eDown);
-    
+
                         setTimeout(() => {
                             const items = document.querySelectorAll('.dropdown-item');
                             if (items.length < 2) return resolve(false);
-    
+
                             const secondItemText = items[1].textContent;
                             resolve(secondItemText.includes('\u25b6'));
                         }, 50);

@@ -16,9 +16,12 @@ export const DateValidator = {
         };
     },
 
-    validateDateLogic(data) {
+    validateDateLogic(data, options = {}) {
         const warnings = [];
-        const today = new Date();
+        const today = options.today instanceof Date
+            && !Number.isNaN(options.today.getTime())
+            ? new Date(options.today)
+            : new Date();
         today.setHours(0, 0, 0, 0);
         const currentYear = today.getFullYear();
 
@@ -36,7 +39,7 @@ export const DateValidator = {
             return { valid: false, warnings };
         }
 
-        pushExperienceWarnings(warnings, { today, currentYear, tiec, le });
+        pushExperienceWarnings(warnings, { today, tiec, le });
 
         return {
             valid: !hasBlockingDateWarnings(warnings),

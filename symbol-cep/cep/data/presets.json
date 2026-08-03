@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "presets": [
     {
       "id": "preset_1771816563051",
@@ -3282,11 +3282,11 @@
               },
               {
                 "id": "info_template",
-                "label": "10. Mẫu thông tin Pasteboard (Template)",
+                "label": "10. Ghi chu in tuy chinh",
                 "type": "textarea",
-                "placeholder": "{count} tem - Khổ {width}x{height}",
+                "placeholder": "{preset_name} | {count} tem | {width}x{height} | {date} {time}\\n{margin_summary}",
                 "binding": false,
-                "note": "Biến hỗ trợ: {preset_name}, {count}, {width}, {height}, {timestamp}"
+                "note": "Dung che do Tuy chinh neu can viet mau slug rieng; cac token co san trong muc Ghi chu in."
               }
             ],
             "rows": []
@@ -3467,8 +3467,8 @@
         "sheet_m_right": "7",
         "sheet_m_top": "7",
         "sheet_m_bot": "7",
-        "finish_w": "165",
-        "finish_h": "210",
+        "finish_w": "210",
+        "finish_h": "165",
         "resize_mode": "fill",
         "opt_cleanup": true,
         "opt_k100": true,
@@ -3500,12 +3500,13 @@
         "row_dynamic_1771810110423_draw_border": "on",
         "row_dynamic_1771810110423_border_style": "dashed",
         "preset_name": "f4 ky",
-        "save_after_run": true
+        "save_after_run": true,
+        "pasteboard_mode": "standard"
       },
       "geometry": {
         "finish": {
-          "w": 165,
-          "h": 210
+          "w": 210,
+          "h": 165
         },
         "safe": [
           12,
@@ -3536,6 +3537,7 @@
           "hybrid": true
         },
         "postflight": {
+          "pasteboardMode": "standard",
           "pasteboardInfoTemplate": ""
         },
         "invariants": {
@@ -3549,7 +3551,7 @@
         "k100": true
       },
       "info_template": "",
-      "updatedAt": "2026-04-11T02:49:36.101Z"
+      "updatedAt": "2026-07-21T02:13:45.613Z"
     },
     {
       "id": "preset_1773040239135",
@@ -7845,7 +7847,7 @@
         "safe_left": "13",
         "safe_right": "7",
         "safe_top": "7",
-        "safe_bottom": "25",
+        "safe_bottom": "7",
         "dynamic_1773281058917_left": "10",
         "dynamic_1773281058917_right": "0",
         "dynamic_1773281058917_top": "0",
@@ -7867,7 +7869,7 @@
         },
         "safe": [
           7,
-          25,
+          7,
           13,
           7
         ]
@@ -7908,7 +7910,7 @@
         "k100": true
       },
       "info_template": "{preset_name}|gáy:{safe_top}mm|chừa viền xén:{safe_left}mm|chừa ký:{safe_bottom}mm|{time}|{date}",
-      "updatedAt": "2026-06-02T01:57:58.047Z"
+      "updatedAt": "2026-07-23T10:15:54.652Z"
     },
     {
       "id": "preset_1777020327786",
@@ -8808,7 +8810,7 @@
         "align_position": "tl",
         "info_template": "",
         "save_filename_prefix": "",
-        "save_output_dir": "//Cuoidep-vy/in nhanh 180/BAO THU - THU MOI",
+        "save_output_dir": "//Cuoidep-vy/in nhanh 180/Thiêp Cuoi/FILE IN THIEP - May in nhanh",
         "opt_draw_marks": false,
         "mark_len": 5,
         "mark_weight": 0.5,
@@ -8869,7 +8871,7 @@
         "k100": false
       },
       "info_template": "",
-      "updatedAt": "2026-07-15T08:58:06.908Z"
+      "updatedAt": "2026-07-16T09:40:02.288Z"
     },
     {
       "id": "preset_1781917344945",
@@ -9331,9 +9333,51 @@
       "updatedAt": "2026-06-20T01:02:24.953Z"
     },
     {
+      "modelVersion": 1,
       "id": "preset_1784105901123",
       "label": "BAO THU",
-      "createdAt": "2026-07-15T08:58:21.130Z",
+      "schemaId": "standard_imposition",
+      "schemaExtensions": {
+        "marginRows": []
+      },
+      "values": {
+        "ab_w": "",
+        "ab_h": "",
+        "sheet_m_left": "",
+        "sheet_m_right": "",
+        "sheet_m_top": "",
+        "sheet_m_bot": "",
+        "finish_w": "",
+        "finish_h": "",
+        "resize_mode": "preserve",
+        "opt_cleanup": false,
+        "opt_k100": false,
+        "opt_symbol_mode": false,
+        "opt_layout_head_to_head": false,
+        "opt_n_up": false,
+        "opt_custom_rotate": false,
+        "custom_rotate_angle": 0,
+        "align_position": "tl",
+        "info_template": "",
+        "save_filename_prefix": "",
+        "save_output_dir": "//Cuoidep-vy/in nhanh 180/BAO THU - THU MOI",
+        "opt_draw_marks": false,
+        "mark_len": 5,
+        "mark_weight": 0.5,
+        "mark_style_hybrid": false,
+        "safe_left": 0,
+        "safe_right": 0,
+        "safe_top": 0,
+        "safe_bottom": 0,
+        "pasteboard_mode": "standard"
+      },
+      "createdAt": "2026-07-27T08:18:29.854Z",
+      "updatedAt": "2026-07-27T08:18:29.860Z"
+    },
+    {
+      "id": "preset_1784511980094",
+      "label": "BAO BANH MY - DUA",
+      "createdAt": "2026-07-20T01:46:20.101Z",
       "schemaId": "embedded",
       "schema": {
         "id": "standard_imposition",
@@ -9722,7 +9766,7 @@
         "align_position": "tl",
         "info_template": "",
         "save_filename_prefix": "",
-        "save_output_dir": "//Cuoidep-vy/in nhanh 180/BAO THU - THU MOI",
+        "save_output_dir": "//Cuoidep-vy/in nhanh 180/TEM NHAN/DECAL KRAFT",
         "opt_draw_marks": false,
         "mark_len": 5,
         "mark_weight": 0.5,
@@ -9732,8 +9776,8 @@
         "safe_top": 0,
         "safe_bottom": 0,
         "pasteboard_mode": "standard",
-        "preset_id": "preset_1784105901123",
-        "preset_name": "BAO THU"
+        "preset_id": "preset_1784511980094",
+        "preset_name": "BAO BANH MY - DUA"
       },
       "geometry": {
         "finish": {
@@ -9783,7 +9827,518 @@
         "k100": false
       },
       "info_template": "",
-      "updatedAt": "2026-07-15T08:58:21.130Z"
+      "updatedAt": "2026-07-21T01:12:27.028Z"
+    },
+    {
+      "id": "preset_1784596371238",
+      "label": "kraft decal",
+      "createdAt": "2026-07-21T01:12:51.245Z",
+      "schemaId": "embedded",
+      "schema": {
+        "id": "standard_imposition",
+        "name": "Căn Lề Chuẩn (Standard)",
+        "version": "2.0",
+        "description": "Cấu hình tiêu chuẩn: An toàn, Gáy sách, Rãnh xé, tự động tính khổ và hỗ trợ vẽ viền.",
+        "sections": [
+          {
+            "id": "sec_artboard",
+            "title": "Khổ in (Sheet Size)",
+            "layout": "grid-2",
+            "fields": [
+              {
+                "id": "ab_w",
+                "label": "Rộng (Width)",
+                "type": "number",
+                "placeholder": "mm"
+              },
+              {
+                "id": "ab_h",
+                "label": "Cao (Height)",
+                "type": "number",
+                "placeholder": "mm"
+              }
+            ],
+            "rows": []
+          },
+          {
+            "id": "sec_sheet_layout",
+            "title": "Bố cục Trang in (Sheet Layout Matrix)",
+            "layout": "matrix",
+            "headers": [
+              "Trái (Left)",
+              "Phải (Right)",
+              "Trên (Top)",
+              "Dưới (Bottom)"
+            ],
+            "rows": [
+              {
+                "id": "row_gripper",
+                "label": "Biên Giấy (Sheet Margins)",
+                "classification": "STRUCTURAL",
+                "fields": {
+                  "left": {
+                    "id": "sheet_m_left",
+                    "binding": false,
+                    "placeholder": "mm"
+                  },
+                  "right": {
+                    "id": "sheet_m_right",
+                    "binding": false,
+                    "placeholder": "mm"
+                  },
+                  "top": {
+                    "id": "sheet_m_top",
+                    "binding": false,
+                    "placeholder": "Nhíp (mm)"
+                  },
+                  "bottom": {
+                    "id": "sheet_m_bot",
+                    "binding": false,
+                    "placeholder": "mm"
+                  }
+                }
+              }
+            ],
+            "fields": []
+          },
+          {
+            "id": "sec_size",
+            "title": "Kích thước Thành phẩm (mm)",
+            "layout": "grid-2",
+            "fields": [
+              {
+                "id": "finish_w",
+                "label": "Rộng (Width)",
+                "type": "number",
+                "step": 0.1,
+                "placeholder": "Auto",
+                "protected": true
+              },
+              {
+                "id": "finish_h",
+                "label": "Cao (Height)",
+                "type": "number",
+                "step": 0.1,
+                "placeholder": "Auto",
+                "protected": true
+              }
+            ],
+            "rows": []
+          },
+          {
+            "id": "sec_resize_mode",
+            "title": "Chế độ Resize (Geometry Decision)",
+            "layout": "stack",
+            "semantic": "GEOMETRY_LOCK",
+            "fields": [
+              {
+                "id": "resize_mode",
+                "type": "radio",
+                "label": "Chế độ co giãn thiết kế:",
+                "options": [
+                  {
+                    "val": "preserve",
+                    "txt": "🔒 Giữ tỷ lệ (Preserve Ratio) - Không méo"
+                  },
+                  {
+                    "val": "fill",
+                    "txt": "📐 Lấp đầy khung (Fill Frame) - Chấp nhận méo"
+                  }
+                ],
+                "default": "preserve",
+                "protected": true,
+                "binding": false
+              }
+            ],
+            "rows": []
+          },
+          {
+            "id": "sec_options",
+            "title": "Tùy chọn Xử lý (Pipeline Order)",
+            "layout": "stack",
+            "readOnlySummary": [
+              {
+                "id": "pipeline_clone",
+                "label": "01. [Bắt buộc] Tạo bản sao (Isolation)",
+                "note": "Luôn bật để giữ artwork gốc an toàn."
+              },
+              {
+                "id": "pipeline_resize_checkpoint",
+                "label": "04. Resize selection",
+                "note": "Checkpoint nội bộ luôn chạy trước bước layout."
+              }
+            ],
+            "fields": [
+              {
+                "id": "opt_cleanup",
+                "label": "02. Làm sạch (Pre-flight Cleanup)",
+                "type": "checkbox",
+                "default": true,
+                "protected": true
+              },
+              {
+                "id": "opt_k100",
+                "label": "03. Chuyển màu đen (K100)",
+                "type": "checkbox",
+                "default": true,
+                "protected": true
+              },
+              {
+                "id": "opt_symbol_mode",
+                "label": "05. Tạo Symbol (Proxy Asset)",
+                "type": "checkbox",
+                "default": true,
+                "protected": true
+              },
+              {
+                "id": "opt_layout_head_to_head",
+                "label": "06. Xếp kiểu đấu đầu (Head-to-Head 180°)",
+                "type": "checkbox",
+                "default": false,
+                "note": "Xoay ngược hàng chẵn"
+              },
+              {
+                "id": "opt_n_up",
+                "label": "07. Bình dàn trang (N-Up Layout)",
+                "type": "checkbox",
+                "default": true,
+                "protected": true
+              },
+              {
+                "id": "opt_custom_rotate",
+                "label": "08. Xoay toàn bộ thiết kế (Custom Rotation)",
+                "type": "checkbox",
+                "default": false,
+                "binding": false
+              },
+              {
+                "id": "custom_rotate_angle",
+                "label": "___ Góc xoay (độ)",
+                "type": "number",
+                "default": 0,
+                "binding": false,
+                "note": "VD: 90, 180, 45..."
+              },
+              {
+                "id": "align_position",
+                "label": "09. Căn vị trí (Alignment)",
+                "type": "select",
+                "options": [
+                  {
+                    "val": "tl",
+                    "txt": "↖ Top-Left"
+                  },
+                  {
+                    "val": "tc",
+                    "txt": "↑ Top-Center"
+                  },
+                  {
+                    "val": "tr",
+                    "txt": "↗ Top-Right"
+                  },
+                  {
+                    "val": "ml",
+                    "txt": "← Middle-Left"
+                  },
+                  {
+                    "val": "mc",
+                    "txt": "● Center"
+                  },
+                  {
+                    "val": "mr",
+                    "txt": "→ Middle-Right"
+                  },
+                  {
+                    "val": "bl",
+                    "txt": "↙ Bottom-Left"
+                  },
+                  {
+                    "val": "bc",
+                    "txt": "↓ Bottom-Center"
+                  },
+                  {
+                    "val": "br",
+                    "txt": "↘ Bottom-Right"
+                  }
+                ],
+                "default": "tl",
+                "binding": false
+              },
+              {
+                "id": "info_template",
+                "label": "10. Ghi chu in tuy chinh",
+                "type": "textarea",
+                "placeholder": "{preset_name} | {count} tem | {width}x{height} | {date} {time}\\n{margin_summary}",
+                "binding": false,
+                "note": "Dung che do Tuy chinh neu can viet mau slug rieng; cac token co san trong muc Ghi chu in."
+              }
+            ],
+            "rows": []
+          },
+          {
+            "id": "sec_output_save",
+            "title": "Luu sau khi binh",
+            "layout": "stack",
+            "fields": [
+              {
+                "id": "save_filename_prefix",
+                "label": "Tien to ten file",
+                "type": "text",
+                "placeholder": "Vi du: bai in thiep cuoi",
+                "binding": false,
+                "note": "Bo trong thi se dung ten file hien tai lam tien to. Neu co nhap, he thong se dung tien to nay truoc moc thoi gian luu."
+              },
+              {
+                "id": "save_output_dir",
+                "label": "Thu muc luu",
+                "type": "text",
+                "placeholder": "Chon thu muc luu bai in",
+                "binding": false,
+                "note": "Co thu muc thi preset se luu AI sau khi binh. Sau khi doi thu muc, hay Luu Preset de tab Chay dung gia tri moi."
+              }
+            ],
+            "rows": []
+          },
+          {
+            "id": "sec_marks",
+            "title": "Cấu hình Mark Xén (Trim Marks)",
+            "layout": "stack",
+            "fields": [
+              {
+                "id": "opt_draw_marks",
+                "label": "08. Kích hoạt vẽ Mark xén",
+                "type": "checkbox",
+                "default": true,
+                "binding": false
+              },
+              {
+                "id": "mark_len",
+                "label": "___ Độ dài Mark (mm)",
+                "type": "number",
+                "default": 5,
+                "binding": false
+              },
+              {
+                "id": "mark_weight",
+                "label": "___ Độ dày nét (pt)",
+                "type": "number",
+                "default": 0.5,
+                "binding": false
+              },
+              {
+                "id": "mark_style_hybrid",
+                "label": "___ Style: 1 đầu Solid / 1 đầu Dash",
+                "type": "checkbox",
+                "default": true,
+                "binding": false,
+                "note": "Giúp phân biệt đường cắt và đường gấp."
+              }
+            ],
+            "rows": []
+          },
+          {
+            "id": "sec_margins",
+            "title": "Thiết lập Biên (Margins - Matrix)",
+            "layout": "matrix",
+            "headers": [
+              "Trái (Left)",
+              "Phải (Right)",
+              "Trên (Top)",
+              "Dưới (Bottom)"
+            ],
+            "rows": [
+              {
+                "id": "row_safe",
+                "label": "Vùng An Toàn",
+                "classification": "BASELINE",
+                "fields": {
+                  "left": {
+                    "id": "safe_left",
+                    "placeholder": "mm",
+                    "protected": true,
+                    "binding": {
+                      "classification": "BASELINE",
+                      "edge": "left"
+                    }
+                  },
+                  "right": {
+                    "id": "safe_right",
+                    "placeholder": "mm",
+                    "protected": true,
+                    "binding": {
+                      "classification": "BASELINE",
+                      "edge": "right"
+                    }
+                  },
+                  "top": {
+                    "id": "safe_top",
+                    "placeholder": "mm",
+                    "protected": true,
+                    "binding": {
+                      "classification": "BASELINE",
+                      "edge": "top"
+                    }
+                  },
+                  "bottom": {
+                    "id": "safe_bottom",
+                    "placeholder": "mm",
+                    "protected": true,
+                    "binding": {
+                      "classification": "BASELINE",
+                      "edge": "bottom"
+                    }
+                  }
+                },
+                "borderControl": {
+                  "id": "safe_draw_border",
+                  "label": "Vẽ viền (Draw Border)",
+                  "default": false,
+                  "styleId": "safe_border_style"
+                }
+              }
+            ],
+            "fields": []
+          }
+        ]
+      },
+      "rawValues": {
+        "ab_w": "",
+        "ab_h": "",
+        "sheet_m_left": "",
+        "sheet_m_right": "",
+        "sheet_m_top": "",
+        "sheet_m_bot": "",
+        "finish_w": "",
+        "finish_h": "",
+        "resize_mode": "preserve",
+        "opt_cleanup": false,
+        "opt_k100": false,
+        "opt_symbol_mode": false,
+        "opt_layout_head_to_head": false,
+        "opt_n_up": false,
+        "opt_custom_rotate": false,
+        "custom_rotate_angle": 0,
+        "align_position": "tl",
+        "info_template": "",
+        "save_filename_prefix": "",
+        "save_output_dir": "//Cuoidep-vy/in nhanh 180/TEM NHAN/DECAL KRAFT",
+        "opt_draw_marks": false,
+        "mark_len": 5,
+        "mark_weight": 0.5,
+        "mark_style_hybrid": false,
+        "safe_left": 0,
+        "safe_right": 0,
+        "safe_top": 0,
+        "safe_bottom": 0,
+        "pasteboard_mode": "standard",
+        "preset_id": "preset_1784596371238",
+        "preset_name": "kraft decal"
+      },
+      "geometry": {
+        "finish": {
+          "w": 0,
+          "h": 0
+        },
+        "safe": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "processingOptions": {
+        "cleanup": false,
+        "k100": false,
+        "output": {
+          "mode": "group"
+        },
+        "layout": {
+          "mode": "single",
+          "headToHead": false,
+          "align": "tl"
+        },
+        "rotate": {
+          "enabled": false,
+          "angle": 0
+        },
+        "marks": {
+          "enabled": false,
+          "length": 5,
+          "weight": 0.5,
+          "hybrid": false
+        },
+        "postflight": {
+          "pasteboardMode": "standard",
+          "pasteboardInfoTemplate": ""
+        },
+        "invariants": {
+          "clone": true,
+          "resizeCheckpoint": true
+        }
+      },
+      "options": {
+        "clone": true,
+        "cleanup": false,
+        "k100": false
+      },
+      "info_template": "",
+      "updatedAt": "2026-07-21T01:12:56.508Z"
+    },
+    {
+      "modelVersion": 1,
+      "id": "preset_1785380049275",
+      "label": "a6 f4 ngang co ky",
+      "schemaId": "standard_imposition",
+      "schemaExtensions": {
+        "marginRows": [
+          {
+            "id": "row_dynamic_1771810110423",
+            "label": "cấn xé trên",
+            "classification": "BASELINE"
+          }
+        ]
+      },
+      "values": {
+        "ab_w": "330",
+        "ab_h": "210",
+        "sheet_m_left": "7",
+        "sheet_m_right": "7",
+        "sheet_m_top": "7",
+        "sheet_m_bot": "7",
+        "finish_w": "165",
+        "finish_h": "105",
+        "resize_mode": "fill",
+        "opt_cleanup": true,
+        "opt_k100": true,
+        "opt_symbol_mode": true,
+        "opt_layout_head_to_head": false,
+        "opt_n_up": true,
+        "opt_custom_rotate": true,
+        "custom_rotate_angle": 180,
+        "align_position": "mc",
+        "info_template": "{preset_name}|gáy:{safe_top}mm|chừa viền xén:{safe_left}mm|chừa ký:{safe_bottom}mm|{time}|{date}",
+        "save_filename_prefix": "",
+        "save_output_dir": "//Cuoidep-vy/in nhanh 180/hoa don 3",
+        "opt_draw_marks": true,
+        "mark_len": 5,
+        "mark_weight": 0.5,
+        "mark_style_hybrid": true,
+        "safe_left": "12",
+        "safe_right": "7",
+        "safe_top": "7",
+        "safe_bottom": "20",
+        "dynamic_1771810110423_left": "10",
+        "dynamic_1771810110423_right": "0",
+        "dynamic_1771810110423_top": "0",
+        "dynamic_1771810110423_bottom": "0",
+        "pasteboard_mode": "custom",
+        "row_gripper_border_style": "dashed",
+        "row_safe_border_style": "dashed",
+        "row_dynamic_1771810110423_draw_border": "on",
+        "row_dynamic_1771810110423_border_style": "dashed"
+      },
+      "createdAt": "2026-07-30T02:54:09.275Z",
+      "updatedAt": "2026-07-30T02:54:09.284Z"
     }
   ]
 }

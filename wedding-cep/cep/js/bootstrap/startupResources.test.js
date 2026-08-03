@@ -19,7 +19,6 @@ describe("startupResources", () => {
             },
             {
                 updateReadyState: (patch) => phases.push(patch.phase),
-                initCalendarEngine: async ({ hostFacade: resolvedHostFacade }) => calls.push(["initCalendarEngine", resolvedHostFacade]),
                 AddressAutocomplete: {
                     init: async ({ hostFacade: resolvedHostFacade }) => calls.push(["AddressAutocomplete.init", resolvedHostFacade])
                 },
@@ -33,9 +32,8 @@ describe("startupResources", () => {
             }
         );
 
-        assert.deepEqual(phases, ["calendar", "bridge", "autocomplete", "schema"]);
+        assert.deepEqual(phases, ["bridge", "autocomplete", "schema"]);
         assert.deepEqual(calls, [
-            ["initCalendarEngine", hostFacade],
             ["hostFacade.testConnection"],
             ["AddressAutocomplete.init", hostFacade],
             ["initEthnicNameNormalizer", hostFacade],
@@ -62,7 +60,6 @@ describe("startupResources", () => {
                 console: {
                     warn: (...args) => warnings.push(args)
                 },
-                initCalendarEngine: async () => {},
                 AddressAutocomplete: {
                     init: async () => {}
                 },
@@ -92,7 +89,6 @@ describe("startupResources", () => {
                 },
                 {
                     updateReadyState: () => {},
-                    initCalendarEngine: async () => {},
                     AddressAutocomplete: {
                         init: async () => {}
                     },

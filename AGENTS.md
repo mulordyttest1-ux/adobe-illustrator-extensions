@@ -12,6 +12,8 @@ Public source of truth for the Adobe Illustrator CEP monorepo.
 - `shared/`: repository lint/test tooling.
 
 Read this file first, then the nearest nested `AGENTS.md` for the module being changed.
+Use `AGENT_CONTEXT.md` as the short repository map and validation matrix.
+Use `LEGACY_MAP.md` before changing compatibility adapters or fallback paths.
 
 ## When to load the private devkit
 

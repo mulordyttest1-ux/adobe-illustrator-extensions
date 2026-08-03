@@ -42,7 +42,6 @@ describe('startup bootstrap', () => {
                         hideLoading: () => events.push('UIFeedback.hideLoading'),
                         showError: (...args) => events.push(['UIFeedback.showError', args])
                     },
-                    initCalendarEngine: ({ hostFacade }) => events.push(['initCalendarEngine', hostFacade]),
                     initEthnicNameNormalizer: ({ hostFacade }) => events.push(['initEthnicNameNormalizer', hostFacade]),
                     AddressAutocomplete: {
                         init: async ({ hostFacade }) => events.push(['AddressAutocomplete.init', hostFacade])
@@ -93,7 +92,6 @@ describe('startup bootstrap', () => {
         assert.equal(fakeWindow.__WEDDING_APP_READY__.phase, 'ready');
         assert.equal(fakeWindow.__WEDDING_APP_READY__.compactReady, true);
         assert.equal(fakeWindow.__WEDDING_APP_READY__.error, null);
-        assert.ok(events.some((entry) => Array.isArray(entry) && entry[0] === 'initCalendarEngine' && entry[1] === fakeHostFacade));
         assert.ok(events.some((entry) => Array.isArray(entry) && entry[0] === 'AddressAutocomplete.init' && entry[1] === fakeHostFacade));
         assert.ok(events.some((entry) => Array.isArray(entry) && entry[0] === 'SchemaLoader.load' && entry[1] === fakeHostFacade));
         assert.ok(events.includes('TabbedPanel'));
@@ -133,7 +131,6 @@ describe('startup bootstrap', () => {
                             showErrorCalls.push(args);
                         }
                     },
-                    initCalendarEngine: async () => {},
                     initEthnicNameNormalizer: async () => {},
                     AddressAutocomplete: {
                         init: async () => {}

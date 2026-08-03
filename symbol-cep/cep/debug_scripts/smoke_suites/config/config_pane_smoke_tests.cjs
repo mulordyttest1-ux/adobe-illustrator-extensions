@@ -16,7 +16,7 @@ function registerConfigPaneSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         const summary = document.querySelector('[data-readonly-summary="sec_options"]');
                         resolve({
@@ -53,7 +53,7 @@ function registerConfigPaneSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         resolve({
                             hasPaneHost: !!document.querySelector('.config-pane-host'),
@@ -96,24 +96,24 @@ function registerConfigPaneSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         const rotateRow = document.querySelector('.pane-setting-row[data-field-id="opt_custom_rotate"]');
                         const rotateLabel = rotateRow ? rotateRow.querySelector('.pane-setting-label') : null;
                         const rotateControl = rotateRow ? rotateRow.querySelector('.pane-setting-control') : null;
                         const angleRow = document.querySelector('.pane-setting-row[data-field-id="custom_rotate_angle"]');
                         const legacyBinding = document.querySelector('.tp-lblv[data-field-id="opt_custom_rotate"]');
-    
+
                         if (!rotateRow || !rotateLabel || !rotateControl || !angleRow) {
                             resolve({ reason: 'missing_processing_rows' });
                             return;
                         }
-    
+
                         const labelStyle = window.getComputedStyle(rotateLabel);
                         const labelRect = rotateLabel.getBoundingClientRect();
                         const controlRect = rotateControl.getBoundingClientRect();
                         const sameRow = Math.abs(labelRect.top - controlRect.top) < 18;
-    
+
                         resolve({
                             hasLegacyBinding: !!legacyBinding,
                             rotateLabel: rotateLabel.textContent.replace(/\\s+/g, ' ').trim(),
@@ -168,17 +168,17 @@ function registerConfigPaneSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         const toggle = document.getElementById('btn-toggle-edit');
                         if (!toggle) {
                             resolve({ reason: 'missing_edit_toggle' });
                             return;
                         }
-    
+
                         const beforeButtons = document.querySelectorAll('.pane-schema-btn').length;
                         toggle.click();
-    
+
                         setTimeout(() => {
                             resolve({
                                 beforeButtons,
@@ -211,36 +211,36 @@ function registerConfigPaneSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         const select = document.getElementById('load-preset-select');
                         if (!select) {
                             resolve({ reason: 'missing_preset_select' });
                             return;
                         }
-    
+
                         const presetOption = Array.from(select.options).find((option) => !!option.value);
                         if (!presetOption) {
                             resolve({ reason: 'missing_saved_preset' });
                             return;
                         }
-    
+
                         select.value = presetOption.value;
                         select.dispatchEvent(new Event('change', { bubbles: true }));
-    
+
                         setTimeout(() => {
                             const paneButton = document.querySelector('.config-pane-host button');
                             if (!paneButton) {
                                 resolve({ reason: 'missing_pane_button' });
                                 return;
                             }
-    
+
                             paneButton.click();
-    
+
                             setTimeout(() => {
                                 const toastTexts = Array.from(document.querySelectorAll('#toast-container .toast'))
                                     .map((toast) => toast.textContent.replace(/\\s+/g, ' ').trim());
-    
+
                                 resolve({
                                     buttonType: paneButton.type,
                                     toastTexts

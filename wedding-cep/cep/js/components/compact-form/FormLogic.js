@@ -10,8 +10,9 @@ import {
 } from './formLogicSupport.js';
 
 export class FormLogic {
-    constructor(builder) {
+    constructor(builder, { inputEngine = InputEngine } = {}) {
         this.builder = builder;
+        this.inputEngine = inputEngine;
         this._createChangeEvent = () => new Event('change', { bubbles: true });
     }
 
@@ -49,7 +50,7 @@ export class FormLogic {
             context,
             venueAutomation: VenueAutomation,
             onCeremonyAddressChanged: (sourceAddr) => {
-                InputEngine.process(sourceAddr, 'ceremony.diachi', {}, this.builder.schema);
+                this.inputEngine.process(sourceAddr, 'ceremony.diachi', {}, this.builder.schema);
             }
         });
     }

@@ -208,6 +208,10 @@ Contract:
 - Date grid is owned by compact form.
 - Widget is instance-owned, not a mutable module singleton.
 - Action layer triggers recompute through builder-facing methods.
+- Solar/lunar conversion is offline domain logic with Vietnam timezone UTC+7;
+  the panel does not load a calendar data file at startup.
+- Gregorian year is visible in each row, automatic and locked by default, with
+  a manual override checkbox for operator correction.
 
 ### Schema Tab
 
@@ -295,26 +299,27 @@ Rationalize `logic/ux/` into clearer internal slices and vendor boundaries.
 
 Implemented shape:
 
-- `InputEngine` keeps the public facade, while `ux/input/FieldTypeResolver.js` owns field-type routing.
+- `InputEngine` keeps the public facade, while `createInputEngine(deps)` owns
+  private normalizer, validator, and field-resolver registries.
+- The default `InputEngine` exposes only `process(...)` and
+  `validateDateLogic(...)`; tests and future bounded contexts can create
+  isolated engines through the factory.
+- Field-type dispatch is centralized for date, name, address, and text while
+  schema types still take precedence over heuristics.
 - `AddressAutocomplete` keeps the public facade, while `ux/search/FuseAddressIndex.js` is the only runtime adapter allowed to touch `Fuse`.
+- `AddressAutocomplete.init({ hostFacade })` is the single host-loading
+  contract; failed initialization resets the index to an empty safe state.
 - Name heuristics stay behind `NameValidator` and `EthnicNameNormalizer`, with direct CI-safe coverage.
 
 ## Planned Next Phase
-
-### P4
-
-Build `Document Sync` as the next `v2 island`:
-
-- keep actions as facades
-- separate orchestration from strategy/policy modules
-- preserve current scan/update runtime contracts while tightening internal boundaries
 
 ### P5
 
 Continue slice-based facade migration:
 
 - keep `SchemaInjector` work policy-driven, not symmetry-driven
-- finish `Workspace`, `Document Sync`, and `Template Authoring` cutovers on top of `HostFacade`
+- evaluate the Symbol Wedding Suite panel policy/render lifecycle as the next
+  bounded-context island
 - prefer docs and routing alignment once a bounded context becomes facade-ready
 
 ## Recent V2 Island Progress
@@ -325,7 +330,9 @@ Completed bounded-context upgrades:
 
 - `runScanDocument(...)` and `runUpdateDocument(...)` now act as the public `Document Sync` seams over named `document-sync` services.
 - `applyStrategyUpdate(...)` delegates planning through `StrategyOrchestrator.planFrames(...)`.
-- `assembler.js` now supports dependency-injected assembly through `assembleWith(...)` for the update path.
+- Document Sync actions and apply planning now accept `HostFacade` only; the Schema Tab bridge compatibility path remains separate.
+- `assembler.js` exposes only stateless dependency-injected assembly through `assembleWith(...)`; mutable and legacy assembly entrypoints were removed.
+- `StrategyOrchestrator` exposes only `analyze(...)` and `planFrames(...)`; metadata codec ownership remains with `StatefulMarkerCodec`.
 - Scan and update contracts stayed stable for `ScanAction` and `UpdateAction`.
 
 ### Template Authoring V2
@@ -342,3 +349,17 @@ Current bounded-context shape:
 Still not done:
 
 - `SchemaInjector` remains the core policy engine and is intentionally unchanged until a real product trigger appears
+
+### Input Assistance V1
+
+Completed bounded-context cleanup:
+
+- `InputEngine` now uses a closure-backed factory with an immutable default
+  facade, so normalizer and validator registries cannot leak across tests or
+  runtime callers.
+- `FormLogic` accepts an `InputEngineLike` dependency without changing its
+  default runtime construction.
+- Autocomplete loading is hostFacade-only and retains its existing Fuse
+  options, result limit, and failure-soft reset behavior.
+- Existing schema precedence, heuristic fallback, ethnic-name fallback, date
+  validation, and address separator policy remain unchanged.

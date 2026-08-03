@@ -4,26 +4,39 @@ import assert from 'node:assert/strict';
 import {
     confirmConfigTabModal,
     openConfigTabAddFieldModal,
-    requestRemoveFieldFromConfigTab,
     requestRemoveRowFromConfigTab
 } from './configSchemaEditService.js';
 
-test('requestRemoveFieldFromConfigTab removes the field and re-renders on confirm', async () => {
+test('requestRemoveRowFromConfigTab removes a dynamic margin row and prunes draft state', async () => {
+    const schema = {
+        sections: [
+            {
+                id: 'sec_margins',
+                rows: [
+                    { id: 'row_dynamic_1' },
+                    { id: 'row_dynamic_2' }
+                ]
+            }
+        ]
+    };
     const calls = [];
     const tab = {
         getActiveSchema() {
-            return { sections: [{ id: 'sec', fields: [] }] };
+            return schema;
+        },
+        pruneRemovedRowState(rowId) {
+            calls.push(['prune', rowId]);
         },
         render() {
             calls.push('render');
         }
     };
 
-    const result = await requestRemoveFieldFromConfigTab(tab, 'field_a', 'Field A', {
+    const result = await requestRemoveRowFromConfigTab(tab, 'row_dynamic_2', 'Row 2', {
         confirm: async () => true,
-        configEngine: {
-            removeField(schema, fieldId) {
-                calls.push(['removeField', schema.sections.length, fieldId]);
+        schemaMutationService: {
+            removeMarginRow(nextSchema, rowId) {
+                nextSchema.sections[0].rows = nextSchema.sections[0].rows.filter((row) => row.id !== rowId);
                 return true;
             }
         }
@@ -31,47 +44,55 @@ test('requestRemoveFieldFromConfigTab removes the field and re-renders on confir
 
     assert.equal(result, true);
     assert.deepEqual(calls, [
-        ['removeField', 1, 'field_a'],
+        ['prune', 'row_dynamic_2'],
         'render'
     ]);
+    assert.deepEqual(schema.sections[0].rows, [{ id: 'row_dynamic_1' }]);
 });
 
-test('requestRemoveRowFromConfigTab removes the row and re-renders on confirm', async () => {
+test('requestRemoveRowFromConfigTab rejects canonical rows', async () => {
     const schema = {
         sections: [
             {
-                rows: [
-                    { id: 'row_keep' },
-                    { id: 'row_remove' }
-                ]
+                id: 'sec_margins',
+                rows: [{ id: 'row_safe' }]
             }
         ]
     };
-    let renders = 0;
+    const calls = [];
     const tab = {
         getActiveSchema() {
             return schema;
         },
         render() {
-            renders += 1;
+            calls.push('render');
         }
     };
 
-    const result = await requestRemoveRowFromConfigTab(tab, 'row_remove', 'Row Remove', {
-        confirm: async () => true
+    const result = await requestRemoveRowFromConfigTab(tab, 'row_safe', 'Row Safe', {
+        confirm: async () => true,
+        schemaMutationService: {
+            removeMarginRow() {
+                return false;
+            }
+        },
+        showToast(message, type) {
+            calls.push(['toast', message, type]);
+        }
     });
 
-    assert.equal(result, true);
-    assert.equal(renders, 1);
-    assert.deepEqual(schema.sections[0].rows, [{ id: 'row_keep' }]);
+    assert.equal(result, false);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], 'toast');
+    assert.equal(calls[0][2], 'error');
 });
 
-test('confirmConfigTabModal creates a field, hides the modal, and re-renders', () => {
-    const modal = { dataset: { section: 'sec_options' }, style: { display: 'flex' } };
+test('confirmConfigTabModal creates a margin row, hides the modal, and re-renders', () => {
+    const modal = { dataset: { section: 'sec_margins' }, style: { display: 'flex' } };
     const calls = [];
     const tab = {
         getActiveSchema() {
-            return { sections: [{ id: 'sec_options', fields: [] }] };
+            return { sections: [{ id: 'sec_margins', rows: [] }] };
         },
         render() {
             calls.push('render');
@@ -82,18 +103,19 @@ test('confirmConfigTabModal creates a field, hides the modal, and re-renders', (
         document: {
             getElementById(id) {
                 if (id === 'modal-add-field') return modal;
-                if (id === 'new-field-label') return { value: 'New Field' };
+                if (id === 'new-field-label') return { value: 'New Margin' };
                 if (id === 'new-field-classification') return { value: 'ADDITIVE' };
                 return null;
             }
         },
-        configEngine: {
-            createFieldDefinition(payload) {
+        schemaMutationService: {
+            createMarginRowDefinition(payload) {
                 calls.push(['createFieldDefinition', payload.label, payload.classification]);
-                return { id: 'dynamic_1' };
+                return { id: 'row_dynamic_1', fields: {} };
             },
-            addField(schema, sectionId, fieldDef) {
-                calls.push(['addField', schema.sections.length, sectionId, fieldDef.id]);
+            addMarginRow(schema, row) {
+                calls.push(['addMarginRow', schema.sections.length, row.id]);
+                schema.sections[0].rows.push(row);
                 return true;
             }
         }
@@ -102,8 +124,8 @@ test('confirmConfigTabModal creates a field, hides the modal, and re-renders', (
     assert.equal(result, true);
     assert.equal(modal.style.display, 'none');
     assert.deepEqual(calls, [
-        ['createFieldDefinition', 'New Field', 'ADDITIVE'],
-        ['addField', 1, 'sec_options', 'dynamic_1'],
+        ['createFieldDefinition', 'New Margin', 'ADDITIVE'],
+        ['addMarginRow', 1, 'row_dynamic_1'],
         'render'
     ]);
 });
@@ -113,7 +135,7 @@ test('openConfigTabAddFieldModal primes the modal inputs and shows the dialog', 
     const labelInput = { value: 'stale' };
     const classificationInput = { value: 'STRUCTURAL' };
 
-    const result = openConfigTabAddFieldModal('sec_options', {
+    const result = openConfigTabAddFieldModal('sec_margins', {
         document: {
             getElementById(id) {
                 if (id === 'modal-add-field') return modal;
@@ -125,7 +147,7 @@ test('openConfigTabAddFieldModal primes the modal inputs and shows the dialog', 
     });
 
     assert.equal(result, true);
-    assert.equal(modal.dataset.section, 'sec_options');
+    assert.equal(modal.dataset.section, 'sec_margins');
     assert.equal(labelInput.value, '');
     assert.equal(classificationInput.value, 'ADDITIVE');
     assert.equal(modal.style.display, 'flex');

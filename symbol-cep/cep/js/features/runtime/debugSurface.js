@@ -42,6 +42,12 @@ function buildSchemaSnapshot(schema) {
     };
 }
 
+function buildEmbeddedSchemaSnapshot(sourcePreset) {
+    return sourcePreset && sourcePreset.modelVersion === 1
+        ? buildSchemaSnapshot(null)
+        : buildSchemaSnapshot(sourcePreset && sourcePreset.schema);
+}
+
 // eslint-disable-next-line complexity
 function buildRuntimeSnapshot(preset, storedPreset, configEngine) {
     if (!preset) return null;
@@ -67,7 +73,7 @@ function buildRuntimeSnapshot(preset, storedPreset, configEngine) {
         originalRawKeys: sourcePreset.rawValues ? Object.keys(sourcePreset.rawValues) : [],
         hasProcessingOptions: !!hydrated.processingOptions,
         schemaSnapshot: buildSchemaSnapshot(hydrated.schema),
-        embeddedSchemaSnapshot: buildSchemaSnapshot(sourcePreset.schema)
+        embeddedSchemaSnapshot: buildEmbeddedSchemaSnapshot(sourcePreset)
     };
 }
 

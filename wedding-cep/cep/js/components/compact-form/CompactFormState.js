@@ -53,6 +53,25 @@ export class CompactFormState {
     setData(data = {}) {
         Object.keys(this.refs).forEach((key) => {
             this._setRefValue(this.refs[key], data[key]);
+            if (
+                key.endsWith('.nam')
+                && data[key] !== undefined
+                && this.refs[key].dataset
+            ) {
+                this.refs[key].dataset.yearSource = 'explicit';
+            }
+        });
+
+        ['date.tiec', 'date.le', 'date.nhap'].forEach((baseKey) => {
+            const yearInput = this.refs[`${baseKey}.nam`];
+            const autoRef = this.refs[`${baseKey}.nam_auto`];
+            if (
+                yearInput?.dataset
+                && data[`${baseKey}.nam`] === undefined
+                && autoRef?.checked !== false
+            ) {
+                yearInput.dataset.yearSource = 'default';
+            }
         });
         this.data = { ...this.data, ...data };
     }

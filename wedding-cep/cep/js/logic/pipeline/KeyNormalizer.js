@@ -48,7 +48,6 @@ export const KeyNormalizer = {
             return;
         }
         console.log('[KeyNormalizer] Enrich dates started');
-        CalendarEngine.loadDatabase();
 
         const dateKeys = ['date.tiec', 'date.le', 'date.nhap'];
 

@@ -22,8 +22,20 @@
 - Feature-level navigation lives in `symbol-cep/FEATURE_MAP.md`.
 - Shared postflight terminology lives in `../POSTFLIGHT_TAXONOMY.md`.
 - Runtime smoke remains the main regression guard for this app.
-- `Preset / Config` is now facade-ready; persistence, tab-state shell, event workflow, and schema-edit workflow have named service seams under `cep/js/features/imposition/preset-config/`.
-- The remaining config debt is renderer/shell composition pressure, not basic save-load or modal workflow separation.
+- `Preset / Config` now uses canonical drafts for all Config writes while mixed V4/V5 storage remains readable through the runtime adapter.
+- `ConfigEngine` is pure, dynamic schema editing is limited to margin rows, and stale raw values are pruned when a row is removed.
+- Preset switching now has a dirty-draft confirmation path; the old write-only `last_active` store was removed.
+- Standard controls and pasteboard/schema-edit rendering now live behind dedicated adapters with characterization coverage.
+- Config persistence compatibility branches are removed; `hydratePreset()` remains only as the required Action Tab/runtime facade for legacy reads.
+- Wedding Suite Standard now has isolated panel policy/view/actions modules and
+  an ES3 host composition split for source, render, and output lifecycle.
+- Wedding Suite builds now reuse the host composition loaded at panel boot;
+  repeated build-time host reloads were removed to avoid persistent-engine
+  namespace accumulation and intermittent Illustrator `PARM` failures.
+- Symbol smoke harness now keeps a thin runner and bounded scenario families;
+  the supported smoke lane remains Illustrator 2026 on port `9198`.
+- Symbol composition and policy boundaries are now covered by the developer
+  architecture guard; this pass does not alter production runtime behavior.
 
 ## Main Surfaces
 
@@ -32,3 +44,5 @@
 - Preflight: `symbol-cep/cep/js/features/imposition/preflight/PreflightOrchestrator.js`
 - Postflight: `symbol-cep/cep/js/features/imposition/postflight/PostflightOrchestrator.js`
 - Hook rule example: `symbol-cep/cep/js/features/imposition/postflight/rules/PasteboardInfoRule.js`
+- Wedding Suite panel facade: `symbol-cep/cep/js/features/wedding-suite-standard/WeddingSuiteTab.js`
+- Wedding Suite host facade: `symbol-cep/cep/jsx/features/wedding_suite_standard.jsx`

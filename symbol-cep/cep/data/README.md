@@ -19,7 +19,7 @@ This folder holds local persistence files for `symbol-cep`.
 
 ## Runtime Owner
 
-- Main runtime owner: `symbol-cep/cep/js/features/imposition/data_store.js`
+- Main runtime owner: `symbol-cep/cep/js/features/imposition/preset_repository.js`
 - Wedding Suite paper stock owner: `symbol-cep/cep/js/features/wedding-suite-standard/paperStockConfig.js`
 - Feature routing: `symbol-cep/FEATURE_MAP.md` under `Data / Persistence`
 

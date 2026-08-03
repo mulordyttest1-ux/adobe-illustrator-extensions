@@ -58,14 +58,6 @@ export const NameNormalizer = {
     },
 
     /**
-       * Smart Title Case: (Deprecated - moved to StringUtils)
-       * @private
-       */
-    _toTitleCase(str) {
-        return StringUtils.toSmartTitleCase(str);
-    },
-
-    /**
      * Extract first name from full name (Vietnamese style)
      * "Nguyễn Văn A" → "A" (last word)
      * @param {string} fullName - Full name

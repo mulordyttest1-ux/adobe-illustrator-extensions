@@ -19,34 +19,34 @@ function registerActionRunSmokeTests(context) {
                         resolve({ reason: 'missing_live_run_surface' });
                         return;
                     }
-    
+
                     if (typeof switchTab === 'function') {
                         switchTab('action');
                     }
-    
+
                     setTimeout(() => {
                         const runMode = document.getElementById('btn-mode-run');
                         if (runMode && runMode.getAttribute('aria-pressed') !== 'true') {
                             runMode.click();
                         }
-    
+
                         setTimeout(() => {
                             const input = document.getElementById('action-search');
                             if (!input) {
                                 resolve({ reason: 'missing_action_search' });
                                 return;
                             }
-    
+
                             input.value = '';
                             input.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
                             setTimeout(() => {
                                 const item = document.querySelector('.dropdown-item');
                                 if (!item) {
                                     resolve({ reason: 'missing_dropdown_item' });
                                     return;
                                 }
-    
+
                                 const clickedId = item.dataset.id;
                                 const originalPreflight = actionTab.preflightOrchestrator.runAll;
                                 const originalPostflight = actionTab.postflightOrchestrator.runAll;
@@ -56,12 +56,12 @@ function registerActionRunSmokeTests(context) {
                                 const restoreScripts = [];
                                 let capturedPreset = null;
                                 let postflightCalls = 0;
-    
+
                                 actionTab.lastPostflightSummary = { stale: true };
                                 if (toastContainer) {
                                     toastContainer.innerHTML = '';
                                 }
-    
+
                                 actionTab.preflightOrchestrator.runAll = async function() {
                                     return { safe: true, context: {} };
                                 };
@@ -100,9 +100,9 @@ function registerActionRunSmokeTests(context) {
                                         return window.btoa(JSON.stringify({ success: true }));
                                     };
                                 }
-    
+
                                 item.click();
-    
+
                                 setTimeout(() => {
                                     actionTab.preflightOrchestrator.runAll = originalPreflight;
                                     actionTab.postflightOrchestrator.runAll = originalPostflight;
@@ -110,7 +110,7 @@ function registerActionRunSmokeTests(context) {
                                     if (actionTab.bridgeInst) {
                                         actionTab.bridgeInst.eval = originalBridgeEval;
                                     }
-    
+
                                     resolve({
                                         clickedId,
                                         engineCalls: engineScripts.length,
@@ -162,40 +162,40 @@ function registerActionRunSmokeTests(context) {
                         resolve({ reason: 'missing_live_run_surface' });
                         return;
                     }
-    
+
                     if (typeof switchTab === 'function') {
                         switchTab('action');
                     }
-    
+
                     setTimeout(() => {
                         const runMode = document.getElementById('btn-mode-run');
                         if (runMode && runMode.getAttribute('aria-pressed') !== 'true') {
                             runMode.click();
                         }
-    
+
                         setTimeout(() => {
                             const input = document.getElementById('action-search');
                             if (!input) {
                                 resolve({ reason: 'missing_action_search' });
                                 return;
                             }
-    
+
                             input.value = '';
                             input.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
                             setTimeout(() => {
                                 const item = document.querySelector('.dropdown-item');
                                 if (!item) {
                                     resolve({ reason: 'missing_dropdown_item' });
                                     return;
                                 }
-    
+
                                 const originalPreflight = actionTab.preflightOrchestrator.runAll;
                                 const originalEvalScript = actionTab.csInterface.evalScript;
                                 const originalBridgeEval = actionTab.bridgeInst ? actionTab.bridgeInst.eval : null;
                                 let engineCalls = 0;
                                 let restoreCalls = 0;
-    
+
                                 actionTab.lastPostflightSummary = { failedCount: 99 };
                                 actionTab.preflightOrchestrator.runAll = async function() {
                                     return { safe: false, context: { autoGrouped: true } };
@@ -210,9 +210,9 @@ function registerActionRunSmokeTests(context) {
                                         return window.btoa(JSON.stringify({ success: true }));
                                     };
                                 }
-    
+
                                 item.click();
-    
+
                                 setTimeout(() => {
                                     const promptInput = document.getElementById('save-filename-prompt-input');
                                     const promptConfirm = document.querySelector('[data-save-filename-action="confirm"]');
@@ -222,14 +222,14 @@ function registerActionRunSmokeTests(context) {
                                         promptConfirm.click();
                                     }
                                 }, 40);
-    
+
                                 setTimeout(() => {
                                     actionTab.preflightOrchestrator.runAll = originalPreflight;
                                     actionTab.csInterface.evalScript = originalEvalScript;
                                     if (actionTab.bridgeInst) {
                                         actionTab.bridgeInst.eval = originalBridgeEval;
                                     }
-    
+
                                     resolve({
                                         engineCalls,
                                         restoreCalls,

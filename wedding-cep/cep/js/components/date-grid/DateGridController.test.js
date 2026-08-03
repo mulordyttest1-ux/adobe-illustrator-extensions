@@ -10,6 +10,8 @@ function createRefs() {
         refs[`${baseKey}.thang`] = createInput({ type: 'number', value: '06', dataset: { key: `${baseKey}.thang`, baseKey, type: 'solar' } });
         refs[`${baseKey}.ngay_al`] = createInput({ type: 'number', value: '10', dataset: { key: `${baseKey}.ngay_al`, baseKey, type: 'lunar' } });
         refs[`${baseKey}.thang_al`] = createInput({ type: 'number', value: '11', dataset: { key: `${baseKey}.thang_al`, baseKey, type: 'lunar' } });
+        refs[`${baseKey}.nam`] = createInput({ type: 'number', value: '2026', dataset: { key: `${baseKey}.nam`, baseKey, type: 'year' } });
+        refs[`${baseKey}.nam_auto`] = createInput({ type: 'checkbox', checked: true });
         refs[`${baseKey}.gio`] = createInput({ type: 'number', value: '11', dataset: { key: `${baseKey}.gio`, baseKey, type: 'time' } });
         refs[`${baseKey}.phut`] = createInput({ type: 'number', value: '00', dataset: { key: `${baseKey}.phut`, baseKey, type: 'time' } });
     });
@@ -20,13 +22,13 @@ function createRefs() {
 
 function createControllerDeps(overrides = {}) {
     const calls = {
-        loadDatabase: 0,
         updateErrorState: [],
         updateLunarUI: [],
         updateSolarUI: [],
         updateComputedInfo: [],
         updateFieldSilently: [],
         toggleRowState: [],
+        toggleYearState: [],
         collectCurrentData: 0,
         showLogicFeedback: [],
         getSolarState: [],
@@ -68,6 +70,12 @@ function createControllerDeps(overrides = {}) {
         },
         toggleRowState(refs, baseKey, isLocked) {
             calls.toggleRowState.push({ baseKey, isLocked });
+        },
+        toggleYearState(refs, baseKey, isAutomatic) {
+            calls.toggleYearState.push({ baseKey, isAutomatic });
+        },
+        getCurrentYear() {
+            return 2026;
         },
         updateFieldSilently(refs, key, value) {
             calls.updateFieldSilently.push({ key, value });
@@ -112,13 +120,7 @@ function createControllerDeps(overrides = {}) {
         }
     };
 
-    const calendarEngine = {
-        loadDatabase() {
-            calls.loadDatabase += 1;
-        }
-    };
-
-    return { calls, deps: { dateGridDom, dateLogic, inputEngine, calendarEngine } };
+    return { calls, deps: { dateGridDom, dateLogic, inputEngine } };
 }
 
 describe('DateGridController', () => {
@@ -129,7 +131,6 @@ describe('DateGridController', () => {
 
         controller.handleBlur(refs['date.tiec.ngay']);
 
-        assert.equal(calls.loadDatabase, 1);
         assert.equal(calls.updateErrorState.length, 1);
         assert.deepEqual(
             calls.updateLunarUI.map((entry) => entry.baseKey),
@@ -183,6 +184,29 @@ describe('DateGridController', () => {
             { baseKey: 'date.le', isLocked: false }
         ]);
         assert.deepEqual(syncCalls, [{ baseKey: 'date.nhap', offset: -1 }]);
+    });
+
+    it('routes year auto toggles independently from dependent-row locks', () => {
+        const refs = createRefs();
+        const { calls, deps } = createControllerDeps();
+        const notifications = [];
+        const controller = new DateGridController(
+            refs,
+            (key, value) => notifications.push({ key, value }),
+            deps
+        );
+
+        refs['date.tiec.nam'].value = '2027';
+        controller.handleYearAutoChange(refs['date.tiec.nam_auto'], 'date.tiec');
+
+        assert.deepEqual(calls.toggleYearState, [
+            { baseKey: 'date.tiec', isAutomatic: true }
+        ]);
+        assert.equal(refs['date.tiec.nam'].value, '2026');
+        assert.deepEqual(notifications, [
+            { key: 'date.tiec.nam_auto', value: true },
+            { key: 'date.tiec.nam', value: '2026' }
+        ]);
     });
 
     it('does not override time styles when the field already has error or logic styling', () => {

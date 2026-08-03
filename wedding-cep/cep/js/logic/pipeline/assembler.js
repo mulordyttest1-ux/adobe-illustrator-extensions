@@ -4,27 +4,10 @@
  * PURPOSE: Transform raw form data into rich Illustrator-ready packet (7-phase pipeline)
  * DEPENDENCIES: Normalizer, NameAnalysis, CalendarEngine, WeddingRules, TimeAutomation, VenueAutomation
  * SIDE EFFECTS: None (pure, dependencies injected)
- * EXPORTS: WeddingAssembler.setDependencies(), .assemble(), .assembleWith()
+ * EXPORTS: WeddingAssembler.assembleWith()
  */
 
 export const WeddingAssembler = {
-    _deps: {
-        normalizer: null,
-        nameAnalysis: null,
-        calendarEngine: null,
-        weddingRules: null,
-        timeAutomation: null,
-        venueAutomation: null
-    },
-
-    setDependencies(deps) {
-        this._deps = { ...this._deps, ...deps };
-    },
-
-    async assemble(rawData, schema) {
-        return this.assembleWith(rawData, schema, this._deps);
-    },
-
     async assembleWith(rawData, schema, deps = {}) {
         // 1. Copy raw data
         const packet = { ...rawData };
@@ -71,10 +54,7 @@ export const WeddingAssembler = {
 
     async _runDatePipeline(packet, schema, deps) {
         let currentPacket = packet;
-        if (deps.calendarEngine) {
-            if (!deps.calendarEngine._isLoaded) {
-                deps.calendarEngine.loadDatabase();
-            }
+        if (deps.calendarEngine?.expandDate) {
             currentPacket = await this._expandDates(currentPacket, schema, deps);
         }
         return currentPacket;

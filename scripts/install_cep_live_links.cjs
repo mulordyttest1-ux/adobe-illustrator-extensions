@@ -245,6 +245,40 @@ function createDirLink(sourcePath, targetPath, dryRun) {
     fs.symlinkSync(sourcePath, targetPath, 'junction');
 }
 
+function assertDirLink(sourcePath, targetPath, appKey, variantName, dryRun) {
+    let sourceRealPath;
+    let targetRealPath;
+    let targetStats;
+
+    if (dryRun) {
+        return;
+    }
+
+    try {
+        targetStats = fs.lstatSync(targetPath);
+    } catch (error) {
+        throw new Error(
+            `Live-link install did not create ${appKey}:${variantName} app junction: ${targetPath}`
+        );
+    }
+
+    if (!targetStats.isSymbolicLink()) {
+        throw new Error(
+            `Live-link install created a physical directory instead of a junction for ` +
+            `${appKey}:${variantName}: ${targetPath}`
+        );
+    }
+
+    sourceRealPath = fs.realpathSync.native(sourcePath).toLowerCase();
+    targetRealPath = fs.realpathSync.native(targetPath).toLowerCase();
+    if (sourceRealPath !== targetRealPath) {
+        throw new Error(
+            `Live-link target mismatch for ${appKey}:${variantName}. ` +
+            `Expected ${sourcePath}, resolved ${targetRealPath}.`
+        );
+    }
+}
+
 function createFileLink(sourcePath, targetPath, dryRun) {
     if (dryRun) {
         return;
@@ -367,6 +401,7 @@ function installAppJunctionVariant(app, variant, options, logs) {
     }
 
     createDirLink(app.sourceDir, appLinkPath, options.dryRun);
+    assertDirLink(app.sourceDir, appLinkPath, app.key, variant.name, options.dryRun);
 }
 
 function installRootLinkedVariant(app, variant, options, logs) {

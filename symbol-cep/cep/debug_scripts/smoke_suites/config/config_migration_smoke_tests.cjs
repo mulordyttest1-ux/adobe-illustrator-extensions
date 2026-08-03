@@ -16,12 +16,12 @@ function registerConfigMigrationSmokeTests(context) {
                 if (!debug || typeof debug.inspectPresetShape !== 'function' || typeof debug.cloneActiveSchema !== 'function') {
                     return { reason: 'missing_runtime_debug' };
                 }
-    
+
                 const schema = debug.cloneActiveSchema();
                 if (!schema || !schema.sections) {
                     return { reason: 'missing_active_schema' };
                 }
-    
+
                 return debug.inspectPresetShape({
                     id: 'legacy_sparse',
                     label: 'Legacy Sparse',
@@ -44,7 +44,7 @@ function registerConfigMigrationSmokeTests(context) {
             if (!result.hasProcessingOptions || !result.processingOptions) {
                 throw new Error(`Preset did not hydrate processingOptions: ${JSON.stringify(result)}`);
             }
-    
+
             if (result.originalRawKeys.indexOf('opt_symbol_mode') !== -1 || result.originalRawKeys.indexOf('opt_n_up') !== -1) {
                 throw new Error(`Legacy sparse fixture was not sparse: ${JSON.stringify(result)}`);
             }
@@ -71,7 +71,7 @@ function registerConfigMigrationSmokeTests(context) {
                 if (!debug || typeof debug.inspectPresetShape !== 'function') {
                     return { reason: 'missing_runtime_debug' };
                 }
-    
+
                 return debug.inspectPresetShape({
                     id: 'legacy_no_raw',
                     label: 'Legacy No Raw',
@@ -125,7 +125,7 @@ function registerConfigMigrationSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         const presetSelect = document.getElementById('load-preset-select');
                         if (presetSelect && presetSelect.value) {
@@ -133,16 +133,16 @@ function registerConfigMigrationSmokeTests(context) {
                             presetSelect.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     }, 80);
-    
+
                     setTimeout(() => {
                         const debug = window.Imposition && (window.Imposition.debug || (typeof window.Imposition.enableDebug === 'function' && window.Imposition.enableDebug()));
                         const configTab = window.Imposition && window.Imposition.configTab;
-    
+
                         if (!debug || typeof debug.inspectCurrentFormRuntime !== 'function' || !configTab || typeof configTab.setFormState !== 'function' || typeof configTab.render !== 'function') {
                             resolve({ reason: 'missing_runtime_debug' });
                             return;
                         }
-    
+
                         const current = debug.inspectCurrentFormRuntime();
                         configTab.setFormState({
                             ...(current && current.rawValues ? current.rawValues : {}),
@@ -155,7 +155,7 @@ function registerConfigMigrationSmokeTests(context) {
                             opt_draw_marks: false
                         });
                         configTab.render();
-    
+
                         setTimeout(() => {
                             resolve(debug.inspectCurrentFormRuntime());
                         }, 120);
@@ -199,23 +199,23 @@ function registerConfigMigrationSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                         const debug = window.Imposition && (window.Imposition.debug || (typeof window.Imposition.enableDebug === 'function' && window.Imposition.enableDebug()));
                         if (!debug || typeof debug.inspectCurrentFormRuntime !== 'function') {
                             resolve({ reason: 'missing_runtime_debug' });
                             return;
                         }
-    
+
                         const safeTop = document.getElementById('safe_top');
                         const drawBorder = document.getElementById('row_safe_draw_border');
                         const borderStyle = document.getElementById('row_safe_border_style');
-    
+
                         if (!safeTop || !drawBorder || !borderStyle) {
                             resolve({ reason: 'missing_border_controls' });
                             return;
                         }
-    
+
                         safeTop.value = '10';
                         safeTop.dispatchEvent(new Event('input', { bubbles: true }));
                         safeTop.dispatchEvent(new Event('change', { bubbles: true }));
@@ -223,7 +223,7 @@ function registerConfigMigrationSmokeTests(context) {
                         drawBorder.dispatchEvent(new Event('change', { bubbles: true }));
                         borderStyle.value = 'solid';
                         borderStyle.dispatchEvent(new Event('change', { bubbles: true }));
-    
+
                         setTimeout(() => {
                             resolve(debug.inspectCurrentFormRuntime());
                         }, 40);
@@ -259,26 +259,26 @@ function registerConfigMigrationSmokeTests(context) {
                     if (typeof switchTab === 'function') {
                         switchTab('config');
                     }
-    
+
                     setTimeout(() => {
                 const debug = window.Imposition && (window.Imposition.debug || (typeof window.Imposition.enableDebug === 'function' && window.Imposition.enableDebug()));
                         if (!debug || typeof debug.inspectActiveSchema !== 'function' || typeof debug.cloneActiveSchema !== 'function' || typeof debug.applyEphemeralPreset !== 'function') {
                             resolve({ reason: 'missing_runtime_debug' });
                             return;
                         }
-    
+
                         const legacySchema = debug.cloneActiveSchema();
                         if (!legacySchema || !legacySchema.sections) {
                             resolve({ reason: 'missing_active_schema' });
                             return;
                         }
-    
+
                         const optionsSection = legacySchema.sections.find((section) => section && section.id === 'sec_options');
                         if (!optionsSection || !Array.isArray(optionsSection.fields)) {
                             resolve({ reason: 'missing_options_section' });
                             return;
                         }
-    
+
                         optionsSection.fields = optionsSection.fields.filter((field) => field && field.id !== 'info_template');
                         delete optionsSection.readOnlySummary;
                         debug.applyEphemeralPreset({
@@ -290,15 +290,15 @@ function registerConfigMigrationSmokeTests(context) {
                                 preset_name: 'Legacy Schema'
                             }
                         });
-    
+
                         setTimeout(() => {
                             const loadedState = {
                                 hasInfoTemplate: !!document.getElementById('info_template'),
                                 hasSummary: !!document.querySelector('[data-readonly-summary="sec_options"]')
                             };
-    
+
                             window.Imposition.configTab.resetDraft();
-    
+
                             setTimeout(() => {
                                 resolve({
                                     loadedState,

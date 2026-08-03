@@ -13,7 +13,7 @@ function registerHostBorderSmokeTests(context) {
         makeHostScenarioExpression('border_zero_offset'),
         async (payload) => {
             const result = decodeBase64Json(payload);
-    
+
             if (!result.success) {
                 throw new Error(`Host border scenario failed: ${JSON.stringify(result)}`);
             }
@@ -28,7 +28,7 @@ function registerHostBorderSmokeTests(context) {
         makeHostScenarioExpression('single_edge_border'),
         async (payload) => {
             const result = decodeBase64Json(payload);
-    
+
             if (!result.success) {
                 throw new Error(`Single-edge border scenario failed: ${JSON.stringify(result)}`);
             }

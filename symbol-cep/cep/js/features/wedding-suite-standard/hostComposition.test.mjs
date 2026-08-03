@@ -68,3 +68,18 @@ test('Wedding Suite JSX extraction stays ES3-compatible', () => {
     assert.doesNotMatch(source, /\blet\b|\bconst\b|=>|\?\./);
     assert.doesNotMatch(source, /\.\.\.\s*[A-Za-z_$({[]/);
 });
+
+test('PDF export failures retain an AI recovery document instead of closing all work', () => {
+    const output = readFile(HOST_FILES.output);
+    const root = readFile(HOST_FILES.root);
+
+    assert.match(output, /WEDDING_SUITE_PDF_EXPORT_FAILED/);
+    assert.match(output, /if \(firstError \|\| !tempFile\.exists\)/);
+    assert.match(output, /options\.preserveEditability = false/);
+    assert.match(output, /_withAlertsSuppressed\(function \(\) \{\s*doc\.saveAs/);
+    assert.match(root, /recoveryArtifactPath/);
+    assert.match(root, /preserveWorkingDocument/);
+    assert.match(root, /response\.recoveryArtifact/);
+    assert.match(root, /pdfExportWarning/);
+    assert.match(root, /outputDoc && !preserveWorkingDocument/);
+});

@@ -21,6 +21,7 @@ function collectModuleDefinitions(options = {}) {
         const moduleDir = path.join(modulesDir, directoryEntry.name);
         const manifestPath = path.join(moduleDir, 'module.json');
         const runPath = path.join(moduleDir, 'run.jsx');
+        const requestPath = path.join(moduleDir, 'request.js');
         const context = `Module "${directoryEntry.name}"`;
 
         if (!fs.existsSync(manifestPath)) {
@@ -39,6 +40,7 @@ function collectModuleDefinitions(options = {}) {
         definitions.push(createModuleDefinition(normalizedManifest, {
             manifestPath,
             runPath,
+            requestPath: fs.existsSync(requestPath) ? requestPath : '',
             jsxRoot
         }));
     });
@@ -148,6 +150,25 @@ function renderDispatchSource() {
     ].join('\n');
 }
 
+function renderRequestRegistrySource(definitions) {
+    const requestDefinitions = definitions.filter((definition) => definition.requestPath);
+    const importLines = requestDefinitions.map((definition, index) => (
+        `import { prepareRequest as requestAdapter${index} } from '${definition.requestRelativePath}';`
+    ));
+    const registryEntries = requestDefinitions.map((definition, index) => (
+        `    ${JSON.stringify(definition.id)}: requestAdapter${index}`
+    ));
+
+    return [
+        ...importLines,
+        importLines.length ? '' : null,
+        'export const GENERATED_TOOLKIT_REQUEST_ADAPTERS = Object.freeze({',
+        registryEntries.join(',\n'),
+        '});',
+        ''
+    ].filter((line) => line !== null).join('\n');
+}
+
 async function generateToolkitArtifacts(options = {}) {
     const projectRoot = options.projectRoot || path.resolve(__dirname, '..');
     const generatedDir = options.generatedDir || path.join(projectRoot, '.generated');
@@ -159,21 +180,25 @@ async function generateToolkitArtifacts(options = {}) {
     const catalogSource = renderCatalogSource(definitions);
     const registrySource = renderRegistrySource(definitions);
     const dispatchSource = renderDispatchSource();
+    const requestRegistrySource = renderRequestRegistrySource(definitions);
 
     const catalogPath = path.join(generatedDir, 'module_catalog.js');
     const registryPath = path.join(generatedDir, 'module_registry.jsx');
     const dispatchPath = path.join(generatedDir, 'module_dispatch.jsx');
+    const requestRegistryPath = path.join(generatedDir, 'module_request_registry.js');
 
     fs.writeFileSync(catalogPath, catalogSource, 'utf8');
     fs.writeFileSync(registryPath, registrySource, 'utf8');
     fs.writeFileSync(dispatchPath, dispatchSource, 'utf8');
+    fs.writeFileSync(requestRegistryPath, requestRegistrySource, 'utf8');
 
     return {
         definitions,
         generatedDir,
         catalogPath,
         registryPath,
-        dispatchPath
+        dispatchPath,
+        requestRegistryPath
     };
 }
 
@@ -182,7 +207,8 @@ module.exports = {
     generateToolkitArtifacts,
     renderCatalogSource,
     renderRegistrySource,
-    renderDispatchSource
+    renderDispatchSource,
+    renderRequestRegistrySource
 };
 
 if (require.main === module) {

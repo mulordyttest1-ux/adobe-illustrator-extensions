@@ -16,7 +16,7 @@ function registerConfigPostflightSmokeTests(context) {
                 if (!debug || typeof debug.normalizePostflightResultData !== 'function' || typeof debug.previewPasteboardLegend !== 'function') {
                     return { reason: 'missing_postflight_debug' };
                 }
-    
+
                 const normalized = debug.normalizePostflightResultData({
                     itemsProcessed: 4,
                     finishSize: { w: 210, h: 297 }
@@ -25,7 +25,7 @@ function registerConfigPostflightSmokeTests(context) {
                     label: 'Preview',
                     info_template: '{count} tem - Kho {width}x{height}'
                 });
-    
+
                 return {
                     normalized,
                     preview
@@ -53,7 +53,7 @@ function registerConfigPostflightSmokeTests(context) {
                 if (!debug || typeof debug.simulatePostflightSuccess !== 'function' || typeof debug.getLastPostflightSummary !== 'function') {
                     return { reason: 'missing_postflight_summary_debug' };
                 }
-    
+
                 const hostCalls = [];
                 const fakeHostGateway = {
                     drawPasteboardLegend: async (payloadBase64) => {
@@ -64,7 +64,7 @@ function registerConfigPostflightSmokeTests(context) {
                         return btoa(JSON.stringify({ success: true }));
                     }
                 };
-    
+
                 const summary = await debug.simulatePostflightSuccess(
                     {
                         itemsProcessed: 3,
@@ -76,7 +76,7 @@ function registerConfigPostflightSmokeTests(context) {
                     },
                     fakeHostGateway
                 );
-    
+
                 return {
                     summary,
                     latest: debug.getLastPostflightSummary(),

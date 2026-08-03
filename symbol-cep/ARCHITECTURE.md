@@ -151,10 +151,22 @@ Location:
 
 - `cep/js/features/imposition/config_tab.js`
 - `cep/js/features/imposition/config_engine.js`
-- `cep/js/features/imposition/config_renderer.js`
 - `cep/js/features/imposition/config_events.js`
 - `cep/js/features/imposition/config_pane_renderer.js`
+- `cep/js/features/imposition/config_pane_control_adapter.js`
+- `cep/js/features/imposition/config_pane_special_sections.js`
+- `cep/js/features/imposition/config_schema_state.js`
 - `cep/js/features/imposition/config_persistence.js`
+- `cep/js/features/imposition/preset-config/`
+- `cep/js/features/imposition/config_draft_store.js`
+- `cep/js/features/imposition/config_section_registry.js`
+- `cep/js/features/imposition/preset_schema_policy.js`
+- `cep/js/features/imposition/preset_draft_model.js`
+- `cep/js/features/imposition/preset_migrator.js`
+- `cep/js/features/imposition/preset_serializer.js`
+- `cep/js/features/imposition/runtime_preset_adapter.js`
+- `cep/js/features/imposition/processing_option_mapper.js`
+- `cep/js/features/imposition/legacy_preset_adapter.js`
 
 Contract:
 
@@ -162,7 +174,17 @@ Contract:
 - Renderer files own view assembly, not persistence or engine dispatch.
 - Persistence stays separate from pane layout and form serialization.
 - Internal workflow seams for persistence, config-tab state, event routing, and schema-edit flow now live under `cep/js/features/imposition/preset-config/`.
-- Reopen deeper config renderer work only when composition pressure or a real operator workflow trigger appears.
+- `config_engine.js` is pure and only dynamic margin rows may be added or removed at runtime.
+- `config_schema_state.js` is the single normalization/fingerprint seam for dirty drafts and stale-field pruning.
+- `ConfigDraftStore` owns the current config snapshot and clean baseline; `ConfigTab` keeps only a compatibility mirror while callers migrate.
+- Draft preset switching asks before discarding unsaved changes.
+- `preset_schema_policy.js` and `processing_option_mapper.js` keep schema invariants and form serialization out of the ConfigTab coordinator.
+- `processing_options.js` is a stable runtime facade. Legacy mapping lives in `legacy_preset_adapter.js`; canonical V5 drafts are read through `preset_migrator.js`.
+- `CepPresetRepository` reads mixed V4/V5 entries, exposes `getDraftById()` and `saveDraft()`, and writes storage version 5 without mass-migrating untouched entries.
+- `config_section_registry.js` owns the nine Config pane adapters: groups A (core/output), B (paper/margins), and C (options/pasteboard).
+- `config_pane_control_adapter.js` owns standard, dense, compact, and Tweakpane control construction through an injected renderer context.
+- `config_pane_special_sections.js` owns the pasteboard and schema-edit render adapters; the main renderer mounts them without owning their section policy.
+- Config load, save, dry-run, and save-directory updates use `getDraftById()` and `saveDraft()` only. Legacy V4 hydration remains a read adapter behind the runtime facade, not a Config persistence branch.
 
 ### Preflight
 
@@ -191,6 +213,62 @@ Contract:
 - Payload shaping stays separate from host bridge transport.
 - Engine success/failure handling should not be buried in config or bridge layers.
 
+### Wedding Suite Standard
+
+Location:
+
+- `cep/js/features/wedding-suite-standard/WeddingSuiteTab.js`
+- `cep/js/features/wedding-suite-standard/panelPolicy.js`
+- `cep/js/features/wedding-suite-standard/panelView.js`
+- `cep/js/features/wedding-suite-standard/panelActions.js`
+- `cep/jsx/features/wedding_suite_standard.jsx`
+- `cep/jsx/features/wedding_suite_standard_core.jsx`
+- `cep/jsx/features/wedding_suite_standard_source.jsx`
+- `cep/jsx/features/wedding_suite_standard_render.jsx`
+- `cep/jsx/features/wedding_suite_standard_output.jsx`
+
+Contract:
+
+- `WeddingSuiteTab.js` remains the panel facade and composition root for this
+  bounded context. It owns dependency wiring, state snapshots, event
+  delegation, and the existing runtime facade methods.
+- `panelPolicy.js` contains source/manifest, draft, pair/combined, and
+  validation policy without bridge or DOM access.
+- `panelView.js` renders the shell and preview without repository, bridge, or
+  feedback access.
+- `panelActions.js` owns source/output pickers, refresh, build, and toast
+  lifecycle through injected dependencies.
+- `cep/jsx/host.jsx` includes the Wedding Suite host layers in the fixed order
+  `core -> source -> render -> output -> wedding_suite_standard`.
+- App boot and page reload own loading `cep/jsx/host.jsx` into Illustrator.
+  Wedding Suite build calls must reuse that loaded host and must not evaluate
+  the composition root again inside Illustrator's persistent script engine.
+  `Bridge.reloadHostScripts()` remains an explicit developer-only seam.
+- `wedding_suite_standard.jsx` is the only public host endpoint surface;
+  extracted JSX files expose internal helpers only and remain ES3-compatible.
+- PDF-only output, dirty guards, previous-output cleanup, QA, and temporary
+  debug artifact behavior remain unchanged.
+
+### Symbol Smoke Harness
+
+Location:
+
+- `cep/debug_scripts/test_smoke.cjs`
+- `cep/debug_scripts/smoke_support.cjs`
+- `cep/debug_scripts/smoke_suites/`
+
+Contract:
+
+- `test_smoke.cjs` is the thin CLI runner and defaults to the Illustrator 2026
+  lane on port `9198`.
+- `smoke_manifest.cjs` owns the stable suite IDs and registration order.
+- Top-level suite files are composition facades; scenario bodies live in
+  bounded Action, Config, Host, and Wedding Suite family files.
+- Smoke support owns cleanup guards, host payload decoding, and expression
+  factories. It must not contain product runtime policy.
+- Scenario names, order, and counts are locked by manifest tests. Standalone
+  diagnostic scripts are not part of the supported smoke contract.
+
 ### Postflight / Hooks
 
 Location:
@@ -208,7 +286,7 @@ Contract:
 
 Location:
 
-- `cep/js/features/imposition/data_store.js`
+- `cep/js/features/imposition/preset_repository.js`
 - `cep/js/features/imposition/config_persistence.js`
 
 Contract:
@@ -232,6 +310,18 @@ Contract:
 
 ## Validation Contract
 
+### Architecture Guards
+
+- `cep/scripts/check_architecture.cjs` is a developer-only static guard for
+  panel import direction, app-global writes, and selected policy/view
+  boundaries.
+- The guard is intentionally local to Symbol and does not change runtime
+  behavior or rewrite source.
+- The root `npm run check:architecture` command runs this guard together with
+  the existing Wedding dependency check and the Toolkit guard.
+- Architecture exceptions must be explicit in the checker source with a
+  filename and reason. New exceptions are not inferred automatically.
+
 ### Main Validation
 
 - `npm run lint:symbol`
@@ -246,6 +336,8 @@ Notes:
 
 - Runtime smoke remains the main regression guard for this app.
 - Focused unit tests exist in some seams, but they are not a substitute for the real panel/runtime lane.
+- Wedding Suite host composition is guarded by
+  `hostComposition.test.mjs`; Symbol smoke runs only the Illustrator 2026 lane.
 
 ## Retired Or Non-Entry Surfaces
 
@@ -257,15 +349,18 @@ These surfaces must not be treated as production entrypoints:
 
 ## Current Remaining Debt
 
-The highest-value remaining debts are:
+Remaining debt is trigger-based rather than an active refactor queue:
 
-1. The remaining `Preset / Config` debt is shell/layout composition around `config_pane_renderer.js` and top-level `ConfigTab`, not basic persistence/event/schema-edit workflow separation.
-2. `CODEOWNERS` still uses placeholder owner identity and should be updated only when real ownership data exists.
-3. Platform / host and preflight should remain trigger-based, not speculative refactor targets.
+1. `CODEOWNERS` still uses placeholder owner identity and should be updated
+   only when real ownership data exists.
+2. Platform / host, preflight, and any final Config compatibility cleanup
+   should reopen only for a reproducible defect, feature requirement, or
+   repeated coupling.
 
 ## Next Phase Guidance
 
-- Keep using milestone-sized changes.
+- Keep using milestone-sized changes for real feature or defect work.
 - Prefer bounded-context upgrades over file-level cleanup.
-- Treat `Preset / Config` as facade-ready; reopen it only for real composition pressure, policy change, or validation pain.
-- Reopen preflight or host work only after a real policy/runtime trigger appears.
+- Proactive refactoring is paused after the architecture guard pass.
+- Reopen preflight, host, or Config work only after a real policy/runtime
+  trigger appears.

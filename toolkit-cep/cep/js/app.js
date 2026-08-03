@@ -12,7 +12,7 @@ const runtimeState = {
     error: null
 };
 
-const { hostFacade, hostRuntime, debugHost, panelMode } = createHostFacade();
+const { hostFacade, hostRuntime, debugHost, requestServices, panelMode } = createHostFacade();
 
 registerToolkitTestApi({
     getHostFacade: () => hostFacade,
@@ -28,6 +28,7 @@ void initToolkitApp({
     hostFacade,
     hostRuntime,
     debugHost,
+    requestServices,
     panelMode,
     runtimeState
 });

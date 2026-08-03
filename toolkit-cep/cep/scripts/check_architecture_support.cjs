@@ -89,7 +89,10 @@ function readModuleFiles(projectRoot) {
     const files = {};
     const modulesRoot = path.join(projectRoot, 'modules');
 
-    for (const filePath of walkFiles(modulesRoot, (candidate) => candidate.endsWith('.jsx'))) {
+    for (const filePath of walkFiles(
+        modulesRoot,
+        (candidate) => candidate.endsWith('.jsx') || candidate.endsWith('.js')
+    )) {
         const relativePath = toPosixPath(path.relative(projectRoot, filePath));
         files[relativePath] = fs.readFileSync(filePath, 'utf8');
     }

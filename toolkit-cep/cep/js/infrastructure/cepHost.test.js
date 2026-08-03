@@ -37,3 +37,23 @@ test('createCepHost normalizes extension root path from CSInterface', () => {
 
     assert.equal(host.getExtensionRootPath(), 'C:/Toolkit CEP');
 });
+
+test('createCepHost reads file bytes through its Node boundary', async () => {
+    const host = createCepHost({
+        CSInterface: createFakeCSInterface(),
+        require(moduleId) {
+            assert.equal(moduleId, 'fs');
+            return {
+                readFileSync(filePath) {
+                    assert.equal(filePath, 'C:/input.pdf');
+                    return new Uint8Array([4, 5, 6]);
+                }
+            };
+        }
+    });
+
+    assert.deepEqual(
+        Array.from(await host.readFileBytes('C:/input.pdf')),
+        [4, 5, 6]
+    );
+});

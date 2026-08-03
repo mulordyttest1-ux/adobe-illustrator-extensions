@@ -29,7 +29,7 @@ test('handleConfigSubmit prevents default and delegates preset save only for con
     ]);
 });
 
-test('handleConfigChange loads a preset when dropdown has a value and resets draft when blank', () => {
+test('handleConfigChange loads a preset when dropdown has a value and resets draft when blank', async () => {
     const calls = [];
     const tab = {
         resetDraft() {
@@ -37,7 +37,7 @@ test('handleConfigChange loads a preset when dropdown has a value and resets dra
         }
     };
 
-    const handledLoad = handleConfigChange(
+    const handledLoad = await handleConfigChange(
         { target: { id: 'load-preset-select', value: 'preset_a4' } },
         tab,
         {
@@ -45,7 +45,7 @@ test('handleConfigChange loads a preset when dropdown has a value and resets dra
         }
     );
 
-    const handledReset = handleConfigChange(
+    const handledReset = await handleConfigChange(
         { target: { id: 'load-preset-select', value: '' } },
         tab,
         {
@@ -59,6 +59,40 @@ test('handleConfigChange loads a preset when dropdown has a value and resets dra
         ['loadPreset', 'preset_a4'],
         'resetDraft'
     ]);
+});
+
+test('handleConfigChange cancels a dirty draft without loading the next preset', async () => {
+    const calls = [];
+    const select = {
+        id: 'load-preset-select',
+        value: 'preset_next',
+        dataset: {},
+        setAttribute(name, value) {
+            this.dataset[name] = value;
+        }
+    };
+    const tab = {
+        selectedPresetId: 'preset_current',
+        isDirty() {
+            return true;
+        },
+        async requestDiscardChanges() {
+            calls.push('requestDiscardChanges');
+            return false;
+        }
+    };
+
+    const handled = await handleConfigChange(
+        { target: select },
+        tab,
+        {
+            loadPreset: () => calls.push('loadPreset')
+        }
+    );
+
+    assert.equal(handled, false);
+    assert.equal(select.value, 'preset_current');
+    assert.deepEqual(calls, ['requestDiscardChanges']);
 });
 
 test('handleConfigClick routes edit toggle, modal actions, and dry run through the workflow service', async () => {

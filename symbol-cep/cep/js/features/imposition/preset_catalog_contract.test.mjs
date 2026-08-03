@@ -5,24 +5,24 @@ import fs from 'node:fs';
 import { ConfigEngine } from './config_engine.js';
 import { hydratePreset as legacyHydratePreset } from './legacy_preset_adapter.js';
 import { migratePresetToDraft } from './preset_migrator.js';
-import { hydratePreset } from './processing_options.js';
-import { serializePresetDraft } from './preset_serializer.js';
+import { buildLegacyMirrors, buildProcessingOptions, hydratePreset } from './processing_options.js';
+import { isCanonicalPresetEntry, serializePresetDraft } from './preset_serializer.js';
 
 const presetsPath = new URL('../../../data/presets.json', import.meta.url);
 
-test('every stored preset hydrates and compiles without mutating its embedded schema', () => {
+test('every stored preset hydrates and compiles without mutating its stored entry', () => {
     const catalog = JSON.parse(fs.readFileSync(presetsPath, 'utf8'));
     const presets = Array.isArray(catalog) ? catalog : catalog.presets;
 
     assert.ok(Array.isArray(presets));
     presets.forEach((preset) => {
-        const embeddedSchema = JSON.parse(JSON.stringify(preset.schema));
+        const storedEntry = JSON.parse(JSON.stringify(preset));
         const hydrated = hydratePreset(preset);
         const rules = ConfigEngine.compileRules(hydrated.schema, hydrated.rawValues);
 
         assert.ok(hydrated.schema && Array.isArray(hydrated.schema.sections), preset.id);
         assert.ok(Array.isArray(rules), preset.id);
-        assert.deepEqual(preset.schema, embeddedSchema, preset.id);
+        assert.deepEqual(preset, storedEntry, preset.id);
     });
 });
 
@@ -31,8 +31,21 @@ test('legacy and canonical runtime adapters preserve compiled rules and operator
     const presets = Array.isArray(catalog) ? catalog : catalog.presets;
 
     presets.forEach((preset) => {
-        const legacy = legacyHydratePreset(preset);
         const current = hydratePreset(preset);
+
+        if (isCanonicalPresetEntry(preset)) {
+            const expectedProcessing = buildProcessingOptions(preset.values, current.schema);
+            const expectedMirrors = buildLegacyMirrors(expectedProcessing);
+
+            assert.deepEqual(current.processingOptions, expectedProcessing, `${preset.id}: processing options`);
+            assert.deepEqual(current.options, expectedMirrors.options, `${preset.id}: options`);
+            assert.equal(current.info_template, expectedMirrors.info_template, `${preset.id}: pasteboard template`);
+            assert.equal(current.rawValues.preset_id, preset.id, `${preset.id}: runtime id`);
+            assert.equal(current.rawValues.preset_name, preset.label, `${preset.id}: runtime label`);
+            return;
+        }
+
+        const legacy = legacyHydratePreset(preset);
 
         assert.deepEqual(current.processingOptions, legacy.processingOptions, `${preset.id}: processing options`);
         assert.deepEqual(current.geometry, legacy.geometry, `${preset.id}: geometry`);

@@ -166,7 +166,7 @@ test('createWeddingSuiteBridgeAdapter roundtrips Unicode source paths through pe
     assert.doesNotMatch(calls[0], /tệp cưới\.pdf/u);
 });
 
-test('createWeddingSuiteBridgeAdapter refreshes the live-linked host before Build PDF', async () => {
+test('createWeddingSuiteBridgeAdapter reuses the host loaded at app boot for Build PDF', async () => {
     const calls = [];
     const adapter = createWeddingSuiteBridgeAdapter({
         async reloadHostScripts() {
@@ -196,13 +196,39 @@ test('createWeddingSuiteBridgeAdapter refreshes the live-linked host before Buil
 
     assert.equal(result.success, true);
     assert.equal(result.outputPath, 'C:/Outputs/bài in source.pdf');
-    assert.equal(calls.length, 2);
-    assert.equal(calls[0], 'reloadHostScripts');
-    assert.match(calls[1], /buildJob\("/);
-    assert.doesNotMatch(calls[1], /_buildJobPatchVersion/);
-    assert.doesNotMatch(calls[1], /inspectOpenOutput/);
-    assert.doesNotMatch(calls[1], /markOpenOutputDirty/);
-    assert.doesNotMatch(calls[1], /ensureOutputOpen/);
+    assert.equal(calls.length, 1);
+    assert.match(calls[0], /buildJob\("/);
+    assert.doesNotMatch(calls[0], /_buildJobPatchVersion/);
+    assert.doesNotMatch(calls[0], /inspectOpenOutput/);
+    assert.doesNotMatch(calls[0], /markOpenOutputDirty/);
+    assert.doesNotMatch(calls[0], /ensureOutputOpen/);
+    assert.equal(calls.includes('reloadHostScripts'), false);
+});
+
+test('createWeddingSuiteBridgeAdapter never reloads the persistent host between repeated builds', async () => {
+    const calls = [];
+    const adapter = createWeddingSuiteBridgeAdapter({
+        async reloadHostScripts() {
+            calls.push('reloadHostScripts');
+        },
+        async eval(script) {
+            calls.push(script);
+            const response = encodeURIComponent(JSON.stringify({
+                success: true,
+                outputPath: 'C:/Outputs/repeated.pdf',
+                openedOutput: true
+            }));
+            return Buffer.from(response, 'utf8').toString('base64');
+        }
+    });
+
+    await adapter.buildJob({ plan: { valid: true } });
+    await adapter.buildJob({ plan: { valid: true } });
+    await adapter.buildJob({ plan: { valid: true } });
+
+    assert.equal(calls.length, 3);
+    assert.equal(calls.every((call) => /buildJob\("/.test(call)), true);
+    assert.equal(calls.includes('reloadHostScripts'), false);
 });
 
 test('createWeddingSuiteBridgeAdapter exposes an explicit active-document source endpoint', async () => {

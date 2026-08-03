@@ -1,9 +1,75 @@
+import { impositionCopy } from '../imposition_copy.js';
+
 function resolveForm(documentRef) {
     return documentRef.getElementById('config-form');
 }
 
 function resolveModal(documentRef) {
     return documentRef.getElementById('modal-add-field');
+}
+
+async function runTabOperation(tab, name, task) {
+    if (tab && typeof tab.runExclusive === 'function') {
+        return tab.runExclusive(name, task);
+    }
+
+    return task();
+}
+
+function showOperationError(tab, error) {
+    const message = error && error.message
+        ? error.message
+        : impositionCopy.persistence.saveError;
+    const notifier = tab && tab.notifier;
+    if (notifier && typeof notifier.showToast === 'function') {
+        notifier.showToast(message, 'error');
+    }
+}
+
+async function confirmPresetSwitch(tab, event) {
+    if (
+        !tab ||
+        typeof tab.isDirty !== 'function' ||
+        !tab.isDirty() ||
+        typeof tab.requestDiscardChanges !== 'function'
+    ) {
+        return true;
+    }
+
+    const confirmed = await tab.requestDiscardChanges();
+    if (confirmed) {
+        return true;
+    }
+
+    event.target.value = tab.selectedPresetId || '';
+    tab.selectedPresetId = event.target.value;
+    return false;
+}
+
+function loadSelectedPreset(event, tab, loadPreset) {
+    if (!event.target.value) {
+        return false;
+    }
+
+    try {
+        loadPreset(event.target.value, tab);
+    } catch (error) {
+        showOperationError(tab, error);
+    }
+    return true;
+}
+
+function resetSelectedPreset(tab) {
+    if (!tab || typeof tab.resetDraft !== 'function') {
+        return false;
+    }
+
+    try {
+        tab.resetDraft();
+    } catch (error) {
+        showOperationError(tab, error);
+    }
+    return true;
 }
 
 export async function handleConfigSubmit(event, tab, overrides = {}) {
@@ -17,11 +83,15 @@ export async function handleConfigSubmit(event, tab, overrides = {}) {
     }
 
     event.preventDefault();
-    await savePreset(event.target, true, tab);
+    try {
+        await runTabOperation(tab, 'save', () => savePreset(event.target, true, tab));
+    } catch (error) {
+        showOperationError(tab, error);
+    }
     return true;
 }
 
-export function handleConfigChange(event, tab, overrides = {}) {
+export async function handleConfigChange(event, tab, overrides = {}) {
     const persistence = overrides.persistence || (tab && tab.persistence) || null;
     const loadPreset = overrides.loadPreset || ((id, configTab) => (
         persistence ? persistence.loadPreset(id, configTab) : false
@@ -31,17 +101,13 @@ export function handleConfigChange(event, tab, overrides = {}) {
         return false;
     }
 
-    if (event.target.value) {
-        loadPreset(event.target.value, tab);
-        return true;
+    if (!await confirmPresetSwitch(tab, event)) {
+        return false;
     }
 
-    if (tab && typeof tab.resetDraft === 'function') {
-        tab.resetDraft();
-        return true;
-    }
-
-    return false;
+    return event.target.value
+        ? loadSelectedPreset(event, tab, loadPreset)
+        : resetSelectedPreset(tab);
 }
 
 function handleToggleEdit(tab) {
@@ -71,7 +137,7 @@ async function handleDryRun(tab, documentRef, overrides) {
     ));
     const form = resolveForm(documentRef);
     if (form) {
-        await runDry(form, tab);
+        await runTabOperation(tab, 'dry-run', () => runDry(form, tab));
     }
     return true;
 }
@@ -81,7 +147,7 @@ async function handlePickSaveOutputDirectory(tab) {
         return false;
     }
 
-    await tab.pickSaveOutputDirectory();
+    await runTabOperation(tab, 'pick-save-output-dir', () => tab.pickSaveOutputDirectory());
     return true;
 }
 
@@ -103,6 +169,10 @@ export async function handleConfigClick(event, tab, overrides = {}) {
 
     const handler = handlers[actionId || event.target.id];
     if (!handler) return false;
-    await handler();
+    try {
+        await handler();
+    } catch (error) {
+        showOperationError(tab, error);
+    }
     return true;
 }

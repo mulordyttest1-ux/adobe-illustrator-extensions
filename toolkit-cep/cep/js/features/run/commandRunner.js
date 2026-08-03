@@ -66,7 +66,73 @@ function createDisabledResult(manifest) {
     };
 }
 
-export function createCommandRunner({ hostFacade, UIFeedback, runtimeState }) {
+function createRequestPreparationFailure(error) {
+    return {
+        success: false,
+        message: error && error.message ? error.message : 'Toolkit request preparation failed.',
+        errorCode: error && error.errorCode
+            ? error.errorCode
+            : 'TOOLKIT_REQUEST_PREPARATION_FAILED',
+        data: null,
+        blocked: true
+    };
+}
+
+async function prepareCommandRequest({ manifest, requestAdapters, requestServices }) {
+    const prepareRequest = requestAdapters?.[manifest.id];
+
+    if (typeof prepareRequest !== 'function') {
+        return {
+            request: {
+                id: manifest.id,
+                payload: {}
+            }
+        };
+    }
+
+    try {
+        const prepared = await prepareRequest({
+            manifest,
+            services: requestServices
+        });
+
+        if (prepared?.cancelled) {
+            return {
+                cancelled: true,
+                result: {
+                    success: false,
+                    message: prepared.message || `${manifest.buttonLabel} cancelled.`,
+                    errorCode: prepared.errorCode || 'TOOLKIT_REQUEST_CANCELLED',
+                    data: null,
+                    blocked: true
+                }
+            };
+        }
+
+        if (!prepared || typeof prepared !== 'object' || !prepared.payload || typeof prepared.payload !== 'object') {
+            throw new Error(`Request adapter for "${manifest.id}" returned an invalid payload.`);
+        }
+
+        return {
+            request: {
+                id: manifest.id,
+                payload: prepared.payload
+            }
+        };
+    } catch (error) {
+        return {
+            preparationError: createRequestPreparationFailure(error)
+        };
+    }
+}
+
+export function createCommandRunner({
+    hostFacade,
+    UIFeedback,
+    runtimeState,
+    requestAdapters = {},
+    requestServices = {}
+}) {
     return {
         async runManifest(manifest) {
             if (manifest.enabled === false) {
@@ -92,13 +158,28 @@ export function createCommandRunner({ hostFacade, UIFeedback, runtimeState }) {
                 return blockedResult;
             }
 
+            const preparedRequest = await prepareCommandRequest({
+                manifest,
+                requestAdapters,
+                requestServices
+            });
+
+            if (preparedRequest.cancelled || preparedRequest.preparationError) {
+                const requestResult = preparedRequest.cancelled
+                    ? preparedRequest.result
+                    : preparedRequest.preparationError;
+                runtimeState.lastResult = requestResult;
+                UIFeedback.showToast(
+                    requestResult.message,
+                    resolveToastTone(requestResult)
+                );
+                return requestResult;
+            }
+
             const hostResult = await runHostCommandWithRuntimeSyncFallback({
                 hostFacade,
                 runtimeState,
-                request: {
-                    id: manifest.id,
-                    payload: {}
-                }
+                request: preparedRequest.request
             });
             const normalizedResult = normalizeResult(hostResult, manifest);
             runtimeState.lastResult = normalizedResult;

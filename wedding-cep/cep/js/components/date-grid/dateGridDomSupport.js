@@ -8,13 +8,35 @@ export function writeRefValue(ref, value) {
     }
 
     if (ref.tagName === 'INPUT') {
-        ref.value = String(value).padStart(2, '0');
+        ref.value = ref.dataset.type === 'year'
+            ? String(value)
+            : String(value).padStart(2, '0');
         return;
     }
 
     if (ref.el) {
         ref.el.textContent = value;
     }
+}
+
+export function isYearAuto(refs, baseKey) {
+    return refs[`${baseKey}.nam_auto`]?.checked !== false;
+}
+
+export function isYearExplicit(refs, baseKey) {
+    return refs[`${baseKey}.nam`]?.dataset?.yearSource === 'explicit';
+}
+
+export function markYearSource(refs, baseKey, source) {
+    const yearInput = refs[`${baseKey}.nam`];
+    if (yearInput?.dataset) {
+        yearInput.dataset.yearSource = source;
+    }
+}
+
+export function toggleYearInput(refs, baseKey, isAutomatic) {
+    const yearInput = refs[`${baseKey}.nam`];
+    toggleEditableRef(yearInput, isAutomatic);
 }
 
 export function toggleEditableRef(ref, isLocked) {
